@@ -108,7 +108,7 @@ def decode(
     path: Path = typer.Argument(..., exists=True, readable=True),
     json_out: bool = typer.Option(False, "--json", help="Machine-readable report"),
 ) -> None:
-    """Recover keyless plaintext (LSB / PNG text / JPEG COM / EXIF). Not a stripper."""
+    """Recover keyless plaintext (LSB tiles / PNG text / JPEG COM / QR / JSteg). Not a stripper."""
     from veilscan.decode import decode_path as do_decode
 
     result = do_decode(path)
@@ -122,6 +122,8 @@ def decode(
     else:
         console.print(f"{path}")
         console.print("  NO KEYLESS PLAINTEXT")
+    for hs in result.hotspots[:8]:
+        console.print(f"  hotspot x={hs.x} y={hs.y} {hs.w}x{hs.h} corr={hs.corr:.3f}")
     for note in result.notes:
         console.print(f"  note: {note}")
 

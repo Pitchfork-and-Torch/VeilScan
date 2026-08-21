@@ -8,7 +8,12 @@ from typer.testing import CliRunner
 from veilscan.cli import app
 from veilscan.decode import decode_bytes, decode_path
 from veilscan.decode.container import plant_jpeg_com, plant_png_text
-from veilscan.decode.embed_text import embed_text_array, embed_text_path, embed_text_png_bytes
+from veilscan.decode.embed_text import (
+    embed_text_array,
+    embed_text_patch,
+    embed_text_path,
+    embed_text_png_bytes,
+)
 from veilscan.decode.layouts import LSB_LAYOUTS
 from veilscan.decode.lsb import extract_bits, pack_bits
 from veilscan.decode.score import split_frames, utf8_text
@@ -116,6 +121,36 @@ def test_decode_json_schema_cli(tmp_path: Path) -> None:
         "candidates",
         "kind",
     }
+
+
+def test_patch_lsb_found_without_coords() -> None:
+    cover = _cover(21, size=192)
+    marked = embed_text_patch(cover, MSG, x=90, y=40, w=70, h=42, layout_id="r-bit0-msb")
+    buf = BytesIO()
+    Image.fromarray(marked).save(buf, format="PNG")
+    result = decode_bytes(buf.getvalue())
+    assert result.found
+    assert result.text == MSG
+    assert result.hotspots, "blind tile hunt should flag the planted patch"
+    xs = [h.x for h in result.hotspots]
+    ys = [h.y for h in result.hotspots]
+    assert any(abs(x - 90) <= 80 for x in xs)
+    assert any(abs(y - 40) <= 80 for y in ys)
+
+
+def test_colleague_jpeg_identifies_eye_hotspot() -> None:
+    photo = Path.home() / "Desktop" / "photo_2026-08-21_17-40-16.jpg"
+    if not photo.is_file():
+        return
+    result = decode_path(photo)
+    assert result.kind == "jpeg"
+    assert result.hotspots, "should locate the left-eye LSB patch without coordinates"
+    near = [
+        h
+        for h in result.hotspots
+        if abs(h.x - 545) <= 96 and abs(h.y - 415) <= 96
+    ]
+    assert near, f"eye box missing from hotspots {[h.to_json() for h in result.hotspots]}"
 
 
 def test_embed_text_path_png_text(tmp_path: Path) -> None:

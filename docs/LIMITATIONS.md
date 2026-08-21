@@ -27,16 +27,22 @@ machine has an RTX 4080; the default torch install at authoring was CPU-only.
 
 ## Decode
 
-v0.3 recovers **keyless plaintext** only:
+v0.3.1 recovers **keyless plaintext** and **localizes** LSB patches:
 
-- sequential LSB (several channel / bit-order layouts)
+- sequential LSB in the full raster and in blindly found tiles
 - PNG `tEXt` / `zTXt` / `iTXt`
 - JPEG COM and common EXIF comment tags
+- LSB-plane QR (OpenCV)
+- optional JSteg (quantized DCT AC LSBs) when `jpeglib` is installed
+
+A small LSB rectangle is sequential only inside that box. The decoder hunts
+low bit-0 autocorrelation tiles, then tries those windows. It does not need
+the coordinates in advance.
 
 It will not print encrypted stego (Steghide / OpenStego with a password),
 SynthID, Digimarc, Tree-Ring payloads, or HiDDeN-class neural marks.
-Spatial LSB usually dies after JPEG. A recovered string is not proof of
-authorship.
+Spatial LSB usually dies after JPEG / Telegram recompress. Hotspots can
+still mark the patched region. A recovered string is not proof of authorship.
 
 ## Legal
 

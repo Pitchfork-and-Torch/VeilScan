@@ -36,10 +36,30 @@ def printable_ratio(text: str) -> float:
     return ok / len(text)
 
 
+def looks_like_message(text: str) -> bool:
+    t = text.strip()
+    if not t:
+        return False
+    low = t.lower()
+    if low.startswith(("http://", "https://", "ftp://", "www.")):
+        return True
+    letters = sum(ch.isalpha() for ch in t)
+    if letters / len(t) < 0.70:
+        return False
+    vowels = sum(ch.lower() in "aeiou" for ch in t)
+    if vowels < 2 and len(t) < 16:
+        return False
+    if vowels / letters < 0.22:
+        return False
+    return True
+
+
 def score_text(text: str, framed: bool) -> float:
     n = len(text)
     min_n = MIN_FRAMED_CHARS if framed else MIN_UNFRAMED_CHARS
     if n < min_n:
+        return 0.0
+    if not looks_like_message(text):
         return 0.0
     pr = printable_ratio(text)
     need = 0.92 if framed else 0.99
@@ -52,6 +72,27 @@ def score_text(text: str, framed: bool) -> float:
     if framed:
         s = min(1.0, s + 0.15)
     return float(s)
+
+
+def extract_run_candidates(raw: bytes) -> list[tuple[bytes, bool]]:
+    """Prefix frames plus interior printable runs (payload need not start at bit 0)."""
+    out = split_frames(raw)
+    seen = {payload for payload, _ in out}
+    i = 0
+    n = len(raw)
+    while i < n:
+        if not (0x20 <= raw[i] <= 0x7E):
+            i += 1
+            continue
+        j = i
+        while j < n and (0x20 <= raw[j] <= 0x7E or raw[j] in (0x09, 0x0A, 0x0D)):
+            j += 1
+        chunk = raw[i:j]
+        if len(chunk) >= MIN_UNFRAMED_CHARS and chunk not in seen:
+            seen.add(chunk)
+            out.append((chunk, False))
+        i = j + 1
+    return out
 
 
 def split_frames(raw: bytes) -> list[tuple[bytes, bool]]:

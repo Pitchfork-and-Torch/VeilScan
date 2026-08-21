@@ -13,6 +13,23 @@ from veilscan.decode.layouts import DEFAULT_LAYOUT_ID, get_layout
 from veilscan.decode.lsb import message_to_bits, plant_bits
 
 
+def embed_text_patch(
+    rgb: np.ndarray,
+    message: str,
+    x: int,
+    y: int,
+    w: int,
+    h: int,
+    layout_id: str = DEFAULT_LAYOUT_ID,
+) -> np.ndarray:
+    """Eval-only: plant sequential LSB in a rectangle. Tests localized decode."""
+    out = np.ascontiguousarray(rgb.copy())
+    crop = out[y : y + h, x : x + w]
+    marked = embed_text_array(crop, message, layout_id=layout_id)
+    out[y : y + h, x : x + w] = marked
+    return out
+
+
 def embed_text_array(
     rgb: np.ndarray,
     message: str,
