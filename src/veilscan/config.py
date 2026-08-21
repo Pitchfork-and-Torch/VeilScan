@@ -8,6 +8,25 @@ from typing import Any
 
 import yaml
 
+DEFAULT_PEAK_OK = [
+    "chi_square",
+    "rs_analysis",
+    "bitplane",
+    "dct",
+    "dwt",
+    "hybrid_dds",
+    "tree_ring_spectral",
+]
+
+DEFAULT_FUSION = {
+    "full_mean": 0.20,
+    "ok_mean": 0.20,
+    "top_mean": 0.20,
+    "peak": 0.40,
+    "top_k": 3,
+    "uncertainty": "peak_ok",
+}
+
 DEFAULTS = {
     "threshold": 0.48,
     "tile_size": 1024,
@@ -15,6 +34,8 @@ DEFAULTS = {
     "device": "auto",
     "tier": "all",
     "jpeg_quality_probe": 95,
+    "peak_ok": list(DEFAULT_PEAK_OK),
+    "fusion": dict(DEFAULT_FUSION),
     "weights": {
         "chi_square": 1.0,
         "rs_analysis": 1.05,
@@ -33,6 +54,7 @@ DEFAULTS = {
         "color_spaces": 0.55,
         "reconstruction": 0.6,
         "higher_order": 0.5,
+        "jpeg_ela": 0.55,
         "residual_cnn": 1.15,
         "fsnet_lite": 1.2,
         "wmd": 1.1,
@@ -54,6 +76,8 @@ class VeilConfig:
     tier: str = "all"
     jpeg_quality_probe: int = 95
     weights: dict[str, float] = field(default_factory=lambda: dict(DEFAULTS["weights"]))
+    peak_ok: list[str] = field(default_factory=lambda: list(DEFAULT_PEAK_OK))
+    fusion: dict[str, Any] = field(default_factory=lambda: dict(DEFAULT_FUSION))
     checkpoint_dir: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -61,14 +85,35 @@ class VeilConfig:
     def load(cls, path: str | Path | None = None) -> VeilConfig:
         data = dict(DEFAULTS)
         weights = dict(DEFAULTS["weights"])
+        fusion = dict(DEFAULT_FUSION)
+        peak_ok = list(DEFAULT_PEAK_OK)
         src = Path(path) if path else _pkg_default_path()
         if src.is_file():
             with src.open("r", encoding="utf-8") as f:
                 loaded = yaml.safe_load(f) or {}
             weights.update(loaded.pop("weights", {}) or {})
+            fusion.update(loaded.pop("fusion", {}) or {})
+            po = loaded.pop("peak_ok", None)
+            if po:
+                peak_ok = list(po)
             data.update(loaded)
         data["weights"] = weights
-        known = {k: data[k] for k in ("threshold", "tile_size", "tile_overlap", "device", "tier", "jpeg_quality_probe", "weights")}
+        data["fusion"] = fusion
+        data["peak_ok"] = peak_ok
+        known = {
+            k: data[k]
+            for k in (
+                "threshold",
+                "tile_size",
+                "tile_overlap",
+                "device",
+                "tier",
+                "jpeg_quality_probe",
+                "weights",
+                "peak_ok",
+                "fusion",
+            )
+        }
         cfg = cls(**known)
         cfg.checkpoint_dir = data.get("checkpoint_dir")
         return cfg

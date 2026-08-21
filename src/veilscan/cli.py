@@ -74,7 +74,7 @@ def scan(
     if json_out:
         console.print_json(data=result.to_json())
         return
-    _print_result(path, result)
+    _print_result(path, result, peak_ok=set(cfg.peak_ok))
 
 
 @app.command()
@@ -132,6 +132,7 @@ def selftest(
     n: int = typer.Option(6, help="Covers per family"),
     size: int = typer.Option(128),
     json_out: bool = typer.Option(False, "--json"),
+    per_detector: bool = typer.Option(False, "--per-detector", help="Also print per-head AUC by family"),
 ) -> None:
     """Generate synthetic covers, embed several families, report AUC."""
     from veilscan.eval.harness import run_synthetic
@@ -139,7 +140,7 @@ def selftest(
 
     ensure_loaded()
     names = [d.name for d in all_detectors() if d.name != "wmd"]
-    report = run_synthetic(n=n, size=size, detectors=names)
+    report = run_synthetic(n=n, size=size, detectors=names, per_detector=per_detector)
     if json_out:
         console.print_json(data=report)
         return
@@ -162,6 +163,53 @@ def selftest(
     console.print(
         f"overall AUC={ov['auc']:.3f}  TPR@5%FPR={ov['tpr_at_fpr_5']:.3f}  F1={ov['f1']:.3f}"
     )
+    if per_detector and report.get("detectors"):
+        _print_detector_auc(report["detectors"])
+
+
+@app.command()
+def loao(
+    n: int = typer.Option(3, help="Covers per held-out family"),
+    size: int = typer.Option(128),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Leave-one-family-out report (classical path; deep train-holdout is Phase 2)."""
+    from veilscan.eval.harness import run_loao
+    from veilscan.registry import all_detectors, ensure_loaded
+
+    ensure_loaded()
+    names = [d.name for d in all_detectors() if d.name != "wmd"]
+    report = run_loao(n=n, size=size, detectors=names)
+    if json_out:
+        console.print_json(data=report)
+        return
+    console.print(report["protocol"])
+    table = Table(title="LOAO ensemble (held-out family vs matched covers)")
+    table.add_column("held out")
+    table.add_column("AUC", justify="right")
+    table.add_column("mean cover", justify="right")
+    table.add_column("mean marked", justify="right")
+    for fam, row in report["held_out_ensemble"].items():
+        table.add_row(fam, f"{row['auc']:.3f}", f"{row['mean_cover']:.3f}", f"{row['mean_marked']:.3f}")
+    console.print(table)
+    console.print(f"deep_loao={report['deep_loao']}")
+    if report.get("detectors"):
+        _print_detector_auc(report["detectors"])
+
+
+def _print_detector_auc(heads: dict) -> None:
+    table = Table(title="Per-detector AUC by family")
+    fams = sorted({f for rec in heads.values() for f in rec})
+    table.add_column("detector")
+    for f in fams:
+        table.add_column(f, justify="right")
+    for name in sorted(heads):
+        row = [name]
+        for f in fams:
+            cell = heads[name].get(f)
+            row.append(f"{cell['auc']:.3f}" if cell else "-")
+        table.add_row(*row)
+    console.print(table)
 
 
 @app.command()
@@ -176,7 +224,7 @@ def robustness(
     console.print_json(data=report)
 
 
-def _print_result(path: Path, result) -> None:
+def _print_result(path: Path, result, peak_ok: set[str] | None = None) -> None:
     flag = "[red]WATERMARK LIKELY[/red]" if result.present else "[green]NO STRONG MARK[/green]"
     console.print(f"{path}")
     console.print(f"  {flag}  score={result.score:.3f}  conf={result.confidence:.3f}  unc={result.uncertainty:.3f}")
@@ -186,8 +234,22 @@ def _print_result(path: Path, result) -> None:
     table.add_column("score", justify="right")
     table.add_column("conf", justify="right")
     table.add_column("skip")
+    table.add_column("core")
     table.add_column("note")
-    for d in sorted(result.detectors, key=lambda r: (-(not r.skipped), -r.score)):
+    allow = peak_ok or set()
+
+    def _key(r):
+        core = r.detector in allow
+        return (r.skipped, not core, -r.score)
+
+    for d in sorted(result.detectors, key=_key):
         note = d.explanation if len(d.explanation) < 80 else d.explanation[:77] + "..."
-        table.add_row(d.detector, f"{d.score:.3f}", f"{d.confidence:.3f}", "yes" if d.skipped else "", note)
+        table.add_row(
+            d.detector,
+            f"{d.score:.3f}",
+            f"{d.confidence:.3f}",
+            "yes" if d.skipped else "",
+            "yes" if d.detector in allow else "",
+            note,
+        )
     console.print(table)

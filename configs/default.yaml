@@ -5,6 +5,23 @@ device: auto
 tier: all
 jpeg_quality_probe: 95
 
+peak_ok:
+  - chi_square
+  - rs_analysis
+  - bitplane
+  - dct
+  - dwt
+  - hybrid_dds
+  - tree_ring_spectral
+
+fusion:
+  full_mean: 0.20
+  ok_mean: 0.20
+  top_mean: 0.20
+  peak: 0.40
+  top_k: 3
+  uncertainty: peak_ok
+
 weights:
   chi_square: 1.0
   rs_analysis: 1.05
@@ -23,6 +40,7 @@ weights:
   color_spaces: 0.55
   reconstruction: 0.6
   higher_order: 0.5
+  jpeg_ela: 0.55
   residual_cnn: 1.15
   fsnet_lite: 1.2
   wmd: 1.1

@@ -95,6 +95,8 @@ Until those files exist, deep detectors skip.
 - Attacks: JPEG, resize, crop, noise, blur, jitter.
 - Protocol helper: leave-one-family-out over generators.
 
+Living upgrade contract: `docs/UPGRADE_PLAN.md`.
+
 ## Non-goals (v0)
 
 - Matching a closed SynthID verifier

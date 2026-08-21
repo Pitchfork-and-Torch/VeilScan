@@ -7,7 +7,7 @@ from veilscan.generators import embed, synthetic_cover
 
 def test_list_detectors_has_core() -> None:
     names = {d["name"] for d in list_detectors()}
-    for n in ("chi_square", "rs_analysis", "dct", "dwt", "srm", "fsnet_lite", "wmd"):
+    for n in ("chi_square", "rs_analysis", "dct", "dwt", "srm", "fsnet_lite", "wmd", "jpeg_ela"):
         assert n in names
 
 

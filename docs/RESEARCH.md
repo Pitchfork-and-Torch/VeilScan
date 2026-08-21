@@ -5,7 +5,7 @@ does this image carry an invisible watermark, without a matching decoder or key.
 
 Product name: **VeilScan**. Question it answers: "Does this image contain an invisible watermark?"
 
-Last updated: 2026-08-20.
+Last updated: 2026-08-20. Upgrade contract: `docs/UPGRADE_PLAN.md`.
 
 ## 1. Problem
 

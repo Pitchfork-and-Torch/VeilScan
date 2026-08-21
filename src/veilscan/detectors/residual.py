@@ -132,8 +132,35 @@ class HigherOrderDetector(BaseDetector):
         return DetectionResult(self.name, float(score), 0.5, expl, extras=extras, tier=self.tier).clamp()
 
 
+class JpegELADetector(BaseDetector):
+    name = "jpeg_ela"
+    tier = "residual"
+
+    def analyze(self, image: np.ndarray, context: AnalyzeContext | None = None) -> DetectionResult:
+        from veilscan.image_io import jpeg_roundtrip
+
+        q = 95
+        if context and context.extra:
+            q = int(context.extra.get("jpeg_quality_probe", 95))
+        try:
+            recon = jpeg_roundtrip(image, q)
+        except Exception as e:
+            return self.skip(f"JPEG ELA unavailable: {e}")
+        err = image.astype(np.float64) - recon.astype(np.float64)
+        mse = float(np.mean(err ** 2))
+        hm = np.clip(np.mean(np.abs(err), axis=-1) / (np.percentile(np.abs(err), 99) + 1e-9), 0, 1)
+        score = score_from_stat(np.log1p(mse), center=2.4, scale=1.2)
+        extras = {"jpeg_q": q, "ela_mse": mse}
+        expl = (
+            f"JPEG residual (ELA-style) at Q={q}, MSE={mse:.3f}. "
+            "High-frequency marks often inflate recompression error."
+        )
+        return DetectionResult(self.name, float(score), 0.5, expl, heatmap=hm, extras=extras, tier=self.tier).clamp()
+
+
 def register_residual() -> None:
     register(SRMDetector())
     register(ColorSpaceDetector())
     register(ReconstructionDetector())
     register(HigherOrderDetector())
+    register(JpegELADetector())

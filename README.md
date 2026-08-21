@@ -37,13 +37,15 @@ py -3 -m veilscan scan path\to\image.png
 py -3 -m veilscan scan path\to\image.png --json --heatmap out_overlay.png
 py -3 -m veilscan batch path\to\folder --json
 py -3 -m veilscan selftest
+py -3 -m veilscan selftest --per-detector
+py -3 -m veilscan loao --n 3
 ```
 
 Python:
 
 ```python
 from veilscan import analyze_path
-r = analyze_path(r"C:\pics\frame.png")
+r = analyze_path("path/to/image.png")
 print(r.present, r.score, r.explanation)
 ```
 
@@ -79,6 +81,15 @@ Needs PyTorch. CUDA is faster; CPU works. Until checkpoints exist, the ensemble 
 ## Honest limits
 
 Leave-one-algorithm-out work (AWPD / FSNet, UniFreq-100K) shows LSB and Patchwork defeat frequency-centric nets. Latent-only marks (Gaussian Shading, some Tree-Ring / SynthID cases) are weak in pixel space without inversion or a vendor verifier. A VeilScan score is not a copyright ruling.
+
+## Docs
+
+- `docs/RESEARCH.md` -- AWPD survey
+- `docs/ARCHITECTURE.md` -- plugin contract
+- `docs/LIMITATIONS.md` / `docs/ETHICS.md`
+- `docs/UPGRADE_PLAN.md` -- v0.1.0 -> production AWPD (phased)
+
+`py -3 -m veilscan loao` and `selftest --per-detector` are the Phase 0 measurement CLI.
 
 ## License
 

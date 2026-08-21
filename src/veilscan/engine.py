@@ -25,6 +25,7 @@ def analyze_image(
         device=device,
         reference_images=reference_images,
         checkpoint_dir=cfg.checkpoint_dir,
+        extra={"jpeg_quality_probe": cfg.jpeg_quality_probe, "peak_ok": list(cfg.peak_ok)},
     )
     dets = select(detector_names, tier=cfg.tier)
     h, w = rgb.shape[:2]
@@ -32,7 +33,7 @@ def analyze_image(
 
     if len(pieces) == 1:
         results = [_safe(d, rgb, ctx) for d in dets]
-        return fuse(results, cfg.weights, cfg.threshold, rgb.shape)
+        return fuse(results, cfg.weights, cfg.threshold, rgb.shape, peak_ok=cfg.peak_ok, mix=cfg.fusion)
 
     # Per-detector: take the max tile score (a mark in one tile is enough).
     # Heatmaps stitched by overlap-average.
@@ -72,7 +73,7 @@ def analyze_image(
         extras["tile_mean"] = float(np.mean([r.score for r in live]))
         best.extras = extras
         merged.append(best)
-    return fuse(merged, cfg.weights, cfg.threshold, rgb.shape)
+    return fuse(merged, cfg.weights, cfg.threshold, rgb.shape, peak_ok=cfg.peak_ok, mix=cfg.fusion)
 
 
 def _safe(detector, rgb: np.ndarray, ctx: AnalyzeContext) -> DetectionResult:
