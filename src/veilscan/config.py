@@ -1,0 +1,89 @@
+"""YAML config loader."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+DEFAULTS = {
+    "threshold": 0.48,
+    "tile_size": 1024,
+    "tile_overlap": 64,
+    "device": "auto",
+    "tier": "all",
+    "jpeg_quality_probe": 95,
+    "weights": {
+        "chi_square": 1.0,
+        "rs_analysis": 1.05,
+        "sample_pairs": 0.95,
+        "bitplane": 0.85,
+        "histogram": 0.7,
+        "patchwork": 0.8,
+        "dct": 1.0,
+        "dft": 0.75,
+        "dwt": 0.95,
+        "hybrid_dds": 0.8,
+        "tree_ring_spectral": 0.9,
+        "fourier_mellin": 0.45,
+        "block_multiscale": 0.7,
+        "srm": 0.9,
+        "color_spaces": 0.55,
+        "reconstruction": 0.6,
+        "higher_order": 0.5,
+        "residual_cnn": 1.15,
+        "fsnet_lite": 1.2,
+        "wmd": 1.1,
+        "foundation": 0.55,
+    },
+}
+
+
+def _pkg_default_path() -> Path:
+    return Path(__file__).resolve().parents[2] / "configs" / "default.yaml"
+
+
+@dataclass
+class VeilConfig:
+    threshold: float = 0.48
+    tile_size: int = 1024
+    tile_overlap: int = 64
+    device: str = "auto"
+    tier: str = "all"
+    jpeg_quality_probe: int = 95
+    weights: dict[str, float] = field(default_factory=lambda: dict(DEFAULTS["weights"]))
+    checkpoint_dir: str | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def load(cls, path: str | Path | None = None) -> VeilConfig:
+        data = dict(DEFAULTS)
+        weights = dict(DEFAULTS["weights"])
+        src = Path(path) if path else _pkg_default_path()
+        if src.is_file():
+            with src.open("r", encoding="utf-8") as f:
+                loaded = yaml.safe_load(f) or {}
+            weights.update(loaded.pop("weights", {}) or {})
+            data.update(loaded)
+        data["weights"] = weights
+        known = {k: data[k] for k in ("threshold", "tile_size", "tile_overlap", "device", "tier", "jpeg_quality_probe", "weights")}
+        cfg = cls(**known)
+        cfg.checkpoint_dir = data.get("checkpoint_dir")
+        return cfg
+
+
+def resolve_device(requested: str) -> str:
+    if requested and requested != "auto":
+        return requested
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            return "cuda"
+        if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+            return "mps"
+    except Exception:
+        pass
+    return "cpu"
