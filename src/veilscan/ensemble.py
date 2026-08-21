@@ -15,6 +15,7 @@ DEFAULT_PEAK_OK = (
     "dwt",
     "hybrid_dds",
     "tree_ring_spectral",
+    "residual_cnn",
 )
 
 DEFAULT_MIX = {"full_mean": 0.20, "ok_mean": 0.20, "top_mean": 0.20, "peak": 0.40, "top_k": 3, "uncertainty": "peak_ok"}

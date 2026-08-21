@@ -9,6 +9,7 @@ build/
 venv/
 checkpoints/*.pt
 !checkpoints/residual_cnn.pt
+!checkpoints/fsnet_lite.pt
 !checkpoints/manifest.json
 checkpoints/*.onnx
 *.onnx

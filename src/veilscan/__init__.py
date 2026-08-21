@@ -3,7 +3,7 @@
 from veilscan.api import analyze, analyze_images, analyze_path, list_detectors
 from veilscan.types import DetectionResult, EnsembleResult
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __all__ = [
     "analyze",
     "analyze_images",

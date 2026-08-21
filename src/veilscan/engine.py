@@ -80,7 +80,7 @@ def _fuse_calibrated(results: list, cfg: VeilConfig, shape: tuple[int, ...]) -> 
     if cfg.apply_calibration:
         from veilscan.calibrate import apply_affine, load_calibration
 
-        cal = load_calibration()
+        cal = load_calibration(cfg.calibration_path)
         heads = cal.get("detectors") or {}
         for r in results:
             if not r.skipped:

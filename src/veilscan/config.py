@@ -16,6 +16,7 @@ DEFAULT_PEAK_OK = [
     "dwt",
     "hybrid_dds",
     "tree_ring_spectral",
+    "residual_cnn",
 ]
 
 DEFAULT_FUSION = {
@@ -35,6 +36,7 @@ DEFAULTS = {
     "tier": "all",
     "jpeg_quality_probe": 95,
     "apply_calibration": True,
+    "calibration_path": None,
     "peak_ok": list(DEFAULT_PEAK_OK),
     "fusion": dict(DEFAULT_FUSION),
     "weights": {
@@ -80,6 +82,7 @@ class VeilConfig:
     peak_ok: list[str] = field(default_factory=lambda: list(DEFAULT_PEAK_OK))
     fusion: dict[str, Any] = field(default_factory=lambda: dict(DEFAULT_FUSION))
     apply_calibration: bool = True
+    calibration_path: str | None = None
     checkpoint_dir: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -115,6 +118,7 @@ class VeilConfig:
                 "peak_ok",
                 "fusion",
                 "apply_calibration",
+                "calibration_path",
             )
         }
         cfg = cls(**known)

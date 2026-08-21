@@ -29,6 +29,7 @@ class SyntheticWM(Dataset):
         jpeg_prob: float = 0.0,
         size: int = SIZE,
         cover_style: str = "mix",
+        families: list[str] | None = None,
     ) -> None:
         self.n = n
         self.size = size
@@ -36,7 +37,8 @@ class SyntheticWM(Dataset):
         self.cover_style = cover_style
         self.rng = np.random.default_rng(seed)
         self.holdout = holdout
-        self.families = [f for f in FAMILIES if f != holdout]
+        src = list(families) if families else list(FAMILIES)
+        self.families = [f for f in src if f != holdout]
         if not self.families:
             raise ValueError("no training families left after holdout")
 
@@ -95,17 +97,34 @@ def train_one(
     holdout: str | None,
     jpeg_prob: float,
     size: int = SIZE,
+    fresh: bool = False,
+    families: list[str] | None = None,
+    batch_size: int = 8,
+    lr: float = 1e-3,
+    cover_style: str = "mix",
 ) -> dict:
-    ds = SyntheticWM(max(steps * 4, 64), seed=0, holdout=holdout, jpeg_prob=jpeg_prob, size=size)
-    val = SyntheticWM(48, seed=1, holdout=holdout, jpeg_prob=jpeg_prob, size=size)
-    loader = DataLoader(ds, batch_size=8, shuffle=True, num_workers=0)
-    vloader = DataLoader(val, batch_size=8, shuffle=False, num_workers=0)
+    if fresh and out.is_file():
+        out.unlink()
+    ds = SyntheticWM(
+        max(steps * 8, 128),
+        seed=0,
+        holdout=holdout,
+        jpeg_prob=jpeg_prob,
+        size=size,
+        families=families,
+        cover_style=cover_style,
+    )
+    val = SyntheticWM(
+        160, seed=1, holdout=holdout, jpeg_prob=jpeg_prob, size=size, families=families, cover_style=cover_style
+    )
+    loader = DataLoader(ds, batch_size=batch_size, shuffle=True, num_workers=0)
+    vloader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0)
     model.to(device)
     if out.is_file():
         state = torch.load(out, map_location=device, weights_only=True)
         model.load_state_dict(state)
         print(f"{name} resumed {out}")
-    opt = torch.optim.AdamW(model.parameters(), lr=1e-3)
+    opt = torch.optim.AdamW(model.parameters(), lr=lr)
     loss_fn = torch.nn.BCEWithLogitsLoss()
     model.train()
     n = 0
@@ -127,7 +146,7 @@ def train_one(
         n += 1
         if n % 20 == 0:
             print(f"{name} step {n}/{steps} loss={last_loss:.4f}")
-    auc = _val_auc(model, vloader, device)
+    auc = _val_auc(model, vloader, device, max_batches=20)
     out.parent.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), out)
     print(f"wrote {out} val_auc={auc:.3f}")
@@ -152,9 +171,16 @@ def main() -> None:
     p.add_argument("--jpeg-prob", type=float, default=0.35, help="Probability of JPEG attack on each sample.")
     p.add_argument("--size", type=int, default=SIZE)
     p.add_argument("--only", default="both", help="residual_cnn | fsnet_lite | both")
+    p.add_argument("--fresh", action="store_true", help="Do not resume an existing checkpoint.")
+    p.add_argument("--families", default="", help="Comma list; default all generators.")
+    p.add_argument("--batch-size", type=int, default=0, help="0 = 32 on cuda else 8")
+    p.add_argument("--lr", type=float, default=1e-3)
+    p.add_argument("--cover-style", default="mix", help="sine | photo | mix")
     args = p.parse_args()
     device = resolve_device(args.device)
-    print("device", device, "holdout", args.holdout_family, "jpeg_prob", args.jpeg_prob, "only", args.only)
+    fams = [x.strip() for x in args.families.split(",") if x.strip()] or None
+    bs = args.batch_size or (32 if device == "cuda" else 8)
+    print("device", device, "holdout", args.holdout_family, "jpeg_prob", args.jpeg_prob, "only", args.only, "bs", bs, "families", fams)
     root = Path(args.out)
     recs = []
     if args.only in ("both", "residual_cnn"):
@@ -168,6 +194,11 @@ def main() -> None:
                 args.holdout_family,
                 args.jpeg_prob,
                 size=args.size,
+                fresh=args.fresh,
+                families=fams,
+                batch_size=bs,
+                lr=args.lr,
+                cover_style=args.cover_style,
             )
         )
     if args.only in ("both", "fsnet_lite"):
@@ -181,6 +212,11 @@ def main() -> None:
                 args.holdout_family,
                 args.jpeg_prob,
                 size=args.size,
+                fresh=args.fresh,
+                families=fams,
+                batch_size=bs,
+                lr=args.lr,
+                cover_style=args.cover_style,
             )
         )
     manifest = {

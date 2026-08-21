@@ -13,6 +13,7 @@ peak_ok:
   - dwt
   - hybrid_dds
   - tree_ring_spectral
+  - residual_cnn
 
 fusion:
   full_mean: 0.20

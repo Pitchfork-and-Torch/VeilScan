@@ -27,6 +27,7 @@ def test_loao_skeleton() -> None:
 def test_peak_ok_from_yaml() -> None:
     cfg = VeilConfig.load()
     assert "chi_square" in cfg.peak_ok
+    assert "residual_cnn" in cfg.peak_ok
     assert "dct" in cfg.peak_ok
     assert "sample_pairs" not in cfg.peak_ok
     assert "block_multiscale" not in cfg.peak_ok
