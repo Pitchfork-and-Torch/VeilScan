@@ -30,7 +30,7 @@ plugins are off. Patchwork is a hole. Fusion is a peak of mixed classical +
 deep heads, so a noisy classical extra can still dominate a clean 0.001 FSNet
 cover.
 
-**North star for v0.3:** a forensic user scans a megapixel JPEG, gets
+**North star for v0.4:** a forensic user scans a megapixel JPEG, gets
 `present` plus a **family hint** (`lsb` | `frequency` | `unknown`), and the
 false-positive rate at that decision is *measured* on a frozen bench, not
 guessed from n=8.
@@ -85,7 +85,7 @@ quote, then spend remaining budget only on holes the bench still fails
 
 ---
 
-## 4. Phased contract (v0.3.x)
+## 4. Phased contract (v0.4.x)
 
 ### M1 -- Frozen bench + operating point (must ship first)
 
@@ -222,7 +222,7 @@ flag `VEILSCAN_SD_CKPT` is set (CI never has it).
 - Tile path: confirm megapixel scan still uses specialist OR.
 - ONNX of ResidualCNN already exists; add FSNet ONNX only if FFT export
   works (likely not). Do not block on it.
-- One `docs/RESULTS_v0.3.md` that *replaces* the 0.2.1-0.2.4 stack as the
+- One `docs/RESULTS_v0.4.md` that *replaces* the 0.2.1-0.2.4 stack as the
   number people read.
 
 ---
@@ -280,7 +280,7 @@ flag `VEILSCAN_SD_CKPT` is set (CI never has it).
 
 ---
 
-## 8. Acceptance (v0.3.0 ship)
+## 8. Acceptance (v0.4.0 ship)
 
 All of these, or we do not call it 0.3.0:
 
@@ -300,7 +300,7 @@ All of these, or we do not call it 0.3.0:
 - [ ] pytest green; secret scan; private push.
 - [ ] Still no remover.
 
-**v0.3.0 is an operating-point release, not a new-architecture release.**
+**v0.4.0 is an operating-point release, not a new-architecture release.** v0.3.0 already shipped keyless decode.
 
 ---
 
