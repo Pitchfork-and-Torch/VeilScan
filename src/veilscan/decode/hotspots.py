@@ -38,6 +38,24 @@ class Hotspot:
         }
 
 
+def cluster_hotspots(spots: list[Hotspot], dist: float = 110.0) -> list[list[Hotspot]]:
+    """Group nearby tiles so the report can draw one CLUSTER hull."""
+    groups: list[list[Hotspot]] = []
+    for h in spots:
+        cx, cy = h.x + h.w / 2.0, h.y + h.h / 2.0
+        placed = False
+        for g in groups:
+            gx = sum(i.x + i.w / 2.0 for i in g) / len(g)
+            gy = sum(i.y + i.h / 2.0 for i in g) / len(g)
+            if (cx - gx) ** 2 + (cy - gy) ** 2 <= dist * dist:
+                g.append(h)
+                placed = True
+                break
+        if not placed:
+            groups.append([h])
+    return groups
+
+
 def lsb_autocorr(plane: np.ndarray) -> float:
     a = np.asarray(plane, dtype=np.float64)
     if a.ndim != 2 or min(a.shape) < 8:

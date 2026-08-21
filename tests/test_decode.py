@@ -7,6 +7,7 @@ from typer.testing import CliRunner
 
 from veilscan.cli import app
 from veilscan.decode import decode_bytes, decode_path
+from veilscan.decode.report import default_report_path, render_decode_report
 from veilscan.decode.container import plant_jpeg_com, plant_png_text
 from veilscan.decode.embed_text import (
     embed_text_array,
@@ -105,7 +106,7 @@ def test_decode_json_schema_cli(tmp_path: Path) -> None:
     Image.fromarray(cover).save(src)
     r0 = runner.invoke(app, ["embed-text", str(src), str(out), "--message", MSG])
     assert r0.exit_code == 0, r0.output
-    r1 = runner.invoke(app, ["decode", str(out), "--json"])
+    r1 = runner.invoke(app, ["decode", str(out), "--json", "--no-report"])
     assert r1.exit_code == 0, r1.output
     assert '"found": true' in r1.stdout
     assert '"schema_version": 1' in r1.stdout
@@ -167,6 +168,24 @@ def test_wm_png_left_eye_token() -> None:
     assert result.found
     assert result.text == TOKEN
     assert result.family == "lsb"
+
+
+def test_decode_cli_writes_report_png(tmp_path: Path) -> None:
+    cover = _cover(23, size=128)
+    marked = embed_text_patch(cover, TOKEN, x=11, y=13, w=70, h=42, layout_id="rgb-bit0-msb")
+    src = tmp_path / "marked.png"
+    Image.fromarray(marked).save(src)
+    dest = tmp_path / "out-report.png"
+    r = runner.invoke(app, ["decode", str(src), "--out", str(dest)])
+    assert r.exit_code == 0, r.output
+    assert TOKEN in r.stdout
+    assert dest.is_file()
+    im = Image.open(dest)
+    assert im.format == "PNG"
+    assert im.size[0] >= 800
+    assert im.size[1] >= 400
+    r2 = runner.invoke(app, ["decode", str(src), "--no-report"])
+    assert r2.exit_code == 0
 
 
 def test_colleague_jpeg_identifies_eye_hotspot() -> None:

@@ -35,7 +35,15 @@ def iter_scanline_hits(rgb: np.ndarray) -> list[tuple[str, str, float, tuple[int
                     s = score_text(text, framed=framed)
                     if s <= 0:
                         continue
-                    hits.append((layout, text, s, (0, y, w, 1)))
+                    payload = text.encode("ascii", "replace")
+                    idx = raw.find(payload)
+                    if idx < 0:
+                        idx = 0
+                    bit0 = off + idx * 8
+                    chans = 3 if layout.startswith("rgb") else 1
+                    x = int(min(w - 1, max(0, bit0 // chans)))
+                    n_pix = max(8, int(((len(payload) + 1) * 8 + chans - 1) // chans))
+                    hits.append((layout, text, s, (x, y, min(n_pix, w - x), 8)))
                     if s >= 0.93 and framed and len(text) >= 8:
                         return hits
     return hits

@@ -107,25 +107,38 @@ def batch(
 def decode(
     path: Path = typer.Argument(..., exists=True, readable=True),
     json_out: bool = typer.Option(False, "--json", help="Machine-readable report"),
+    out: Optional[Path] = typer.Option(None, "--out", help="HUD + dossier PNG path"),
+    no_report: bool = typer.Option(False, "--no-report", help="Skip the PNG artifact"),
 ) -> None:
-    """Recover keyless plaintext (LSB tiles / PNG text / JPEG COM / QR / JSteg). Not a stripper."""
+    """Recover keyless plaintext and write a HUD + dossier PNG by default."""
     from veilscan.decode import decode_path as do_decode
+    from veilscan.decode.container import load_raw_rgb
+    from veilscan.decode.report import default_report_path, render_decode_report
 
     result = do_decode(path)
     if json_out:
         console.print_json(data=result.to_json())
-        return
-    if result.found:
+    elif result.found:
         console.print(f"{path}")
         console.print(f"  FOUND  family={result.family}  layout={result.layout}  conf={result.confidence:.3f}")
         console.print(result.text or "")
+        for hs in result.hotspots[:8]:
+            console.print(f"  hotspot x={hs.x} y={hs.y} {hs.w}x{hs.h} corr={hs.corr:.3f}")
+        for note in result.notes:
+            console.print(f"  note: {note}")
     else:
         console.print(f"{path}")
         console.print("  NO KEYLESS PLAINTEXT")
-    for hs in result.hotspots[:8]:
-        console.print(f"  hotspot x={hs.x} y={hs.y} {hs.w}x{hs.h} corr={hs.corr:.3f}")
-    for note in result.notes:
-        console.print(f"  note: {note}")
+        for hs in result.hotspots[:8]:
+            console.print(f"  hotspot x={hs.x} y={hs.y} {hs.w}x{hs.h} corr={hs.corr:.3f}")
+        for note in result.notes:
+            console.print(f"  note: {note}")
+    if not no_report:
+        rgb, _, _ = load_raw_rgb(path.read_bytes())
+        if rgb is not None:
+            dest = out or default_report_path(path)
+            render_decode_report(rgb, result, path, dest)
+            console.print(f"  report {dest}")
 
 
 @app.command("embed-text")

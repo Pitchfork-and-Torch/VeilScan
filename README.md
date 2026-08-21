@@ -37,6 +37,7 @@ py -3 -m veilscan scan path\to\image.png
 py -3 -m veilscan scan path\to\image.png --json --heatmap out_overlay.png
 py -3 -m veilscan batch path\to\folder --json
 py -3 -m veilscan decode path\to\image.png
+# writes path-veilscan-report.png (HUD overlay + executive brief) next to the file
 py -3 -m veilscan selftest
 py -3 -m veilscan selftest --per-detector
 py -3 -m veilscan loao --n 3
