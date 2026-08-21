@@ -2,15 +2,18 @@
   "schema_version": 1,
   "device": "cuda",
   "torch": "2.13.0+cu130",
-  "holdout_family": null,
-  "jpeg_prob": 0.2,
-  "steps": 400,
-  "families": ["lsb", "dct", "spread"],
   "models": [
     {
       "name": "residual_cnn",
-      "val_auc": 0.84,
-      "note": "RGB+LSB-plane stem. peak_ok. Live LSB delta ~+0.54 on n=8 mix."
+      "val_auc": 0.80,
+      "peak_ok": true,
+      "note": "RGB+LSB planes. Strong LSB; moderate DCT/spread/tree_ring."
+    },
+    {
+      "name": "fsnet_lite",
+      "val_auc": 0.585,
+      "peak_ok": true,
+      "note": "RGB+LSB ASPM. LSB specialist; frequency families still flat."
     }
   ]
 }

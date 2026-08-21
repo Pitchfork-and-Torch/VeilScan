@@ -17,6 +17,7 @@ DEFAULT_PEAK_OK = [
     "hybrid_dds",
     "tree_ring_spectral",
     "residual_cnn",
+    "fsnet_lite",
 ]
 
 DEFAULT_FUSION = {

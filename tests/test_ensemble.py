@@ -64,6 +64,19 @@ def test_fuse_peak_not_drowned() -> None:
     assert r.present
 
 
+def test_fsnet_checkpoint_loads() -> None:
+    from pathlib import Path
+
+    ckpt = Path(__file__).resolve().parents[1] / "checkpoints" / "fsnet_lite.pt"
+    if not ckpt.is_file():
+        return
+    rng = np.random.default_rng(36)
+    cover = synthetic_cover(64, 64, rng)
+    r = analyze(cover, detectors=["fsnet_lite"])
+    assert not r.detectors[0].skipped
+    assert 0.0 <= r.detectors[0].score <= 1.0
+
+
 def test_residual_cnn_checkpoint_loads() -> None:
     from pathlib import Path
 

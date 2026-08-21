@@ -1,4 +1,4 @@
-"""FSNet-lite: ASPM + small backbone + DMSA (Ao et al. AWPD ideas, independent reimplementation)."""
+"""FSNet-lite: ASPM + backbone + DMSA. RGB+LSB input so bit and frequency marks both survive."""
 
 from __future__ import annotations
 
@@ -24,7 +24,6 @@ def dct2(x: torch.Tensor) -> torch.Tensor:
 
 
 def idct2(x: torch.Tensor) -> torch.Tensor:
-    # Pair with the unnormalized type-II used above via IFFT even extension.
     n0 = x.size(-2)
     n1 = x.size(-1)
     k0 = torch.arange(n0, device=x.device, dtype=x.dtype).view(1, 1, n0, 1)
@@ -37,22 +36,30 @@ def idct2(x: torch.Tensor) -> torch.Tensor:
     return torch.fft.ifft(v2, dim=-1).real[..., :n1]
 
 
+def with_lsb_planes(x: torch.Tensor) -> torch.Tensor:
+    bits = torch.round(x * 255.0) % 2.0
+    return torch.cat([x, bits], dim=1)
+
+
 class ASPM(nn.Module):
-    def __init__(self, size: int = 64) -> None:
+    def __init__(self, size: int = 64, in_ch: int = 6) -> None:
         super().__init__()
-        # Per-channel learnable DCT gate (RGB), then fuse rgb + residual + max-pool.
-        self.gate = nn.Parameter(torch.zeros(1, 3, size, size))
-        self.fuse = nn.Conv2d(9, 32, 3, padding=1)
+        # Bias the gate toward higher frequencies (center of shifted DCT is DC).
+        yy = torch.linspace(-1.0, 1.0, size).view(1, 1, size, 1)
+        xx = torch.linspace(-1.0, 1.0, size).view(1, 1, 1, size)
+        high = (yy ** 2 + xx ** 2).clamp(0, 1) - 0.35
+        self.gate = nn.Parameter(high.expand(1, in_ch, size, size).contiguous())
+        self.fuse = nn.Conv2d(in_ch * 3, 32, 3, padding=1)
+        self.fuse_bn = nn.BatchNorm2d(32)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: B,3,H,W in [0,1]
         freq = dct2(x)
         mask = torch.sigmoid(self.gate)
         mask = F.interpolate(mask, size=freq.shape[-2:], mode="bilinear", align_corners=False)
         residual = idct2(freq * mask)
         mx = F.max_pool2d(residual, 3, stride=1, padding=1)
         fused = torch.cat([x, residual, mx], dim=1)
-        return self.fuse(fused)
+        return F.leaky_relu(self.fuse_bn(self.fuse(fused)), 0.1)
 
 
 class DMSA(nn.Module):
@@ -61,14 +68,13 @@ class DMSA(nn.Module):
         self.k = k
         self.mlp = nn.Sequential(
             nn.Linear(channels, channels // 4),
-            nn.ReLU(inplace=True),
+            nn.LeakyReLU(0.1, inplace=True),
             nn.Linear(channels // 4, channels),
             nn.Sigmoid(),
         )
-        # Predefined (u,v) pairs emphasizing higher frequencies.
         uv = []
         for i in range(k):
-            uv.append((1 + i // 3, 1 + i % 3))
+            uv.append((2 + i // 3, 2 + i % 3))
         self.register_buffer("uv", torch.tensor(uv, dtype=torch.float32))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -93,29 +99,26 @@ class DMSA(nn.Module):
 class FSNetLite(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.aspm = ASPM(64)
+        self.aspm = ASPM(64, in_ch=6)
         self.backbone = nn.Sequential(
             nn.Conv2d(32, 64, 3, stride=2, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
+            nn.LeakyReLU(0.1, inplace=True),
             nn.Conv2d(64, 96, 3, stride=2, padding=1),
             nn.BatchNorm2d(96),
-            nn.ReLU(inplace=True),
+            nn.LeakyReLU(0.1, inplace=True),
             nn.Conv2d(96, 128, 3, stride=2, padding=1),
             nn.BatchNorm2d(128),
-            nn.ReLU(inplace=True),
+            nn.LeakyReLU(0.1, inplace=True),
         )
         self.dmsa = DMSA(128, k=8)
-        self.head = nn.Sequential(
-            nn.Linear(128, 64),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.2),
-            nn.Linear(64, 1),
-        )
+        self.head = nn.Linear(256, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        z = self.aspm(x)
+        z = self.aspm(with_lsb_planes(x))
         z = self.backbone(z)
         z = self.dmsa(z)
-        z = F.adaptive_avg_pool2d(z, 1).flatten(1)
-        return self.head(z).squeeze(1)
+        mean = F.adaptive_avg_pool2d(z, 1).flatten(1)
+        var = F.adaptive_avg_pool2d(z * z, 1).flatten(1) - mean * mean
+        std = torch.sqrt(var.clamp_min(1e-6))
+        return self.head(torch.cat([mean, std], dim=1)).squeeze(1)

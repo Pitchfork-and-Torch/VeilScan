@@ -14,6 +14,7 @@ peak_ok:
   - hybrid_dds
   - tree_ring_spectral
   - residual_cnn
+  - fsnet_lite
 
 fusion:
   full_mean: 0.20
