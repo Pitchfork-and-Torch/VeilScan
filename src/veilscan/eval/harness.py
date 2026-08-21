@@ -47,7 +47,7 @@ def run_synthetic(
         y = []
         s = []
         for i in range(n):
-            cover = synthetic_cover(size, size, np.random.default_rng(int(rng.integers(1 << 30))))
+            cover = synthetic_cover(size, size, np.random.default_rng(int(rng.integers(1 << 30))), style="mix")
             marked = embed(cover, fam, seed=int(rng.integers(1 << 30)))
             c_res = analyze_image(cover, cfg, detectors)
             m_res = analyze_image(marked, cfg, detectors)
@@ -154,7 +154,7 @@ def run_robustness(n: int = 4, size: int = 128, family: str = "dct", seed: int =
         y = []
         s = []
         for i in range(n):
-            cover = synthetic_cover(size, size, np.random.default_rng(int(rng.integers(1 << 30))))
+            cover = synthetic_cover(size, size, np.random.default_rng(int(rng.integers(1 << 30))), style="mix")
             marked = embed(cover, family, seed=int(rng.integers(1 << 30)))
             cover_a = apply_attack(cover, attack, rng)
             marked_a = apply_attack(marked, attack, rng)

@@ -15,8 +15,8 @@ def _u8(x: np.ndarray) -> np.ndarray:
     return np.clip(np.rint(x), 0, 255).astype(np.uint8)
 
 
-def synthetic_cover(h: int, w: int, rng: np.random.Generator) -> np.ndarray:
-    """Smooth shaded RGB cover. Quantized sines keep structured LSB planes."""
+def _sine_cover(h: int, w: int, rng: np.random.Generator) -> np.ndarray:
+    """Quantized sines keep structured LSB planes (good LSB-regression covers)."""
     import cv2
 
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
@@ -34,10 +34,54 @@ def synthetic_cover(h: int, w: int, rng: np.random.Generator) -> np.ndarray:
     return _u8(base)
 
 
-def embed_lsb(rgb: np.ndarray, rng: np.random.Generator, rate: float = 1.0) -> np.ndarray:
+def _photo_cover(h: int, w: int, rng: np.random.Generator) -> np.ndarray:
+    """1/f-ish value-noise octaves. Closer to photographic residual stats than pure sines."""
+    import cv2
+
+    acc = np.zeros((h, w, 3), dtype=np.float32)
+    amp = 90.0
+    for grid in (4, 8, 16, 32, 64):
+        if min(h, w) < grid:
+            break
+        for c in range(3):
+            small = rng.random((grid, grid)).astype(np.float32)
+            acc[..., c] += amp * cv2.resize(small, (w, h), interpolation=cv2.INTER_CUBIC)
+        amp *= 0.52
+    acc -= acc.min()
+    acc = acc / (acc.max() + 1e-6) * 170.0 + 28.0
+    acc += rng.normal(0.0, 2.2, size=acc.shape)
+    y0, x0 = int(h * 0.15), int(w * 0.55)
+    y1, x1 = int(h * 0.7), int(w * 0.9)
+    acc[y0:y1, x0:x1] *= rng.uniform(0.82, 0.95)
+    return _u8(acc)
+
+
+def synthetic_cover(
+    h: int, w: int, rng: np.random.Generator, style: str = "sine"
+) -> np.ndarray:
+    """style: sine | photo | mix (rng chooses). Default sine keeps LSB unit tests stable."""
+    if style == "mix":
+        style = "sine" if rng.random() < 0.45 else "photo"
+    if style == "photo":
+        return _photo_cover(h, w, rng)
+    return _sine_cover(h, w, rng)
+
+
+def embed_lsb(
+    rgb: np.ndarray,
+    rng: np.random.Generator,
+    rate: float = 1.0,
+    sequential: bool = False,
+) -> np.ndarray:
     out = rgb.copy()
-    mask = rng.random(out.shape[:2]) < rate
-    payload = rng.integers(0, 2, size=out.shape[:2], dtype=np.uint8)
+    h, w = out.shape[:2]
+    if sequential:
+        n = int(np.clip(rate, 0.0, 1.0) * h * w)
+        mask = np.zeros((h, w), dtype=bool)
+        mask.ravel()[:n] = True
+    else:
+        mask = rng.random((h, w)) < rate
+    payload = rng.integers(0, 2, size=(h, w), dtype=np.uint8)
     for c in range(3):
         ch = out[..., c]
         ch = (ch & 0xFE) | payload

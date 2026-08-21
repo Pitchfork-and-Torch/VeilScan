@@ -40,19 +40,18 @@ def idct2(x: torch.Tensor) -> torch.Tensor:
 class ASPM(nn.Module):
     def __init__(self, size: int = 64) -> None:
         super().__init__()
-        self.gate = nn.Parameter(torch.zeros(1, 1, size, size))
-        self.fuse = nn.Conv2d(3, 32, 3, padding=1)
+        # Per-channel learnable DCT gate (RGB), then fuse rgb + residual + max-pool.
+        self.gate = nn.Parameter(torch.zeros(1, 3, size, size))
+        self.fuse = nn.Conv2d(9, 32, 3, padding=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: B,3,H,W in [0,1]
-        gray = x.mean(dim=1, keepdim=True)
-        freq = dct2(gray)
+        freq = dct2(x)
         mask = torch.sigmoid(self.gate)
         mask = F.interpolate(mask, size=freq.shape[-2:], mode="bilinear", align_corners=False)
-        spatial = idct2(freq * mask)
-        residual = spatial
+        residual = idct2(freq * mask)
         mx = F.max_pool2d(residual, 3, stride=1, padding=1)
-        fused = torch.cat([gray, residual, mx], dim=1)
+        fused = torch.cat([x, residual, mx], dim=1)
         return self.fuse(fused)
 
 

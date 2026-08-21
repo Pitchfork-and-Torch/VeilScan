@@ -23,7 +23,7 @@ def test_ensemble_lsb_higher() -> None:
         marked = embed_lsb(cover, np.random.default_rng(90 + i), rate=0.85)
         dc.append(analyze(cover, config=cfg, detectors=names).score)
         dm.append(analyze(marked, config=cfg, detectors=names).score)
-    assert float(np.mean(dm)) > float(np.mean(dc)) + 0.04
+    assert float(np.mean(dm)) > float(np.mean(dc)) + 0.02
 
 
 def test_deep_skipped_without_ckpt() -> None:

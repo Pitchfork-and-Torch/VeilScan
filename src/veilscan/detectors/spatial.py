@@ -26,23 +26,40 @@ class ChiSquareDetector(BaseDetector):
         gray = _u8(to_gray(image))
         extras = {}
         rgb_p = []
+        seq_best = 0.0
+        seq_frac = 1.0
         for label, ch in [("r", image[..., 0]), ("g", image[..., 1]), ("b", image[..., 2])]:
-            p, chi, dof = _chi_square_pairs(_u8(ch))
+            u = _u8(ch)
+            p, chi, dof = _chi_square_pairs(u)
             rgb_p.append(p)
             extras[f"{label}_p"] = p
             extras[f"{label}_chi"] = chi
             extras[f"{label}_dof"] = dof
+            sp, sf = _chi_square_sequential(u)
+            extras[f"{label}_seq_p"] = sp
+            extras[f"{label}_seq_frac"] = sf
+            if sp >= seq_best:
+                seq_best, seq_frac = sp, sf
         p_gray, chi_g, dof_g = _chi_square_pairs(gray)
         extras["gray_p"] = p_gray
         extras["gray_chi"] = chi_g
         extras["gray_dof"] = dof_g
-        # Mean RGB p-value. Gray is a mix and can look random after interpolation.
-        p = float(np.mean(rgb_p)) if rgb_p else float(p_gray)
+        # Global RGB mean is the random-LSB statistic. Sequential prefix only
+        # boosts when the *start* of the raster is more equalized than the whole
+        # (Westfeld). Short prefixes otherwise inflate p-values on covers.
+        p_global = float(np.mean(rgb_p)) if rgb_p else float(p_gray)
+        p = p_global
+        if seq_frac <= 0.25 and seq_best > p_global + 0.20:
+            p = 0.5 * p_global + 0.5 * float(seq_best)
+        extras["p_global"] = p_global
+        extras["p_sequential"] = seq_best
+        extras["seq_best_frac"] = seq_frac
         score = float(p)
         conf = 0.85 if extras["r_dof"] >= 20 else 0.45
         expl = (
             f"Chi-square LSB pair test (Westfeld-Pfitzmann). "
-            f"Max channel p-value={p:.4f} (high => equalized even/odd bins, typical of LSB)."
+            f"global p={p_global:.4f}, sequential prefix p={seq_best:.4f} at {seq_frac:.0%} "
+            f"(high => equalized even/odd bins)."
         )
         return DetectionResult(self.name, score, conf, expl, extras=extras, tier=self.tier).clamp()
 
@@ -64,24 +81,52 @@ def _chi_square_pairs(channel: np.ndarray) -> tuple[float, float, int]:
     return p, float(chi), int(dof)
 
 
+def _chi_square_sequential(channel: np.ndarray) -> tuple[float, float]:
+    """Westfeld: sequential LSB equalizes the *start* of the raster first."""
+    flat = _u8(channel).ravel()
+    n = int(flat.size)
+    if n < 512:
+        p, _, _ = _chi_square_pairs(flat)
+        return p, 1.0
+    best_p = 0.0
+    best_frac = 1.0
+    for frac in (0.10, 0.25, 0.50):
+        sl = flat[: max(2048, int(n * frac))]
+        if sl.size >= n:
+            continue
+        p, _, dof = _chi_square_pairs(sl)
+        if dof >= 24 and p >= best_p:
+            best_p = p
+            best_frac = frac
+    return float(best_p), float(best_frac)
+
+
 class RSAnalysisDetector(BaseDetector):
     name = "rs_analysis"
     tier = "fast"
 
     def analyze(self, image: np.ndarray, context: AnalyzeContext | None = None) -> DetectionResult:
-        gray = _u8(to_gray(image))
-        stats_m = _rs_mask(gray, np.array([0, 1, 1, 0], dtype=np.int8))
-        extras = {**stats_m}
-        d = abs(stats_m["rm"] - stats_m["sm"] - (stats_m["rneg"] - stats_m["sneg"]))
-        # Clean natural images usually keep d small; LSB mixing inflates it.
-        score = score_from_stat(d, center=0.04, scale=0.06)
-        p_hat = _rs_payload_estimate(stats_m)
-        extras["d"] = d
+        mask = np.array([0, 1, 1, 0], dtype=np.int8)
+        hats = []
+        extras: dict = {}
+        channels = [("gray", _u8(to_gray(image)))]
+        if image.ndim == 3 and image.shape[-1] >= 3:
+            channels.extend([("r", _u8(image[..., 0])), ("g", _u8(image[..., 1])), ("b", _u8(image[..., 2]))])
+        gray = channels[0][1]
+        for label, ch in channels:
+            p_hat, meta = rs_payload_hat(ch, mask)
+            hats.append(p_hat)
+            extras[f"{label}_payload_hat"] = p_hat
+            extras[f"{label}_gap"] = meta.get("gap", 0.0)
+        p_hat = float(np.max(hats)) if hats else 0.0
         extras["payload_hat"] = p_hat
-        score = max(score, score_from_stat(p_hat, center=0.08, scale=0.12))
+        extras["gap"] = float(extras.get("gray_gap", 0.0))
+        # Quadratic p-hat is reported but saturates on some covers; detection
+        # uses the RM/SM vs R-M/S-M gap (Fridrich diagram).
+        score = score_from_stat(extras["gap"], center=0.04, scale=0.06)
         expl = (
-            f"RS analysis (Fridrich). Regular/singular gap d={d:.4f}, "
-            f"rough payload hat={p_hat:.3f}."
+            f"RS analysis (Fridrich 2001). gap={extras['gap']:.4f}, "
+            f"quadratic payload hat={p_hat:.3f}."
         )
         hm = _lsb_plane_heatmap(gray)
         return DetectionResult(self.name, float(score), 0.82, expl, heatmap=hm, extras=extras, tier=self.tier).clamp()
@@ -123,26 +168,54 @@ def _rs_mask(channel: np.ndarray, mask: np.ndarray) -> dict[str, float]:
     return {"rm": rm, "sm": sm, "rneg": rneg, "sneg": sneg}
 
 
-def _rs_payload_estimate(s: dict[str, float]) -> float:
-    d0 = s["rm"] - s["sm"]
-    d2 = s["rneg"] - s["sneg"]
-    # Without a fully flipped second pass, use a linear interpolation toward zero-gap.
-    denom = abs(d0) + abs(d2) + 1e-9
-    p = abs(d0 - d2) / denom
-    return float(np.clip(p, 0.0, 1.0))
+def rs_payload_hat(channel: np.ndarray, mask: np.ndarray) -> tuple[float, dict[str, float]]:
+    """Fridrich-Goljan-Du quadratic payload estimate (mask M and fully LSB-flipped image)."""
+    orig = _rs_mask(channel, mask)
+    flipped = _u8(channel) ^ np.uint8(1)
+    fl = _rs_mask(flipped, mask)
+    d0 = orig["rm"] - orig["sm"]
+    d1 = fl["rm"] - fl["sm"]
+    d2 = orig["rneg"] - orig["sneg"]
+    d3 = fl["rneg"] - fl["sneg"]
+    a = 2.0 * (d1 + d0)
+    b = d0 - d1 - d2 - d3
+    c = d3 - d0
+    linear = abs(d0 - d2) / (abs(d0) + abs(d2) + 1e-9)
+    p = linear
+    if abs(a) >= 1e-12:
+        disc = b * b - 4.0 * a * c
+        if disc >= 0.0:
+            srt = float(np.sqrt(disc))
+            minus = (-b - srt) / (2.0 * a)
+            plus = (-b + srt) / (2.0 * a)
+            # Fridrich: take the minus root when it lands in [0, 1].
+            if 0.0 <= minus <= 1.0:
+                p = float(minus)
+            elif 0.0 <= plus <= 1.0:
+                p = float(plus)
+    meta = {
+        **orig,
+        "d0": float(d0),
+        "d1": float(d1),
+        "d2": float(d2),
+        "d3": float(d3),
+        "gap": float(abs(d0 - d2)),
+        "payload_hat": float(np.clip(p, 0.0, 1.0)),
+    }
+    return meta["payload_hat"], meta
 
 
 def _lsb_plane_heatmap(gray: np.ndarray) -> np.ndarray:
     plane = (gray.astype(np.uint8) & 1).astype(np.float64)
-    # Local entropy-ish: 8x8 variance of LSB.
     h, w = plane.shape
-    hm = np.zeros_like(plane)
-    bs = 8
-    for y in range(0, h - bs + 1, bs):
-        for x in range(0, w - bs + 1, bs):
-            blk = plane[y : y + bs, x : x + bs]
-            hm[y : y + bs, x : x + bs] = float(np.var(blk) * 4.0)
-    return np.clip(hm, 0, 1)
+    bh, bw = h - (h % 8), w - (w % 8)
+    out = np.zeros_like(plane)
+    if bh < 8 or bw < 8:
+        return out
+    blocks = plane[:bh, :bw].reshape(bh // 8, 8, bw // 8, 8).swapaxes(1, 2)
+    var = np.clip(blocks.var(axis=(2, 3)) * 4.0, 0.0, 1.0)
+    out[:bh, :bw] = np.repeat(np.repeat(var, 8, axis=0), 8, axis=1)
+    return out
 
 
 class SamplePairDetector(BaseDetector):
@@ -151,35 +224,40 @@ class SamplePairDetector(BaseDetector):
 
     def analyze(self, image: np.ndarray, context: AnalyzeContext | None = None) -> DetectionResult:
         gray = _u8(to_gray(image))
-        lsb = (gray & 1).astype(np.float64)
-        if lsb.shape[1] < 3 or lsb.shape[0] < 3:
+        if gray.shape[1] < 3 or gray.shape[0] < 3:
             return self.skip("image too small for sample pairs")
-        hcorr = _corr(lsb[:, :-1].ravel(), lsb[:, 1:].ravel())
-        vcorr = _corr(lsb[:-1, :].ravel(), lsb[1:, :].ravel())
-        corr = 0.5 * (hcorr + vcorr)
-        trans = 0.5 * (
-            np.mean(lsb[:, :-1] != lsb[:, 1:]) + np.mean(lsb[:-1, :] != lsb[1:, :])
-        )
-        a = gray[:, :-1].astype(np.int16)
-        b = gray[:, 1:].astype(np.int16)
-        lo = np.minimum(a, b)
-        hi = np.maximum(a, b)
-        fam = (hi == lo + 1) & (lo % 2 == 0)
-        if int(fam.sum()) >= 40:
-            frac = float(np.mean(a[fam] % 2 == 0))
-            imb = abs(frac - 0.5)
-        else:
-            frac, imb = 0.5, 0.0
-        # Pair-family imbalance shrinks under random LSB. |corr| is extra.
-        score = 0.6 * score_from_stat(imb, center=0.07, scale=0.05, invert=True) + 0.4 * score_from_stat(
-            abs(corr), center=0.12, scale=0.1, invert=True
-        )
-        extras = {"hcorr": hcorr, "vcorr": vcorr, "lsb_transition": trans, "pair_frac_even": frac, "pair_imbalance": imb}
+        p_hat, imb, n_x, extras = spa_payload_hat(gray)
+        extras["payload_hat"] = p_hat
+        extras["pair_imbalance"] = imb
+        extras["n_x"] = n_x
+        score = score_from_stat(p_hat, center=0.12, scale=0.14)
+        conf = 0.78 if n_x >= 80 else 0.45
         expl = (
-            f"Sample-pair / LSB neighbor test. corr={corr:.3f} (low => random LSB), "
-            f"transition rate={trans:.3f} (0.5 => random)."
+            f"Sample pair analysis (Dumitrescu). payload hat={p_hat:.3f}, "
+            f"|W-V|/X={imb:.3f} (LSB mixing equalizes directed {{2k,2k+1}} pairs)."
         )
-        return DetectionResult(self.name, float(score), 0.8, expl, extras=extras, tier=self.tier).clamp()
+        return DetectionResult(self.name, float(score), conf, expl, extras=extras, tier=self.tier).clamp()
+
+
+def spa_payload_hat(channel: np.ndarray) -> tuple[float, float, int, dict[str, float]]:
+    """Dumitrescu-style directed pair counts on {2k, 2k+1} families (horizontal+vertical)."""
+    x = _u8(channel).astype(np.int32)
+    u = np.concatenate([x[:, :-1].ravel(), x[:-1, :].ravel()])
+    v = np.concatenate([x[:, 1:].ravel(), x[1:, :].ravel()])
+    # X: unordered pair values {2k, 2k+1}
+    mn = np.minimum(u, v)
+    mx = np.maximum(u, v)
+    in_x = (mx == mn + 1) & (mn % 2 == 0)
+    n_x = int(in_x.sum())
+    # Directed members of X:
+    # W: (2k, 2k+1) even then odd; V: (2k+1, 2k) odd then even.
+    n_w = int(((u % 2 == 0) & (v == u + 1)).sum())
+    n_v = int(((u % 2 == 1) & (v == u - 1)).sum())
+    imb = abs(n_w - n_v) / (n_x + 1e-9) if n_x else 0.0
+    # Full random LSB drives W ~ V ~ X/2, so imb -> 0 and p_hat -> 1.
+    p_hat = float(np.clip(1.0 - 2.0 * imb, 0.0, 1.0)) if n_x >= 20 else 0.0
+    extras = {"n_w": float(n_w), "n_v": float(n_v), "n_x": float(n_x)}
+    return p_hat, float(imb), n_x, extras
 
 
 def _corr(a: np.ndarray, b: np.ndarray) -> float:
