@@ -38,6 +38,18 @@ def analyze_path(
     return analyze(rgb, config=config, detectors=detectors, reference_images=refs)
 
 
+def analyze_images(
+    images,
+    *,
+    config: VeilConfig | None = None,
+    detectors: list[str] | None = None,
+    reference_images=None,
+) -> list[EnsembleResult]:
+    """Sequential batch. GPU minibatching is Phase 4 follow-up after checkpoints exist."""
+    cfg = config or VeilConfig.load()
+    return [analyze_image(im, cfg, detectors, reference_images) for im in images]
+
+
 def list_detectors() -> list[dict[str, str]]:
     ensure_loaded()
     return [{"name": d.name, "tier": d.tier} for d in all_detectors()]

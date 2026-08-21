@@ -65,5 +65,66 @@ def _wmd_one(image: np.ndarray, refs: list[np.ndarray], device: str, steps: int 
     return score, {"suspect_logit": s, "clean_logit": c, "gap": gap, "n_ref": int(clean.size(0))}
 
 
+def wmd_prune_scan(
+    suspects: list[np.ndarray],
+    refs: list[np.ndarray],
+    *,
+    rounds: int = 2,
+    steps: int = 4,
+    keep: float = 0.5,
+    device: str = "cpu",
+) -> list[dict]:
+    """Dataset-level WMD: train, score, drop lowest, repeat. Detection only."""
+    if not suspects or not refs:
+        raise ValueError("WMD prune needs suspects and clean references")
+    import cv2
+    import torch
+
+    from veilscan.models.wmd_net import WMDNet
+
+    def prep(im: np.ndarray) -> torch.Tensor:
+        im = cv2.resize(im, (64, 64), interpolation=cv2.INTER_AREA)
+        return torch.from_numpy(im.astype(np.float32) / 255.0).permute(2, 0, 1)
+
+    clean = torch.stack([prep(r) for r in refs[:16]], dim=0).to(device)
+    active = list(range(len(suspects)))
+    scores = np.full(len(suspects), 0.5, dtype=np.float64)
+    history = []
+    tau = 0.5
+    keep = float(np.clip(keep, 0.2, 0.9))
+    for rnd in range(max(1, rounds)):
+        model = WMDNet().to(device)
+        opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+        batch = torch.stack([prep(suspects[i]) for i in active], dim=0).to(device)
+        for _ in range(max(1, steps)):
+            opt.zero_grad()
+            pc = model(clean)
+            pd = model(batch)
+            loss = tau * torch.logsumexp(pc / tau, dim=0) - pd.mean()
+            loss.backward()
+            opt.step()
+        with torch.no_grad():
+            logits = model(batch).detach().cpu().numpy().reshape(-1)
+            cmean = float(model(clean).mean().cpu())
+        for i, idx in enumerate(active):
+            gap = float(logits[i] - cmean)
+            scores[idx] = 1.0 / (1.0 + np.exp(-gap))
+        history.append({"round": rnd, "n_active": len(active), "mean_score": float(scores[active].mean())})
+        if len(active) <= 2:
+            break
+        order = sorted(active, key=lambda i: scores[i], reverse=True)
+        n_keep = max(2, int(np.ceil(len(active) * keep)))
+        active = order[:n_keep]
+    return {
+        "items": [
+            {"index": i, "score": float(scores[i]), "survived": i in set(active)}
+            for i in range(len(suspects))
+        ],
+        "history": history,
+        "n_suspects": len(suspects),
+        "n_ref": int(clean.size(0)),
+    }
+
+
 def register_blackbox() -> None:
     register(WMDDetector())

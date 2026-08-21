@@ -34,6 +34,7 @@ DEFAULTS = {
     "device": "auto",
     "tier": "all",
     "jpeg_quality_probe": 95,
+    "apply_calibration": True,
     "peak_ok": list(DEFAULT_PEAK_OK),
     "fusion": dict(DEFAULT_FUSION),
     "weights": {
@@ -78,6 +79,7 @@ class VeilConfig:
     weights: dict[str, float] = field(default_factory=lambda: dict(DEFAULTS["weights"]))
     peak_ok: list[str] = field(default_factory=lambda: list(DEFAULT_PEAK_OK))
     fusion: dict[str, Any] = field(default_factory=lambda: dict(DEFAULT_FUSION))
+    apply_calibration: bool = True
     checkpoint_dir: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -112,6 +114,7 @@ class VeilConfig:
                 "weights",
                 "peak_ok",
                 "fusion",
+                "apply_calibration",
             )
         }
         cfg = cls(**known)

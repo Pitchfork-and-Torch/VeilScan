@@ -8,6 +8,7 @@ def register_all() -> None:
     from veilscan.detectors.deep import register_deep
     from veilscan.detectors.blackbox import register_blackbox
     from veilscan.detectors.foundation import register_foundation
+    from veilscan.detectors.latent import register_latent
 
     register_spatial()
     register_frequency()
@@ -15,3 +16,4 @@ def register_all() -> None:
     register_deep()
     register_blackbox()
     register_foundation()
+    register_latent()

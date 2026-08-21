@@ -155,69 +155,94 @@ class HybridDDSDetector(BaseDetector):
         return DetectionResult(self.name, float(score), 0.7, expl, extras=extras, tier=self.tier).clamp()
 
 
+def _ring_one(gray: np.ndarray) -> dict | None:
+    x = gray - gray.mean()
+    spec = np.fft.fftshift(np.fft.fft2(x))
+    mag = np.abs(spec)
+    h, w = mag.shape
+    cy, cx = h // 2, w // 2
+    yy, xx = np.ogrid[:h, :w]
+    r = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
+    rmax = int(min(cy, cx) * 0.85)
+    r_lo = max(8, int(0.16 * rmax))
+    if rmax - r_lo < 8:
+        return None
+    rad = []
+    circ_cv = []
+    radii = []
+    for rr in range(r_lo, rmax):
+        band = (r >= rr - 0.6) & (r < rr + 0.6)
+        vals = mag[band]
+        if vals.size < 16:
+            continue
+        radii.append(rr)
+        rad.append(float(vals.mean()))
+        circ_cv.append(float(vals.std() / (vals.mean() + 1e-9)))
+    if len(rad) < 8:
+        return None
+    rad_a = np.asarray(rad)
+    cv_a = np.asarray(circ_cv)
+    log_r = np.log(np.asarray(radii, dtype=np.float64) + 1e-6)
+    log_e = np.log(rad_a + 1e-12)
+    A = np.vstack([log_r, np.ones(len(radii))]).T
+    slope, intercept = np.linalg.lstsq(A, log_e, rcond=None)[0]
+    pred = np.exp(slope * log_r + intercept)
+    excess = (rad_a - pred) / (pred + 1e-12)
+    cue = excess / (cv_a + 0.08)
+    idx = int(np.argmax(cue))
+    min_cv = float(cv_a.min())
+    peak_excess = float(excess[idx])
+    score = 0.45 * score_from_stat(min_cv, center=0.42, scale=0.14, invert=True) + 0.55 * score_from_stat(
+        peak_excess, center=1.15, scale=0.45
+    )
+    best_r = int(radii[idx])
+    hm = np.zeros_like(mag, dtype=np.float64)
+    band = (r >= best_r - 1.5) & (r <= best_r + 1.5)
+    hm[band] = 1.0
+    mx = hm.max()
+    if mx > 0:
+        hm = hm / mx
+    return {
+        "score": float(score),
+        "best_radius": best_r,
+        "ring_cue": float(cue[idx]),
+        "min_angular_cv": min_cv,
+        "peak_excess": peak_excess,
+        "heatmap": hm,
+    }
+
+
 class TreeRingSpectralDetector(BaseDetector):
     name = "tree_ring_spectral"
     tier = "frequency"
 
     def analyze(self, image: np.ndarray, context: AnalyzeContext | None = None) -> DetectionResult:
+        import cv2
+
         gray = to_gray(image)
-        x = gray - gray.mean()
-        spec = np.fft.fftshift(np.fft.fft2(x))
-        mag = np.abs(spec)
-        h, w = mag.shape
-        cy, cx = h // 2, w // 2
-        yy, xx = np.ogrid[:h, :w]
-        r = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
-        rmax = int(min(cy, cx) * 0.85)
-        r_lo = max(10, int(0.16 * rmax))
-        if rmax - r_lo < 8:
-            return self.skip("image too small for ring analysis")
-        rad = []
-        circ_cv = []
-        radii = []
-        for rr in range(r_lo, rmax):
-            band = (r >= rr - 0.6) & (r < rr + 0.6)
-            vals = mag[band]
-            if vals.size < 16:
-                continue
-            radii.append(rr)
-            rad.append(float(vals.mean()))
-            circ_cv.append(float(vals.std() / (vals.mean() + 1e-9)))
-        if len(rad) < 8:
-            return self.skip("not enough radii")
-        rad_a = np.asarray(rad)
-        cv_a = np.asarray(circ_cv)
-        log_r = np.log(np.asarray(radii, dtype=np.float64) + 1e-6)
-        log_e = np.log(rad_a + 1e-12)
-        A = np.vstack([log_r, np.ones(len(radii))]).T
-        slope, intercept = np.linalg.lstsq(A, log_e, rcond=None)[0]
-        pred = np.exp(slope * log_r + intercept)
-        excess = (rad_a - pred) / (pred + 1e-12)
-        # Rings: energy excess AND low angular CV at the same radius.
-        cue = excess / (cv_a + 0.08)
-        idx = int(np.argmax(cue))
-        ring_score = float(cue[idx])
-        best_r = int(radii[idx])
-        min_cv = float(cv_a.min())
-        peak_excess = float(excess[idx])
-        score = 0.45 * score_from_stat(min_cv, center=0.42, scale=0.14, invert=True) + 0.55 * score_from_stat(
-            peak_excess, center=1.15, scale=0.45
-        )
-        extras = {
-            "best_radius": best_r,
-            "ring_cue": ring_score,
-            "min_angular_cv": min_cv,
-            "peak_excess": peak_excess,
-        }
+        scales = {"full": gray}
+        h, w = gray.shape
+        if min(h, w) >= 48:
+            scales["half"] = cv2.resize(gray, (max(24, w // 2), max(24, h // 2)), interpolation=cv2.INTER_AREA)
+        found = {}
+        for name, g in scales.items():
+            rec = _ring_one(g)
+            if rec:
+                found[name] = rec
+        if not found:
+            return self.skip("not enough radii at any scale")
+        best_name = max(found, key=lambda k: found[k]["score"])
+        best = found[best_name]
+        extras = {k: v for k, v in best.items() if k != "heatmap"}
+        extras["best_scale"] = best_name
+        extras["scale_scores"] = {k: float(v["score"]) for k, v in found.items()}
         expl = (
-            f"Tree-Ring-style circular FFT test. strongest ring radius={best_r}px, "
-            f"cue={ring_score:.4f}. Pixel-space proxy; not DDIM inversion."
+            f"Tree-Ring-style circular FFT (multi-scale). best={best_name} "
+            f"r={best['best_radius']}px cue={best['ring_cue']:.4f}. Pixel proxy; not DDIM inversion."
         )
-        hm = np.zeros_like(mag, dtype=np.float64)
-        band = (r >= best_r - 1.5) & (r <= best_r + 1.5)
-        hm[band] = 1.0
-        hm = hm / (hm.max() + 1e-9)
-        return DetectionResult(self.name, float(score), 0.7, expl, heatmap=hm, extras=extras, tier=self.tier).clamp()
+        return DetectionResult(
+            self.name, float(best["score"]), 0.7, expl, heatmap=best["heatmap"], extras=extras, tier=self.tier
+        ).clamp()
 
 
 class FourierMellinDetector(BaseDetector):

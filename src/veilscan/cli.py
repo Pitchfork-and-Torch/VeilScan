@@ -216,12 +216,63 @@ def _print_detector_auc(heads: dict) -> None:
 def robustness(
     family: str = typer.Option("dct"),
     n: int = typer.Option(4),
+    all_families: bool = typer.Option(False, "--all-families"),
+    json_out: bool = typer.Option(True, "--json/--table"),
 ) -> None:
-    """JPEG / resize / noise sweep on one synthetic family."""
-    from veilscan.eval.harness import run_robustness
+    """JPEG / resize / noise sweep. Retention vs identity AUC."""
+    from veilscan.eval.harness import run_robustness, run_robustness_all
 
-    report = run_robustness(n=n, family=family)
+    if all_families:
+        report = run_robustness_all(n=n)
+    else:
+        report = run_robustness(n=n, family=family)
     console.print_json(data=report)
+
+
+@app.command()
+def calibrate(
+    n: int = typer.Option(6),
+    size: int = typer.Option(96),
+    out: Path = typer.Option(Path("configs/calibration.json")),
+) -> None:
+    """Fit affine-logit maps on synthetic pairs. Writes JSON (does not train nets)."""
+    from veilscan.calibrate import fit_calibration, save_calibration
+
+    data = fit_calibration(n=n, size=size)
+    save_calibration(data, out)
+    console.print(f"wrote {out} ensemble a={data['ensemble']['a']:.3f} b={data['ensemble']['b']:.3f}")
+
+
+@app.command("wmd-scan")
+def wmd_scan(
+    suspects: Path = typer.Argument(..., exists=True, file_okay=False),
+    reference_dir: Path = typer.Option(..., "--reference-dir", exists=True, file_okay=False),
+    rounds: int = typer.Option(2),
+    steps: int = typer.Option(4),
+) -> None:
+    """Dataset WMD prune (Pan et al. idea). Detection only. Needs a clean reference folder."""
+    from veilscan.detectors.blackbox import wmd_prune_scan
+    from veilscan.image_io import iter_images, load_rgb
+    from veilscan.config import resolve_device, VeilConfig
+
+    cfg = VeilConfig.load()
+    sus = [load_rgb(p) for p in iter_images(suspects)[:32]]
+    refs = [load_rgb(p) for p in iter_images(reference_dir)[:16]]
+    report = wmd_prune_scan(sus, refs, rounds=rounds, steps=steps, device=resolve_device(cfg.device))
+    console.print_json(data=report)
+
+
+@app.command("export-onnx")
+def export_onnx_cmd(
+    out: Path = typer.Option(Path("checkpoints/residual_cnn.onnx")),
+    ckpt: Path | None = typer.Option(None),
+) -> None:
+    """Export ResidualCNN (untrained or checkpoint) to ONNX."""
+    from veilscan.export import export_residual_cnn
+
+    path = export_residual_cnn(out, ckpt)
+    console.print(f"wrote {path}")
+
 
 
 def _print_result(path: Path, result, peak_ok: set[str] | None = None) -> None:

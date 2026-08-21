@@ -1,9 +1,7 @@
 # VeilScan upgrade plan (v0.1.0 -> production-grade AWPD)
 
-**Status:** living plan. Written 2026-08-20 from a full-tree audit of
-`Pitchfork-and-Torch/VeilScan` (private). Phase 0 landed same day. Phase 1
-(RS quadratic, SPA rate hat, sequential chi-square, photo covers, RGB ASPM,
-train holdout/JPEG) in progress.  
+**Status:** living plan. Written 2026-08-20. Phase 0 and Phase 1 landed.
+Phases 2-4 sprint contract: `docs/PHASES_2_3_4.md` (v0.2.0).  
 **Identity (locked):** presence only. No decode. No removal.
 
 This document is the next-massive-upgrade contract. Phase 0 items listed in

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "veilscan"
-version = "0.1.0"
+version = "0.2.0"
 description = "Agnostic invisible-watermark presence detector (local, plugin ensemble)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,6 +30,7 @@ dependencies = [
 dev = ["pytest>=8.0"]
 gui = ["gradio>=4.0"]
 api = ["fastapi>=0.110", "uvicorn>=0.27"]
+onnx = ["onnx>=1.16"]
 
 [project.scripts]
 veilscan = "veilscan.cli:app"

@@ -146,11 +146,21 @@ def run_folder_eval(clean_dir: str | Path, wm_dir: str | Path, cfg: VeilConfig |
     }
 
 
-def run_robustness(n: int = 4, size: int = 128, family: str = "dct", seed: int = 1) -> dict:
-    cfg = VeilConfig.load()
+def run_robustness(
+    n: int = 4,
+    size: int = 128,
+    family: str = "dct",
+    seed: int = 1,
+    attacks: list[str] | None = None,
+    detectors: list[str] | None = None,
+    cfg: VeilConfig | None = None,
+) -> dict:
+    cfg = cfg or VeilConfig.load()
     rng = np.random.default_rng(seed)
+    attacks = attacks or list(DEFAULT_ATTACKS)
     out = {}
-    for attack in DEFAULT_ATTACKS:
+    id_auc = None
+    for attack in attacks:
         y = []
         s = []
         for i in range(n):
@@ -159,9 +169,32 @@ def run_robustness(n: int = 4, size: int = 128, family: str = "dct", seed: int =
             cover_a = apply_attack(cover, attack, rng)
             marked_a = apply_attack(marked, attack, rng)
             y.extend([0, 1])
-            s.extend([analyze_image(cover_a, cfg).score, analyze_image(marked_a, cfg).score])
+            s.extend(
+                [
+                    analyze_image(cover_a, cfg, detectors).score,
+                    analyze_image(marked_a, cfg, detectors).score,
+                ]
+            )
         y_a, s_a = np.asarray(y), np.asarray(s)
-        from veilscan.eval.metrics import auc_roc
+        auc = auc_roc(y_a, s_a)
+        if attack == "identity":
+            id_auc = auc
+        retention = float(auc / id_auc) if id_auc and id_auc > 0 and np.isfinite(id_auc) else float("nan")
+        out[attack] = {"auc": auc, "retention": retention}
+    return {"family": family, "attacks": out, "identity_auc": id_auc}
 
-        out[attack] = {"auc": auc_roc(y_a, s_a)}
-    return {"family": family, "attacks": out}
+
+def run_robustness_all(
+    n: int = 2,
+    size: int = 96,
+    families: list[str] | None = None,
+    attacks: list[str] | None = None,
+    seed: int = 1,
+    detectors: list[str] | None = None,
+) -> dict:
+    families = families or ["lsb", "dct", "spread"]
+    attacks = attacks or ["identity", "jpeg_70", "noise"]
+    by = {}
+    for fam in families:
+        by[fam] = run_robustness(n=n, size=size, family=fam, seed=seed, attacks=attacks, detectors=detectors)
+    return {"families": by, "n": n, "size": size}

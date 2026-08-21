@@ -33,7 +33,7 @@ def analyze_image(
 
     if len(pieces) == 1:
         results = [_safe(d, rgb, ctx) for d in dets]
-        return fuse(results, cfg.weights, cfg.threshold, rgb.shape, peak_ok=cfg.peak_ok, mix=cfg.fusion)
+        return _fuse_calibrated(results, cfg, rgb.shape)
 
     # Per-detector: take the max tile score (a mark in one tile is enough).
     # Heatmaps stitched by overlap-average.
@@ -73,7 +73,25 @@ def analyze_image(
         extras["tile_mean"] = float(np.mean([r.score for r in live]))
         best.extras = extras
         merged.append(best)
-    return fuse(merged, cfg.weights, cfg.threshold, rgb.shape, peak_ok=cfg.peak_ok, mix=cfg.fusion)
+    return _fuse_calibrated(merged, cfg, rgb.shape)
+
+
+def _fuse_calibrated(results: list, cfg: VeilConfig, shape: tuple[int, ...]) -> EnsembleResult:
+    if cfg.apply_calibration:
+        from veilscan.calibrate import apply_affine, load_calibration
+
+        cal = load_calibration()
+        heads = cal.get("detectors") or {}
+        for r in results:
+            if not r.skipped:
+                r.score = apply_affine(heads.get(r.detector), r.score)
+                r.clamp()
+        fused = fuse(results, cfg.weights, cfg.threshold, shape, peak_ok=cfg.peak_ok, mix=cfg.fusion)
+        fused.score = apply_affine(cal.get("ensemble"), fused.score)
+        fused.score = float(np.clip(fused.score, 0.0, 1.0))
+        fused.present = fused.score >= fused.threshold
+        return fused
+    return fuse(results, cfg.weights, cfg.threshold, shape, peak_ok=cfg.peak_ok, mix=cfg.fusion)
 
 
 def _safe(detector, rgb: np.ndarray, ctx: AnalyzeContext) -> DetectionResult:

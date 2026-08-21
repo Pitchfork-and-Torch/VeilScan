@@ -8,6 +8,8 @@ build/
 .venv/
 venv/
 checkpoints/*.pt
+checkpoints/*.onnx
+*.onnx
 examples/_demo_out/
 *.png
 !docs/**

@@ -7,6 +7,7 @@ from typing import Any, Literal
 
 import numpy as np
 
+SCHEMA_VERSION = 1
 Tier = Literal["fast", "frequency", "residual", "deep", "blackbox", "foundation"]
 
 
@@ -60,6 +61,7 @@ class EnsembleResult:
 
     def to_json(self) -> dict[str, Any]:
         return {
+            "schema_version": SCHEMA_VERSION,
             "present": self.present,
             "score": round(float(self.score), 6),
             "confidence": round(float(self.confidence), 6),

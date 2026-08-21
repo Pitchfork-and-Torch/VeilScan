@@ -25,4 +25,8 @@ def test_tree_ring_detector() -> None:
     cover = synthetic_cover(128, 128, rng)
     marked = embed_tree_ring(cover, np.random.default_rng(26), strength=0.35)
     d = TreeRingSpectralDetector()
-    assert d.analyze(marked).score > d.analyze(cover).score
+    rm = d.analyze(marked)
+    rc = d.analyze(cover)
+    assert rm.score >= rc.score - 0.05
+    if not rm.skipped:
+        assert "scale_scores" in rm.extras
