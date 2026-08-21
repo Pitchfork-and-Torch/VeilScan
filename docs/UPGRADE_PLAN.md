@@ -1,9 +1,9 @@
 # VeilScan upgrade plan (v0.1.0 -> production-grade AWPD)
 
 **Status:** historical v0.1 -> v0.2 map. Written 2026-08-20.
-**Next contract:** `docs/NEXT_MASSIVE_UPGRADE.md` (v0.2.4 -> v0.3 operating point).
+**Next science contract:** `docs/NEXT_MASSIVE_UPGRADE.md` (v0.4 operating point). v0.3.0 is keyless decode.
 Phases 2-4 sprint: `docs/PHASES_2_3_4.md` (landed).  
-**Identity (locked):** presence only. No decode. No removal.
+**Identity:** presence plus keyless plaintext decode. No removal.
 
 This document is the next-massive-upgrade contract. Phase 0 items listed in
 section 8 are intended to land in the same working tree as this file.

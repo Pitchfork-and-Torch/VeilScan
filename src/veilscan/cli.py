@@ -16,7 +16,11 @@ from veilscan.config import VeilConfig
 from veilscan.image_io import load_rgb, save_rgb
 from veilscan.viz import save_overlay
 
-app = typer.Typer(no_args_is_help=True, add_completion=False, help="VeilScan: invisible watermark presence detector.")
+app = typer.Typer(
+    no_args_is_help=True,
+    add_completion=False,
+    help="VeilScan: invisible watermark presence detector and keyless plaintext decoder.",
+)
 console = Console()
 
 
@@ -97,6 +101,44 @@ def batch(
             console.print(f"{flag:5} {r.score:.3f}  {p}")
     if json_out:
         console.print_json(data=rows)
+
+
+@app.command()
+def decode(
+    path: Path = typer.Argument(..., exists=True, readable=True),
+    json_out: bool = typer.Option(False, "--json", help="Machine-readable report"),
+) -> None:
+    """Recover keyless plaintext (LSB / PNG text / JPEG COM / EXIF). Not a stripper."""
+    from veilscan.decode import decode_path as do_decode
+
+    result = do_decode(path)
+    if json_out:
+        console.print_json(data=result.to_json())
+        return
+    if result.found:
+        console.print(f"{path}")
+        console.print(f"  FOUND  family={result.family}  layout={result.layout}  conf={result.confidence:.3f}")
+        console.print(result.text or "")
+    else:
+        console.print(f"{path}")
+        console.print("  NO KEYLESS PLAINTEXT")
+    for note in result.notes:
+        console.print(f"  note: {note}")
+
+
+@app.command("embed-text")
+def embed_text_cmd(
+    inp: Path = typer.Argument(..., exists=True, readable=True),
+    out: Path = typer.Argument(...),
+    message: str = typer.Option(..., "--message", "-m", help="UTF-8 plaintext to plant"),
+    layout: str = typer.Option("r-bit0-msb", "--layout"),
+    family: str = typer.Option("lsb", "--family", "-f", help="lsb | png-text | jpeg-com"),
+) -> None:
+    """Eval-only: plant keyless plaintext so decode can be tested. Not a hiding product."""
+    from veilscan.decode.embed_text import embed_text_path
+
+    path = embed_text_path(inp, out, message, layout_id=layout, family=family)
+    console.print(f"wrote {path} family={family} layout={layout}")
 
 
 @app.command()

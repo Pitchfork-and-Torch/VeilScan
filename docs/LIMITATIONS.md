@@ -25,6 +25,19 @@ Classical+frequency path: CPU, seconds per megapixel.
 FSNet-lite / residual CNN training: needs CUDA PyTorch for comfort. The
 machine has an RTX 4080; the default torch install at authoring was CPU-only.
 
+## Decode
+
+v0.3 recovers **keyless plaintext** only:
+
+- sequential LSB (several channel / bit-order layouts)
+- PNG `tEXt` / `zTXt` / `iTXt`
+- JPEG COM and common EXIF comment tags
+
+It will not print encrypted stego (Steghide / OpenStego with a password),
+SynthID, Digimarc, Tree-Ring payloads, or HiDDeN-class neural marks.
+Spatial LSB usually dies after JPEG. A recovered string is not proof of
+authorship.
+
 ## Legal
 
 A VeilScan score is not a copyright determination and not evidence of a

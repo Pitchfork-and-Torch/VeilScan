@@ -1,10 +1,11 @@
-# Next massive upgrade: v0.2.4 -> operating-point VeilScan (v0.3)
+# Next massive upgrade: v0.3.0 -> operating-point VeilScan (v0.4)
 
-**Status:** plan only (written 2026-08-21). Do not treat as done until the
-acceptance table in section 8 is green.  
-**Baseline:** private `Pitchfork-and-Torch/VeilScan` v0.2.4 (`654dcf9`).  
-**Identity (locked):** presence only. No decode. No remover. No SynthID
-verifier. No mandatory cloud weights.
+**Status:** plan only (written 2026-08-21, retitled 2026-08-21 after v0.3
+keyless decode shipped). Do not treat as done until the acceptance table
+in section 8 is green.  
+**Baseline:** private `Pitchfork-and-Torch/VeilScan` v0.3.0 (keyless decode).  
+**Identity:** presence ensemble plus keyless plaintext decode. No remover.
+No SynthID verifier. No mandatory cloud weights.
 
 This supersedes `docs/PHASES_2_3_4.md` as the *next* contract.
 `docs/UPGRADE_PLAN.md` stays as the historical v0.1 map.

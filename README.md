@@ -1,10 +1,10 @@
 # VeilScan
 
-Local, algorithm-agnostic **invisible watermark presence detector**.
+Local, algorithm-agnostic **invisible watermark presence detector** with a **keyless plaintext** reader.
 
-It answers: *does this image contain an invisible watermark?* It does not decode a payload and it does not strip a mark.
+It answers: *does this image contain an invisible watermark?* and, when the payload is sequential LSB / PNG text / JPEG comment, *what does the text say?* It does not strip a mark. It does not break SynthID, Digimarc, encrypted stego, or neural watermarks.
 
-v0 ships a plugin ensemble of classical spatial tests, multi-transform frequency analysis, residual / SRM-lite features, optional FSNet-lite and residual CNNs (silent until trained), and WMD-style offset learning when you have a clean reference set.
+v0.3 ships a plugin ensemble of classical spatial tests, multi-transform frequency analysis, residual / SRM-lite features, optional FSNet-lite and residual CNNs (skip until checkpoints exist), WMD-style offset learning when you have a clean reference set, and `veilscan decode` for keyless plaintext.
 
 ## Synthetic selftest (v0, n=4 covers/family, 128px)
 
@@ -36,6 +36,7 @@ py -3 -m veilscan list-detectors
 py -3 -m veilscan scan path\to\image.png
 py -3 -m veilscan scan path\to\image.png --json --heatmap out_overlay.png
 py -3 -m veilscan batch path\to\folder --json
+py -3 -m veilscan decode path\to\image.png
 py -3 -m veilscan selftest
 py -3 -m veilscan selftest --per-detector
 py -3 -m veilscan loao --n 3
@@ -44,9 +45,11 @@ py -3 -m veilscan loao --n 3
 Python:
 
 ```python
-from veilscan import analyze_path
+from veilscan import analyze_path, decode_path
 r = analyze_path("path/to/image.png")
 print(r.present, r.score, r.explanation)
+d = decode_path("path/to/image.png")
+print(d.found, d.family, d.text)
 ```
 
 ## What it implements
@@ -72,7 +75,7 @@ Needs PyTorch. CUDA is faster; CPU works. Until checkpoints exist, the ensemble 
 
 ## Eval watermarks
 
-`veilscan embed` and `veilscan.generators` exist **only** to test the detector (LSB, DCT, DWT, SVD, patchwork, spread-spectrum, tree-ring-approx, hidden-approx). This is not a steganography product. There is no remover.
+`veilscan embed`, `veilscan embed-text`, and `veilscan.generators` exist **only** to test the detector and decoder. This is not a steganography product. There is no remover.
 
 ## GUI / API
 
@@ -88,7 +91,7 @@ Leave-one-algorithm-out work (AWPD / FSNet, UniFreq-100K) shows LSB and Patchwor
 - `docs/ARCHITECTURE.md` -- plugin contract
 - `docs/LIMITATIONS.md` / `docs/ETHICS.md`
 - `docs/UPGRADE_PLAN.md` -- v0.1.0 -> v0.2 map (historical)
-- `docs/NEXT_MASSIVE_UPGRADE.md` -- **next** contract: v0.2.4 -> v0.3 operating point
+- `docs/NEXT_MASSIVE_UPGRADE.md` -- v0.4 operating-point contract (bench). v0.3.0 is keyless decode.
 - `docs/PHASES_2_3_4.md` -- calibration, WMD prune, batch/ONNX (v0.2.0)
 - `docs/RESULTS_v0.2.1.md` -- CPU ResidualCNN cook (flat scores; superseded)
 - `docs/RESULTS_v0.2.2.md` -- CUDA ResidualCNN with LSB planes; peak_ok

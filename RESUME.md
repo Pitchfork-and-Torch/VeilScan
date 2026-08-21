@@ -1,28 +1,29 @@
-# Resume (parked 2026-08-21)
+# Resume (after v0.3.0 decode)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` @ `313aaf4` (plan) on top of `654dcf9` (v0.2.4).
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.3.0 keyless plaintext decode.
+Public lamp: https://veilscan.jonbailey.xyz/ site v1.1.0.
 
 ## Where we stopped
 
-Complementary deep heads work:
+v0.3.0 shipped `veilscan decode` / `embed-text` plus in-tab LSB / PNG text / JPEG COM read.
 
-- ResidualCNN = LSB (cover ~0.08, marked ~0.99)
-- FSNet-lite = frequency (DCT/spread/DWT/Tree-Ring ~+0.9; JPEG70 DCT +0.74)
+Complementary deep heads still work:
+
+- ResidualCNN = LSB
+- FSNet-lite = frequency
 - Never train FSNet with `lsb` in `--families`
 
-Next contract: `docs/NEXT_MASSIVE_UPGRADE.md` (v0.2.4 -> v0.3 operating point).
+Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md` (v0.4 operating point).
 
-## First session tomorrow (M1, not a new architecture)
+## First session on the bench (M1, not a new net)
 
-1. Desk: `py -3 $env:USERPROFILE\.grok\desk\desk.py check $env:USERPROFILE\veilscan` then claim.
+1. Desk-check `veilscan` then claim.
 2. Implement `scripts/bench.py` / `veilscan bench` from M1 (start n=20 if short, protocol n>=50).
 3. Freeze `configs/bench_protocol.yaml` + write `docs/bench/latest.json`.
-4. Fix README: deep plugins are **on**; kill "silent until trained."
-5. Do not enable `calibration.fitted.json` as default until the bench exists.
+4. Do not enable `calibration.fitted.json` as default until the bench exists.
 
 ## Do not
 
-- New detector before the bench
 - Mix LSB into the FSNet cook
 - Strip LSB planes off ResidualCNN
 - Remover / SynthID clone / UniFreq in git

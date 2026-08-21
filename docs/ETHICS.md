@@ -3,7 +3,8 @@
 VeilScan is a **local detector** for invisible image watermarks. Intended uses:
 
 - copyright / provenance screening
-- forensic triage ("is there a mark?" before calling a specific decoder)
+- forensic triage ("is there a mark?")
+- keyless plaintext recovery (sequential LSB, PNG text, JPEG comments) on files you are authorized to inspect
 - dataset hygiene (filter watermarked training data)
 - research on agnostic presence detection (AWPD)
 
@@ -13,8 +14,9 @@ The same signals that detect a mark can, in other hands, help *strip* one.
 This repository:
 
 - does **not** ship a removal / purification attack
-- ships embedders only as evaluation fixtures for the detector
+- ships embedders and `embed-text` only as evaluation fixtures
 - will not add a "clean this image" mode
+- decode prints keyless plaintext only; it is not a universal watermark decoder
 
 Do not use VeilScan to bypass copyright, provenance, or C2PA-style
 authenticity systems. Do not use the generators to hide unauthorized data

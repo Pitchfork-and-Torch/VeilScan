@@ -97,9 +97,19 @@ Until those files exist, deep detectors skip.
 
 Living upgrade contract: `docs/UPGRADE_PLAN.md`.
 
+## Decode (v0.3)
+
+`veilscan.decode` is a separate walk from the presence ensemble. It parses
+file bytes (not canvas pixels), tries container comments first, then
+sequential LSB layouts on lossless rasters. JSON: `found`, `family`
+(`container` | `lsb` | `none`), `text`, `layout`, `confidence`.
+
+Eval planter: `veilscan embed-text` (not a hiding product).
+
 ## Non-goals (v0)
 
 - Matching a closed SynthID verifier
 - Diffusion inversion backend
 - Watermark removal
 - Mandatory GPU / DINOv2 download
+- Universal payload decode (encrypted / neural / vendor)
