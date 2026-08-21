@@ -5,15 +5,14 @@
   "models": [
     {
       "name": "residual_cnn",
-      "val_auc": 0.80,
       "peak_ok": true,
-      "note": "RGB+LSB planes. Strong LSB; moderate DCT/spread/tree_ring."
+      "note": "RGB+LSB. LSB specialist (v0.2.3 weights)."
     },
     {
       "name": "fsnet_lite",
-      "val_auc": 0.585,
+      "val_auc": 1.0,
       "peak_ok": true,
-      "note": "RGB+LSB ASPM. LSB specialist; frequency families still flat."
+      "note": "9-ch stem RGB+LSB+HP. Trained WITHOUT lsb family. Frequency specialist; JPEG70 DCT still separates."
     }
   ]
 }

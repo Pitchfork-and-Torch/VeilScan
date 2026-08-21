@@ -36,13 +36,16 @@ def idct2(x: torch.Tensor) -> torch.Tensor:
     return torch.fft.ifft(v2, dim=-1).real[..., :n1]
 
 
-def with_lsb_planes(x: torch.Tensor) -> torch.Tensor:
+def stem_channels(x: torch.Tensor) -> torch.Tensor:
+    """RGB + LSB planes + amplified high-pass residual (DCT/spread live here)."""
     bits = torch.round(x * 255.0) % 2.0
-    return torch.cat([x, bits], dim=1)
+    blur = F.avg_pool2d(x, 5, stride=1, padding=2)
+    hp = (x - blur) * 16.0
+    return torch.cat([x, bits, hp], dim=1)
 
 
 class ASPM(nn.Module):
-    def __init__(self, size: int = 64, in_ch: int = 6) -> None:
+    def __init__(self, size: int = 64, in_ch: int = 9) -> None:
         super().__init__()
         # Bias the gate toward higher frequencies (center of shifted DCT is DC).
         yy = torch.linspace(-1.0, 1.0, size).view(1, 1, size, 1)
@@ -99,7 +102,7 @@ class DMSA(nn.Module):
 class FSNetLite(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.aspm = ASPM(64, in_ch=6)
+        self.aspm = ASPM(64, in_ch=9)
         self.backbone = nn.Sequential(
             nn.Conv2d(32, 64, 3, stride=2, padding=1),
             nn.BatchNorm2d(64),
@@ -115,7 +118,7 @@ class FSNetLite(nn.Module):
         self.head = nn.Linear(256, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        z = self.aspm(with_lsb_planes(x))
+        z = self.aspm(stem_channels(x))
         z = self.backbone(z)
         z = self.dmsa(z)
         mean = F.adaptive_avg_pool2d(z, 1).flatten(1)

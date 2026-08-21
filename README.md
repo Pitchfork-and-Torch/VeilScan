@@ -92,6 +92,7 @@ Leave-one-algorithm-out work (AWPD / FSNet, UniFreq-100K) shows LSB and Patchwor
 - `docs/RESULTS_v0.2.1.md` -- CPU ResidualCNN cook (flat scores; superseded)
 - `docs/RESULTS_v0.2.2.md` -- CUDA ResidualCNN with LSB planes; peak_ok
 - `docs/RESULTS_v0.2.3.md` -- FSNet LSB stem; both deep heads in peak_ok
+- `docs/RESULTS_v0.2.4.md` -- FSNet frequency cook (no LSB family); JPEG70 DCT holds
 
 `py -3 -m veilscan loao` and `selftest --per-detector` are the Phase 0 measurement CLI.
 
