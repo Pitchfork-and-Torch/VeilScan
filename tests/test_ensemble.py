@@ -37,10 +37,12 @@ def test_ensemble_lsb_higher() -> None:
     assert float(np.mean(dm)) > float(np.mean(dc)) + 0.02
 
 
-def test_deep_skipped_without_ckpt() -> None:
+def test_deep_skipped_without_ckpt(tmp_path) -> None:
     rng = np.random.default_rng(33)
     cover = synthetic_cover(64, 64, rng)
-    r = analyze(cover, detectors=["residual_cnn", "fsnet_lite"])
+    cfg = VeilConfig.load()
+    cfg.checkpoint_dir = str(tmp_path)
+    r = analyze(cover, config=cfg, detectors=["residual_cnn", "fsnet_lite"])
     assert all(d.skipped for d in r.detectors)
 
 
@@ -60,6 +62,19 @@ def test_fuse_peak_not_drowned() -> None:
     r = fuse(crowd, {"chi_square": 1.0, "rs_analysis": 1.0, "dct": 1.0, "dwt": 1.0, "srm": 0.9, "dft": 0.7, "color_spaces": 0.5}, 0.55, (32, 32, 3))
     assert r.score > 0.62
     assert r.present
+
+
+def test_residual_cnn_checkpoint_loads() -> None:
+    from pathlib import Path
+
+    ckpt = Path(__file__).resolve().parents[1] / "checkpoints" / "residual_cnn.pt"
+    if not ckpt.is_file():
+        return
+    rng = np.random.default_rng(35)
+    cover = synthetic_cover(64, 64, rng)
+    r = analyze(cover, detectors=["residual_cnn"])
+    assert not r.detectors[0].skipped
+    assert 0.0 <= r.detectors[0].score <= 1.0
 
 
 def test_wmd_skipped_without_reference() -> None:

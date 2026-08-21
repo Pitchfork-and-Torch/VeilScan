@@ -8,6 +8,8 @@ build/
 .venv/
 venv/
 checkpoints/*.pt
+!checkpoints/residual_cnn.pt
+!checkpoints/manifest.json
 checkpoints/*.onnx
 *.onnx
 examples/_demo_out/

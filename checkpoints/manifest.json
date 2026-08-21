@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "device": "cpu",
+  "holdout_family": null,
+  "jpeg_prob": 0.25,
+  "steps": 50,
+  "models": [
+    {
+      "name": "residual_cnn",
+      "steps": 50,
+      "holdout_family": null,
+      "jpeg_prob": 0.25,
+      "families": [
+        "lsb",
+        "dct",
+        "dwt",
+        "svd",
+        "patchwork",
+        "spread",
+        "tree_ring",
+        "hidden_approx"
+      ],
+      "val_auc": 0.7389770723104057,
+      "last_loss": 0.6876819133758545,
+      "checkpoint": "residual_cnn.pt"
+    }
+  ]
+}

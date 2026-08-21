@@ -94,12 +94,17 @@ def train_one(
     out: Path,
     holdout: str | None,
     jpeg_prob: float,
+    size: int = SIZE,
 ) -> dict:
-    ds = SyntheticWM(max(steps * 4, 64), seed=0, holdout=holdout, jpeg_prob=jpeg_prob)
-    val = SyntheticWM(64, seed=1, holdout=holdout, jpeg_prob=jpeg_prob)
+    ds = SyntheticWM(max(steps * 4, 64), seed=0, holdout=holdout, jpeg_prob=jpeg_prob, size=size)
+    val = SyntheticWM(48, seed=1, holdout=holdout, jpeg_prob=jpeg_prob, size=size)
     loader = DataLoader(ds, batch_size=8, shuffle=True, num_workers=0)
     vloader = DataLoader(val, batch_size=8, shuffle=False, num_workers=0)
     model.to(device)
+    if out.is_file():
+        state = torch.load(out, map_location=device, weights_only=True)
+        model.load_state_dict(state)
+        print(f"{name} resumed {out}")
     opt = torch.optim.AdamW(model.parameters(), lr=1e-3)
     loss_fn = torch.nn.BCEWithLogitsLoss()
     model.train()
@@ -145,17 +150,39 @@ def main() -> None:
     p.add_argument("--out", default=str(Path(__file__).resolve().parents[1] / "checkpoints"))
     p.add_argument("--holdout-family", default=None, help="Exclude this generator family from training (LOAO).")
     p.add_argument("--jpeg-prob", type=float, default=0.35, help="Probability of JPEG attack on each sample.")
+    p.add_argument("--size", type=int, default=SIZE)
+    p.add_argument("--only", default="both", help="residual_cnn | fsnet_lite | both")
     args = p.parse_args()
     device = resolve_device(args.device)
-    print("device", device, "holdout", args.holdout_family, "jpeg_prob", args.jpeg_prob)
+    print("device", device, "holdout", args.holdout_family, "jpeg_prob", args.jpeg_prob, "only", args.only)
     root = Path(args.out)
     recs = []
-    recs.append(
-        train_one("residual_cnn", ResidualCNN(), args.steps, device, root / "residual_cnn.pt", args.holdout_family, args.jpeg_prob)
-    )
-    recs.append(
-        train_one("fsnet_lite", FSNetLite(), args.steps, device, root / "fsnet_lite.pt", args.holdout_family, args.jpeg_prob)
-    )
+    if args.only in ("both", "residual_cnn"):
+        recs.append(
+            train_one(
+                "residual_cnn",
+                ResidualCNN(),
+                args.steps,
+                device,
+                root / "residual_cnn.pt",
+                args.holdout_family,
+                args.jpeg_prob,
+                size=args.size,
+            )
+        )
+    if args.only in ("both", "fsnet_lite"):
+        recs.append(
+            train_one(
+                "fsnet_lite",
+                FSNetLite(),
+                args.steps,
+                device,
+                root / "fsnet_lite.pt",
+                args.holdout_family,
+                args.jpeg_prob,
+                size=args.size,
+            )
+        )
     manifest = {
         "schema_version": 1,
         "device": device,

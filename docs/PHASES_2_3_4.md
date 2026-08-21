@@ -12,7 +12,9 @@ Companion to `docs/UPGRADE_PLAN.md`. Identity unchanged: presence only, no decod
 | Robustness across attacks, optional all families | `run_robustness` returns identity AUC and retention |
 | Train holdout/JPEG | Already in `scripts/train_lite.py` (Phase 1). No full GPU train this sprint |
 
-**Not this sprint:** UniFreq download, 80-epoch CUDA cook, claiming TPR@1% FPR on photos.
+**v0.2.1 cook:** CPU ResidualCNN 50 steps (val_auc 0.74, live pair means still flat). Fitted cal JSON shipped but identity remains default. See `docs/RESULTS_v0.2.1.md`.
+
+**Still later:** UniFreq download, CUDA cook, claiming TPR@1% FPR on photos.
 
 ## Phase 3 -- latent / dataset cues (gated)
 

@@ -89,6 +89,7 @@ Leave-one-algorithm-out work (AWPD / FSNet, UniFreq-100K) shows LSB and Patchwor
 - `docs/LIMITATIONS.md` / `docs/ETHICS.md`
 - `docs/UPGRADE_PLAN.md` -- v0.1.0 -> production AWPD (phased)
 - `docs/PHASES_2_3_4.md` -- calibration, WMD prune, batch/ONNX (v0.2.0)
+- `docs/RESULTS_v0.2.1.md` -- CPU ResidualCNN cook, fitted cal, tiny robustness
 
 `py -3 -m veilscan loao` and `selftest --per-detector` are the Phase 0 measurement CLI.
 
