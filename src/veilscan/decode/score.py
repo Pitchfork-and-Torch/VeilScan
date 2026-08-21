@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+import re
+
 from veilscan.decode.layouts import MAX_MESSAGE_BYTES, MIN_FRAMED_CHARS, MIN_UNFRAMED_CHARS
+
+_TOKEN_RE = re.compile(r"^[A-Z]{2,}[A-Z0-9_]*:[A-Z0-9_.:/=+\-]{2,64}$")
+_TOKEN_FIND = re.compile(r"[A-Z]{2,}[A-Z0-9_]*:[A-Z0-9_.:/=+\-]{2,64}")
+_WEIRD = set(",'\"%+#$&*;<>[]{}\\|`~")
 
 _PRINTABLE_EXTRA = set("\t\n\r")
 
@@ -36,6 +42,27 @@ def printable_ratio(text: str) -> float:
     return ok / len(text)
 
 
+def looks_like_token(text: str) -> bool:
+    return bool(_TOKEN_RE.match(text.strip()))
+
+
+def looks_like_english(text: str) -> bool:
+    t = text.strip()
+    if sum(ch in _WEIRD for ch in t) >= 2:
+        return False
+    letters = sum(ch.isalpha() for ch in t)
+    if letters / len(t) < 0.70:
+        return False
+    vowels = sum(ch.lower() in "aeiou" for ch in t)
+    if letters == 0 or vowels / letters < 0.22:
+        return False
+    if vowels < 2:
+        return False
+    if " " not in t:
+        return False
+    return True
+
+
 def looks_like_message(text: str) -> bool:
     t = text.strip()
     if not t:
@@ -43,15 +70,9 @@ def looks_like_message(text: str) -> bool:
     low = t.lower()
     if low.startswith(("http://", "https://", "ftp://", "www.")):
         return True
-    letters = sum(ch.isalpha() for ch in t)
-    if letters / len(t) < 0.70:
-        return False
-    vowels = sum(ch.lower() in "aeiou" for ch in t)
-    if vowels < 2 and len(t) < 16:
-        return False
-    if vowels / letters < 0.22:
-        return False
-    return True
+    if looks_like_token(t):
+        return True
+    return looks_like_english(t)
 
 
 def score_text(text: str, framed: bool) -> float:
@@ -71,6 +92,8 @@ def score_text(text: str, framed: bool) -> float:
     s = 0.50 * pr + 0.30 * length_term + 0.20
     if framed:
         s = min(1.0, s + 0.15)
+    if looks_like_token(text):
+        s = min(1.0, s + 0.05)
     return float(s)
 
 
@@ -78,6 +101,12 @@ def extract_run_candidates(raw: bytes) -> list[tuple[bytes, bool]]:
     """Prefix frames plus interior printable runs (payload need not start at bit 0)."""
     out = split_frames(raw)
     seen = {payload for payload, _ in out}
+    ascii_map = "".join(chr(b) if 32 <= b < 127 else " " for b in raw)
+    for tok in _TOKEN_FIND.findall(ascii_map):
+        b = tok.encode("ascii")
+        if b not in seen:
+            seen.add(b)
+            out.append((b, True))
     i = 0
     n = len(raw)
     while i < n:
@@ -100,9 +129,11 @@ def split_frames(raw: bytes) -> list[tuple[bytes, bool]]:
     out: list[tuple[bytes, bool]] = []
     if not raw:
         return out
-    nul = raw.find(b"\x00")
-    if nul >= 0:
-        out.append((raw[:nul], True))
+    if b"\x00" in raw:
+        segs = raw.split(b"\x00")
+        for seg in segs[:-1]:
+            if seg:
+                out.append((seg, True))
     if len(raw) >= 4:
         n = int.from_bytes(raw[:4], "little", signed=False)
         if 2 <= n <= min(MAX_MESSAGE_BYTES, len(raw) - 4):

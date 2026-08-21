@@ -18,6 +18,7 @@ from veilscan.decode.hotspots import Hotspot, find_lsb_hotspots, iter_patch_wind
 from veilscan.decode.jsteg import iter_jsteg_payloads
 from veilscan.decode.layouts import ACCEPT_SCORE, LSB_LAYOUTS
 from veilscan.decode.lsb import extract_bits, pack_bits
+from veilscan.decode.scanlines import iter_scanline_hits
 from veilscan.decode.score import (
     extract_run_candidates,
     printable_ratio,
@@ -117,6 +118,20 @@ def decode_bytes(data: bytes, source: str | None = None) -> DecodeResult:
     if rgb is not None:
         if lsb_safe_kind(kind):
             _collect_lsb(rgb, scored, bbox=None, offsets=(0,))
+            if not _strong_payload(scored):
+                for layout, text, s, bbox in iter_scanline_hits(rgb):
+                    scored.append(
+                        DecodeCandidate(
+                            layout=layout,
+                            text=text,
+                            score=s,
+                            framed=True,
+                            family="lsb",
+                            bbox=bbox,
+                        )
+                    )
+                    if _strong_payload(scored):
+                        break
         else:
             notes.append("Decoded pixels used for localized LSB hunt. JPEG/WebP may have damaged exact bits.")
 

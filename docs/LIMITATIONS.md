@@ -35,9 +35,10 @@ v0.3.1 recovers **keyless plaintext** and **localizes** LSB patches:
 - LSB-plane QR (OpenCV)
 - optional JSteg (quantized DCT AC LSBs) when `jpeglib` is installed
 
-A small LSB rectangle is sequential only inside that box. The decoder hunts
-low bit-0 autocorrelation tiles, then tries those windows. It does not need
-the coordinates in advance.
+A small LSB rectangle is sequential only inside that box. Short headers often
+fit on one scanline (RGB interleaved). v0.3.2 scans each row for NUL-framed
+tokens like `INV_WM:LEFT_EYE:2026` without coordinates. Tile autocorrelation
+still localizes longer patches.
 
 It will not print encrypted stego (Steghide / OpenStego with a password),
 SynthID, Digimarc, Tree-Ring payloads, or HiDDeN-class neural marks.

@@ -14,6 +14,7 @@ from veilscan.decode.embed_text import (
     embed_text_path,
     embed_text_png_bytes,
 )
+from veilscan.decode.score import looks_like_token, score_text
 from veilscan.decode.layouts import LSB_LAYOUTS
 from veilscan.decode.lsb import extract_bits, pack_bits
 from veilscan.decode.score import split_frames, utf8_text
@@ -136,6 +137,36 @@ def test_patch_lsb_found_without_coords() -> None:
     ys = [h.y for h in result.hotspots]
     assert any(abs(x - 90) <= 80 for x in xs)
     assert any(abs(y - 40) <= 80 for y in ys)
+
+
+TOKEN = "INV_WM:LEFT_EYE:2026"
+
+
+def test_token_scorer() -> None:
+    assert looks_like_token(TOKEN)
+    assert score_text(TOKEN, framed=True) >= 0.85
+    assert score_text("H,S'H,s' iLQFiLAg", framed=True) == 0.0
+    assert score_text("hello veil", framed=True) >= 0.85
+
+
+def test_rgb_patch_token_without_coords() -> None:
+    cover = _cover(22, size=192)
+    marked = embed_text_patch(cover, TOKEN, x=11, y=13, w=70, h=42, layout_id="rgb-bit0-msb")
+    buf = BytesIO()
+    Image.fromarray(marked).save(buf, format="PNG")
+    result = decode_bytes(buf.getvalue())
+    assert result.found
+    assert result.text == TOKEN
+
+
+def test_wm_png_left_eye_token() -> None:
+    photo = Path.home() / "Desktop" / "Wm .png"
+    if not photo.is_file():
+        return
+    result = decode_path(photo)
+    assert result.found
+    assert result.text == TOKEN
+    assert result.family == "lsb"
 
 
 def test_colleague_jpeg_identifies_eye_hotspot() -> None:
