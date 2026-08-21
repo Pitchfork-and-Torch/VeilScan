@@ -11,5 +11,5 @@ Agnostic invisible-watermark **presence** detector. Local ensemble.
 - ASCII punctuation in public files. UTF-8 no BOM.
 - Tests: `py -3 -m pytest` from this folder after `pip install -e .`
 - CLI: `py -3 -m veilscan scan PATH`
-- Upgrade contract: `docs/UPGRADE_PLAN.md` and `docs/PHASES_2_3_4.md`. Presence only. No remover.
+- Next upgrade contract: `docs/NEXT_MASSIVE_UPGRADE.md`. Historical: `docs/UPGRADE_PLAN.md`. Presence only. No remover.
 - Fusion `peak_ok` lives in `configs/default.yaml`, not hardcoded.

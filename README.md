@@ -87,7 +87,8 @@ Leave-one-algorithm-out work (AWPD / FSNet, UniFreq-100K) shows LSB and Patchwor
 - `docs/RESEARCH.md` -- AWPD survey
 - `docs/ARCHITECTURE.md` -- plugin contract
 - `docs/LIMITATIONS.md` / `docs/ETHICS.md`
-- `docs/UPGRADE_PLAN.md` -- v0.1.0 -> production AWPD (phased)
+- `docs/UPGRADE_PLAN.md` -- v0.1.0 -> v0.2 map (historical)
+- `docs/NEXT_MASSIVE_UPGRADE.md` -- **next** contract: v0.2.4 -> v0.3 operating point
 - `docs/PHASES_2_3_4.md` -- calibration, WMD prune, batch/ONNX (v0.2.0)
 - `docs/RESULTS_v0.2.1.md` -- CPU ResidualCNN cook (flat scores; superseded)
 - `docs/RESULTS_v0.2.2.md` -- CUDA ResidualCNN with LSB planes; peak_ok
