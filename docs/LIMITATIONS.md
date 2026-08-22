@@ -20,16 +20,18 @@
   ~0.67 (`op-v0.4.0-locked-n50`). BSDS camera FPR at that cut is 0.08.
   The camera sidecar cut is ~0.756 (`op-v1.4.0-camera-locked-n50`).
   DIV2K PNG confirmation ~0.796 with generator FPR 0.59. BSDS 256px TPR
-  collapsed; 128px lock stays. LOAO holdout-dct still collapses. Schema 5
+  recovered in v1.7 via native 128 windows (identity DCT 0.06 -> 1.00);
+  128px lock stays. LOAO holdout-dct still collapses. Schema 5
   `jpeg_freq_weight`. Default `present` is not flipped. JPEG50 DCT
-  TPR@5%FPR is 0.46.
+  TPR@5%FPR at 128px is 0.46.
 - Fusion mode stays `legacy`. specialist-OR FPR was 0.14 vs 0.05 in-sample.
   Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
   OR unless that nested FPR also holds.
 - **JPEG70 LSB** dies on camera stills (TPR@5%FPR 0.08). Identity LSB on
   a JPEG raster is also not a field path after the container blend
   (TPR@5%FPR 0.06). PNG LSB is unchanged. Frequency JPEG70 DWT TPR is
-  0.88. JPEG50 DCT TPR is 0.46. Quote `docs/RESULTS_v1.3.md`.
+  0.88. JPEG50 DCT TPR at 128px is 0.46. Quote `docs/RESULTS_v1.3.md`
+  and `docs/RESULTS_v1.7.md`.
 - **Patchwork is unsupported** on camera stills. A keyless permutation-null
   pair-mean test (v0.9) is AUC 0.50 / TPR@5%FPR 0.08 on BSDS n=24. Camera
   ensemble TPR stays ~0.02-0.10. YAML weight is 0 so the head cannot pollute

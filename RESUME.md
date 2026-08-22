@@ -1,19 +1,19 @@
-# Resume (v1.6.0)
+# Resume (v1.7.0)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v1.6.0 confirmation.
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v1.7.0 native windows.
 Public lamp: https://veilscan.jonbailey.xyz/
 
 ## Where we stopped
 
-- Field JPEG stack A+B+C shipped (blend, policy, confirmation).
-- DIV2K PNG sidecar ~0.796. Generator 0.67 FPR 0.59 on that PNG pack.
-- BSDS 256px TPR collapsed. Canonical camera OP stays 128px v1.4 ~0.756.
-- LOAO holdout-dct still collapses (0.98 -> 0.08). Cooks still allowed.
+- Field JPEG stack A+B+C+D shipped (blend, policy, confirmation, native 128 windows).
+- 256px identity DCT TPR 0.06 -> 1.00. Generator 0.67 FPR 0.02 on that slice.
+- Canonical camera OP stays 128px v1.4 ~0.756.
+- Q50 recooks from v1.3 rejected. Production FSNet unchanged.
 - Default `present` stays ~0.67.
 
 ## Next
 
-Optional: JPEG50 DCT still 0.46. Do not replace 128px lock with 256px.
+JPEG50 DCT still 0.46 at 128px. Do not replace 128px lock with 256px.
 Do not flip default `present`. DIV2K is confirmation only.
 
 ## Do not

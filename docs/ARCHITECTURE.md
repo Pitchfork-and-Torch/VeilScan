@@ -89,6 +89,10 @@ New detector: drop a module in `detectors/`, decorate with `@register`, done.
 Load (Pillow/OpenCV) -> RGB uint8 -> optional EXIF ignore (pixels only) ->
 if `max(H,W) > tile_size`, overlapping tiles, per-tile detect, stitch heatmaps
 by overlap-average, fuse tile scores by max (a mark in one tile is enough).
+Deep heads (ResidualCNN, FSNet-lite) do not area-resize a large plate to
+128 in one shot. They mean-score native 128 windows (four corners + center).
+Exact 128 is one window. Smaller stills still area-resize. v1.6 256px TPR
+collapsed because the whole plate was downscaled first.
 
 ## Generators (eval only)
 
@@ -107,7 +111,7 @@ Until those files exist, deep detectors skip.
 - Attacks: JPEG, resize, crop, noise, blur, jitter.
 - Protocol helper: leave-one-family-out over generators.
 
-Living numbers: `docs/RESULTS_v1.6.md`. BSDS 128px camera OP: `docs/RESULTS_v1.4.md`.
+Living numbers: `docs/RESULTS_v1.7.md`. BSDS 128px camera OP: `docs/RESULTS_v1.4.md`.
 Generator lock: `docs/RESULTS_v0.5.md`.
 Historical maps: `docs/UPGRADE_PLAN.md`, `docs/NEXT_MASSIVE_UPGRADE.md`.
 

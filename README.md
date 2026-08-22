@@ -7,13 +7,13 @@ It answers: *does this image contain an invisible watermark?* and, when the payl
 Lamp: https://veilscan.jonbailey.xyz/  
 Private GitHub: https://github.com/Pitchfork-and-Torch/VeilScan
 
-v1.6.0 is confirmation: DIV2K PNG sidecar re-locked, BSDS 256px does not replace 128px, LOAO holdout-dct still collapses. `--policy` and quality-aware blend stay. Generator `present` stays ~0.67. BSDS camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756. Patchwork weight 0.
+v1.7.0 scores ResidualCNN and FSNet on native 128 windows (corners + center, mean) so field JPEGs and 256px stills keep DCT structure. v1.6 downscale-to-128 collapsed 256px TPR. Generator `present` stays ~0.67. BSDS camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756. Patchwork weight 0. Q50 recook rejected.
 
 ## Synthetic numbers
 
 `py -3 -m veilscan selftest` is a fast n=6 @ 128px smoke, not an operating point.
 
-`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Camera sidecar `op-v1.4.0-camera-locked-n50`: ~0.756. DIV2K confirmation `op-v1.6.0-camera-div2k-locked-n50`: ~0.796 (PNG pack, generator FPR 0.59 at 0.67). JPEG blend weight follows Q-table quality. `--policy generator|camera|both`. Numbers: `docs/RESULTS_v1.6.md`.
+`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Camera sidecar `op-v1.4.0-camera-locked-n50`: ~0.756. DIV2K confirmation `op-v1.6.0-camera-div2k-locked-n50`: ~0.796 (PNG pack, generator FPR 0.59 at 0.67). Native 128 windows restore 256px identity DCT TPR 0.06 -> 1.00 (FPR 0.02 at 0.67). JPEG blend weight follows Q-table quality. `--policy generator|camera|both`. Numbers: `docs/RESULTS_v1.7.md`.
 
 Complementary split (do not mix):
 

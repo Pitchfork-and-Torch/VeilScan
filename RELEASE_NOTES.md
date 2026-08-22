@@ -1,3 +1,14 @@
+# v1.7.0
+
+Native 128 windows on large stills. No production recook.
+
+Lamp: https://veilscan.jonbailey.xyz/
+
+- ResidualCNN and FSNet score four corners plus center at native 128, then mean. Exact 128 is one window.
+- BSDS 256px identity DCT TPR 0.06 -> 1.00. JPEG70 DCT 0.08 -> 0.90. FPR at 0.67 stays 0.02.
+- Do not replace the 128px camera sidecar. Generator present stays ~0.67.
+- Stage D Q50 recooks from v1.3 rejected (FSNet-head jpeg_50 DCT 0.40 -> 0.30 / 0.34). 128px JPEG50 DCT ensemble TPR stays 0.46.
+
 # v1.6.0
 
 Confirmation. No production recook. 128px BSDS camera sidecar unchanged.

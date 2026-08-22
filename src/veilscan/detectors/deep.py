@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 
 from veilscan.detectors.base import BaseDetector
-from veilscan.dsp import sigmoid
 from veilscan.registry import register
 from veilscan.types import AnalyzeContext, DetectionResult
 
@@ -20,28 +19,58 @@ def _checkpoint_dir(context: AnalyzeContext | None) -> Path:
     return Path(__file__).resolve().parents[3] / "checkpoints"
 
 
-def _load_rgb_tensor(image: np.ndarray, device: str):
-    import torch
+def native_windows(image: np.ndarray, size: int = _SIZE) -> list[np.ndarray]:
+    """128px windows at native scale. Downscaling 256+ DCT marks to 128 is chance.
+
+    Exact size: one window, no resample. Smaller: area-resize. Larger: four
+    corners plus center. Mean of those windows is the detector score.
+    """
     import cv2
 
-    rgb = image
-    if rgb.shape[2] != 3:
+    if image.ndim != 3 or image.shape[2] < 3:
         raise ValueError("RGB required")
-    resized = cv2.resize(rgb, (_SIZE, _SIZE), interpolation=cv2.INTER_AREA)
-    t = torch.from_numpy(resized.astype(np.float32) / 255.0).permute(2, 0, 1).unsqueeze(0)
-    return t.to(device)
+    rgb = np.ascontiguousarray(image[..., :3])
+    h, w = rgb.shape[:2]
+    if h < size or w < size:
+        return [cv2.resize(rgb, (size, size), interpolation=cv2.INTER_AREA)]
+    if h == size and w == size:
+        return [rgb]
+    coords = [
+        (0, 0),
+        (0, w - size),
+        (h - size, 0),
+        (h - size, w - size),
+        ((h - size) // 2, (w - size) // 2),
+    ]
+    out: list[np.ndarray] = []
+    seen: set[tuple[int, int]] = set()
+    for y, x in coords:
+        y_i = int(max(0, y))
+        x_i = int(max(0, x))
+        key = (y_i, x_i)
+        if key in seen:
+            continue
+        seen.add(key)
+        tile = rgb[y_i : y_i + size, x_i : x_i + size]
+        if tile.shape[0] == size and tile.shape[1] == size:
+            out.append(tile)
+    if out:
+        return out
+    return [cv2.resize(rgb, (size, size), interpolation=cv2.INTER_AREA)]
 
 
-def _infer(model, image: np.ndarray, device: str) -> float:
+def _infer(model, image: np.ndarray, device: str) -> tuple[float, int]:
     import torch
 
     model.eval()
-    x = _load_rgb_tensor(image, device)
+    windows = native_windows(image)
+    batch = torch.stack(
+        [torch.from_numpy(w.astype(np.float32) / 255.0).permute(2, 0, 1) for w in windows]
+    )
     with torch.no_grad():
-        logit = model(x)
-        if logit.ndim > 0:
-            logit = logit.reshape(-1)[0]
-        return float(torch.sigmoid(logit).cpu())
+        logit = model(batch.to(device))
+        prob = torch.sigmoid(logit.reshape(-1))
+        return float(prob.mean().cpu()), int(prob.numel())
 
 
 class ResidualCNNDetector(BaseDetector):
@@ -63,9 +92,16 @@ class ResidualCNNDetector(BaseDetector):
         state = torch.load(ckpt, map_location=device, weights_only=True)
         model.load_state_dict(state)
         model.to(device)
-        p = _infer(model, image, device)
-        expl = f"Residual CNN (YeNet/SRNet-lite) p={p:.3f} from {ckpt.name}."
-        return DetectionResult(self.name, p, 0.7, expl, extras={"ckpt": str(ckpt)}, tier=self.tier).clamp()
+        p, n_win = _infer(model, image, device)
+        expl = f"Residual CNN (YeNet/SRNet-lite) p={p:.3f} from {ckpt.name} windows={n_win}."
+        return DetectionResult(
+            self.name,
+            p,
+            0.7,
+            expl,
+            extras={"ckpt": str(ckpt), "n_windows": n_win},
+            tier=self.tier,
+        ).clamp()
 
 
 class FSNetLiteDetector(BaseDetector):
@@ -87,9 +123,16 @@ class FSNetLiteDetector(BaseDetector):
         state = torch.load(ckpt, map_location=device, weights_only=True)
         model.load_state_dict(state)
         model.to(device)
-        p = _infer(model, image, device)
-        expl = f"FSNet-lite (ASPM+DMSA) p={p:.3f} from {ckpt.name}."
-        return DetectionResult(self.name, p, 0.75, expl, extras={"ckpt": str(ckpt)}, tier=self.tier).clamp()
+        p, n_win = _infer(model, image, device)
+        expl = f"FSNet-lite (ASPM+DMSA) p={p:.3f} from {ckpt.name} windows={n_win}."
+        return DetectionResult(
+            self.name,
+            p,
+            0.75,
+            expl,
+            extras={"ckpt": str(ckpt), "n_windows": n_win},
+            tier=self.tier,
+        ).clamp()
 
 
 def register_deep() -> None:
