@@ -10,7 +10,7 @@ from veilscan.types import SCHEMA_VERSION
 
 
 def test_version() -> None:
-    assert __version__ == "0.5.0"
+    assert __version__ == "0.5.1"
 
 
 def test_schema_version_json() -> None:
@@ -22,6 +22,28 @@ def test_schema_version_json() -> None:
     assert "family_hint" in js
     assert "lsb_score" in js
     assert "freq_score" in js
+    assert "camera" not in js
+
+
+def test_camera_sidecar_omitted_and_attached(monkeypatch) -> None:
+    rng = np.random.default_rng(0)
+    img = synthetic_cover(64, 64, rng, style="sine")
+    assert "camera" not in analyze(img, detectors=["chi_square"]).to_json()
+    monkeypatch.setattr(
+        "veilscan.engine.load_camera_operating_point",
+        lambda path=None: {
+            "id": "op-cam-test",
+            "status": "provisional",
+            "threshold": 0.99,
+            "fpr_est": 0.05,
+            "n": 4,
+        },
+    )
+    js = analyze(img, detectors=["chi_square"]).to_json()
+    assert js["camera"]["operating_point_id"] == "op-cam-test"
+    assert js["camera"]["status"] == "provisional"
+    assert "present" in js["camera"]
+    assert js["present"] is False or js["present"] is True
 
 
 def test_identity_calibration_noop() -> None:

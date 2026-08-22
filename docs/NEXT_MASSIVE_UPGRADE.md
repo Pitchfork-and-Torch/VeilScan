@@ -1,8 +1,10 @@
 # Operating-point contract (v0.4) - SHIPPED
 
 **Status:** historical. Landed across v0.4.0 / v0.4.1. Current package is
-**v0.5.0** (`docs/RESULTS_v0.5.md`). Next science: camera-folder FPR via
-`veilscan bench --covers DIR`, not another net.
+**v0.5.1** (`docs/RESULTS_v0.5.md` still the last measured generator lock).
+Next science: camera-folder FPR via `veilscan bench --covers DIR` after
+`scripts/fetch_camera_covers.py`. Doctor is shipped. Do not overwrite the
+generator lock.
 
 **Baseline when written:** v0.3.0 keyless decode.  
 **Identity:** presence ensemble plus keyless plaintext decode. No remover.

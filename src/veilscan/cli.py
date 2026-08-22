@@ -44,6 +44,17 @@ def version() -> None:
     console.print(__version__)
 
 
+@app.command()
+def doctor() -> None:
+    """Check local stack: OP file, checkpoint hashes, torch/cuda. No network."""
+    from veilscan.doctor import run_doctor
+
+    report = run_doctor()
+    console.print_json(data=report)
+    if not report.get("ok"):
+        raise typer.Exit(code=2)
+
+
 @app.command("list-detectors")
 def list_detectors_cmd() -> None:
     """Show registered detectors."""
@@ -403,8 +414,8 @@ def bench(
         if json_path is None:
             json_path = ROOT / "docs" / "bench" / "camera.json"
         if write_operating_point:
-            op_path = ROOT / "docs" / "bench" / "camera_operating_point.json"
-        write_operating_point = bool(write_operating_point)
+            # Sidecar only. Never DEFAULT_OP (generator lock).
+            op_path = ROOT / "configs" / "operating_point.camera.json"
     report = run_bench(proto, n=n, size=size, attacks=atk, styles=st, covers=plates)
     written = write_outputs(
         report,

@@ -5,11 +5,15 @@
   "models": [
     {
       "name": "residual_cnn",
+      "file": "residual_cnn.pt",
+      "sha256": "e82851366d533e86eaee9a48c75f6acc7be1166cd191641faa013b7cba37ac79",
       "peak_ok": true,
       "note": "RGB+LSB. LSB specialist (v0.2.3 weights)."
     },
     {
       "name": "fsnet_lite",
+      "file": "fsnet_lite.pt",
+      "sha256": "0046201231d11b118ebb3c94dddf5dc9e265c90394464ccc4a372169fcdae1cc",
       "val_auc": 1.0,
       "peak_ok": true,
       "note": "9-ch stem RGB+LSB+HP. Trained WITHOUT lsb family. Frequency specialist; JPEG70 DCT still separates."

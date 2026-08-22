@@ -20,6 +20,8 @@ examples/_demo_out/
 docs/bench/camera.json
 docs/bench/camera.md
 docs/bench/camera_operating_point.json
+data/covers/
+configs/operating_point.camera.json
 .coverage
 htmlcov/
 .DS_Store

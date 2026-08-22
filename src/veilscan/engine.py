@@ -6,7 +6,13 @@ from collections.abc import Iterable
 
 import numpy as np
 
-from veilscan.config import VeilConfig, load_operating_point, merge_operating_point, resolve_device
+from veilscan.config import (
+    VeilConfig,
+    load_camera_operating_point,
+    load_operating_point,
+    merge_operating_point,
+    resolve_device,
+)
 from veilscan.ensemble import fuse
 from veilscan.image_io import tiles
 from veilscan.registry import ensure_loaded, select
@@ -97,8 +103,29 @@ def _fuse_calibrated(results: list, cfg: VeilConfig, shape: tuple[int, ...]) -> 
         fused.score = float(np.clip(fused.score, 0.0, 1.0))
         if mix.get("mode") != "specialist_or":
             fused.present = fused.score >= fused.threshold
+        return _attach_camera(fused, cfg)
+    return _attach_camera(
+        fuse(results, cfg.weights, threshold, shape, peak_ok=cfg.peak_ok, mix=mix),
+        cfg,
+    )
+
+
+def _attach_camera(fused: EnsembleResult, cfg: VeilConfig) -> EnsembleResult:
+    cam = load_camera_operating_point()
+    if not cam or str(cam.get("status") or "") not in {"provisional", "locked"}:
         return fused
-    return fuse(results, cfg.weights, threshold, shape, peak_ok=cfg.peak_ok, mix=mix)
+    t = cam.get("threshold")
+    if t is None:
+        return fused
+    fused.camera = {
+        "operating_point_id": cam.get("id"),
+        "status": cam.get("status"),
+        "threshold": float(t),
+        "present": float(fused.score) >= float(t),
+        "fpr_est": cam.get("fpr_est"),
+        "n": cam.get("n"),
+    }
+    return fused
 
 
 def _safe(detector, rgb: np.ndarray, ctx: AnalyzeContext) -> DetectionResult:

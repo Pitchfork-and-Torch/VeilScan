@@ -1,3 +1,15 @@
+# v0.5.1
+
+Doctor, camera-cover fetch, optional scan-JSON camera sidecar.
+
+- `veilscan doctor`: torch/cuda, checkpoint sha256 vs `checkpoints/manifest.json`, generator OP required, camera OP optional
+- `scripts/fetch_camera_covers.py` + `configs/camera_covers.manifest.json` (BSDS500 test-64, extracted JPEGs gitignored)
+- Scan JSON may include `camera` when `configs/operating_point.camera.json` exists; omitted otherwise
+- Generator lock unchanged (`op-v0.4.0-locked-n50`). Camera FPR not measured until n>=50 bench
+- `--covers --write-operating-point` writes the camera sidecar only; refuses to overwrite the generator lock
+
+Proprietary. Private repo.
+
 # v0.5.0
 
 Local presence detector plus keyless plaintext reader.

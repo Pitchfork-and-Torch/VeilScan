@@ -4,13 +4,13 @@ Local, algorithm-agnostic **invisible watermark presence detector** with a **key
 
 It answers: *does this image contain an invisible watermark?* and, when the payload is sequential LSB / PNG text / JPEG comment, *what does the text say?* It does not strip a mark. It does not break SynthID, Digimarc, encrypted stego, or neural watermarks.
 
-v0.5 keeps the locked generator-photo operating point and adds a **camera-folder bench adapter** (`veilscan bench --covers DIR`) plus vectorized DCT/spread embedders. Fusion default is still `legacy` (specialist-OR FPR was higher on the generator slice and on a nested holdout). Checkpoints in `checkpoints/*.pt` load ResidualCNN (LSB specialist) and FSNet-lite (frequency specialist). They skip if those files are missing. Do not vendor UniFreq or personal photos in git.
+v0.5.1 keeps the locked generator-photo operating point and adds `veilscan doctor` (checkpoint sha256 vs manifest, no network), a BSDS500 camera-cover fetch script, and an optional scan-JSON `camera` sidecar when `configs/operating_point.camera.json` exists. Fusion default is still `legacy`. Checkpoints in `checkpoints/*.pt` load ResidualCNN (LSB specialist) and FSNet-lite (frequency specialist). They skip if those files are missing. Do not vendor UniFreq or personal photos in git.
 
 ## Synthetic numbers
 
 `py -3 -m veilscan selftest` is a fast n=6 @ 128px smoke, not an operating point.
 
-`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Fusion stays `legacy` because specialist-OR FPR was 0.14 on the same covers. Camera folders: `veilscan bench --covers DIR` writes `docs/bench/camera.json` and will not clobber the generator lock. `veilscan inspect` runs scan then decode into one JSON/HUD.
+`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Fusion stays `legacy` because specialist-OR FPR was 0.14 on the same covers. Camera folders: `veilscan bench --covers DIR --write-operating-point` writes `docs/bench/camera.json` plus `configs/operating_point.camera.json` and will not clobber the generator lock. `veilscan inspect` runs scan then decode into one JSON/HUD.
 
 Complementary split (do not mix):
 
@@ -36,11 +36,14 @@ py -3 -m veilscan scan path\to\image.png --json --heatmap out_overlay.png
 py -3 -m veilscan batch path\to\folder --json
 py -3 -m veilscan decode path\to\image.png
 # writes path-veilscan-report.png (HUD overlay + executive brief) next to the file
+py -3 -m veilscan doctor
 py -3 -m veilscan inspect path\to\image.png
 py -3 -m veilscan selftest
 py -3 -m veilscan selftest --per-detector
 py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point
-py -3 -m veilscan bench --covers path\to\camera_jpegs --n 50 --attacks identity,jpeg_70
+py -3 scripts\fetch_camera_covers.py --dry-run
+py -3 scripts\fetch_camera_covers.py --allow-empty-hash
+py -3 -m veilscan bench --covers data\covers\camera --n 50 --attacks identity,jpeg_70 --write-operating-point
 py -3 -m veilscan loao --n 3
 ```
 

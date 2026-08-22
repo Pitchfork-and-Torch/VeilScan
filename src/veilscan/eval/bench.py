@@ -287,8 +287,17 @@ def choose_operating_point(
     fpr_est = fpr_at(np.zeros(len(ens), dtype=np.int32), np.asarray(ens), t_ens) if ens else None
     n = report.get("n") or 0
     status = "provisional" if int(n) < 50 else "locked"
+    camera = styles == ["camera"] or report.get("corpus") == "camera"
+    if camera:
+        oid = f"op-v0.6.0-camera-{status}-n{n}"
+        notes = "Camera stills pack sidecar. Does not replace the generator lock. Do not cite as UniFreq/ImageNet FPR."
+        corpus = "camera"
+    else:
+        oid = f"op-v0.4.0-{status}-n{n}"
+        notes = "Generator covers, not camera photos. Do not cite as ImageNet FPR."
+        corpus = "generator-photo" if "photo" in styles else "generator"
     return {
-        "id": f"op-v0.4.0-{status}-n{n}",
+        "id": oid,
         "status": status,
         "threshold": round(float(t_ens), 6),
         "t_lsb": round(float(t_lsb), 6),
@@ -299,10 +308,10 @@ def choose_operating_point(
         "n": n,
         "date": date.today().isoformat(),
         "protocol": report.get("protocol_id"),
-        "corpus": "camera" if styles == ["camera"] else ("generator-photo" if "photo" in styles else "generator"),
+        "corpus": corpus,
         "slice": [f"{s}/{a}" for s in styles for a in attacks],
         "fusion_mode": "legacy",
-        "notes": "Generator covers, not camera photos. Do not cite as ImageNet FPR.",
+        "notes": notes,
     }
 
 
@@ -514,6 +523,8 @@ def write_outputs(
     written = {"json": str(json_path), "md": str(md_path)}
     if write_operating_point:
         op_path = operating_point_path or DEFAULT_OP
+        if report.get("corpus") == "camera" and Path(op_path).resolve() == DEFAULT_OP.resolve():
+            raise ValueError("refusing to overwrite generator operating_point.json from a camera bench")
         op_path.write_text(
             json.dumps(_clean_nans(report["operating_point"]), indent=2, allow_nan=False),
             encoding="utf-8",

@@ -389,7 +389,7 @@ def _version() -> str:
 
         return __version__
     except Exception:
-        return "0.5.0"
+        return "0.5.1"
 
 
 def default_report_path(source: str | Path) -> Path:

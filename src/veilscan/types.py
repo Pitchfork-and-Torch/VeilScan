@@ -63,9 +63,10 @@ class EnsembleResult:
     freq_score: float = 0.0
     class_score: float = 0.0
     operating_point_id: str | None = None
+    camera: dict[str, Any] | None = None
 
     def to_json(self) -> dict[str, Any]:
-        return {
+        d = {
             "schema_version": SCHEMA_VERSION,
             "present": self.present,
             "score": round(float(self.score), 6),
@@ -84,6 +85,9 @@ class EnsembleResult:
             "has_heatmap": self.heatmap is not None,
             "detectors": [d.to_json() for d in self.detectors],
         }
+        if self.camera:
+            d["camera"] = self.camera
+        return d
 
 
 @dataclass

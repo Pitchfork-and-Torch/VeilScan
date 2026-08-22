@@ -138,6 +138,17 @@ def _pkg_operating_point_path() -> Path:
     return Path(__file__).resolve().parents[2] / "configs" / "operating_point.json"
 
 
+def _pkg_camera_operating_point_path() -> Path:
+    return Path(__file__).resolve().parents[2] / "configs" / "operating_point.camera.json"
+
+
+def load_camera_operating_point(path: str | Path | None = None) -> dict[str, Any] | None:
+    src = Path(path) if path else _pkg_camera_operating_point_path()
+    if not src.is_file():
+        return None
+    return load_operating_point(src)
+
+
 def load_operating_point(path: str | Path | None = None) -> dict[str, Any] | None:
     src = Path(path) if path else _pkg_operating_point_path()
     if not src.is_file():

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from veilscan.eval.bench import load_camera_covers, load_protocol, render_markdown, run_bench, write_outputs
+from veilscan.eval.bench import DEFAULT_OP, load_camera_covers, load_protocol, render_markdown, run_bench, write_outputs
 from veilscan.eval.metrics import cut_at_fpr, fpr_at
 from veilscan.generators import synthetic_cover
 import numpy as np
@@ -72,3 +72,30 @@ def test_bench_camera_covers(tmp_path: Path) -> None:
     )
     assert report["corpus"] == "camera"
     assert "camera/identity" in report["cells"]
+    op = report["operating_point"]
+    assert op["corpus"] == "camera"
+    assert "camera" in op["id"]
+    assert "Generator covers" not in (op.get("notes") or "")
+    before = DEFAULT_OP.read_text(encoding="utf-8") if DEFAULT_OP.is_file() else None
+    try:
+        write_outputs(
+            report,
+            json_path=tmp_path / "camera.json",
+            md_path=tmp_path / "camera.md",
+            operating_point_path=DEFAULT_OP,
+            write_operating_point=True,
+        )
+        raise AssertionError("camera bench must not write the generator OP path")
+    except ValueError as exc:
+        assert "generator" in str(exc).lower()
+    after = DEFAULT_OP.read_text(encoding="utf-8") if DEFAULT_OP.is_file() else None
+    assert after == before
+    cam_op = tmp_path / "operating_point.camera.json"
+    written = write_outputs(
+        report,
+        json_path=tmp_path / "camera.json",
+        md_path=tmp_path / "camera.md",
+        operating_point_path=cam_op,
+        write_operating_point=True,
+    )
+    assert Path(written["operating_point"]).is_file()

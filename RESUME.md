@@ -1,25 +1,25 @@
-# Resume (v0.5.0)
+# Resume (v0.5.1)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.5.0 vectorized DCT/spread + camera bench adapter.
-Public lamp: https://veilscan.jonbailey.xyz/ site v1.1.7.
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.5.1 doctor + camera-cover fetch.
+Public lamp: https://veilscan.jonbailey.xyz/ site v1.2.0.
 
 ## Where we stopped
 
-- Generator OP stays locked: `op-v0.4.0-locked-n50` threshold 0.67, fusion `legacy`.
-- `embed_dct` / `embed_spread` are batched scipy ortho DCT (matches cv2).
-- `veilscan bench --covers DIR` runs the same protocol on real JPEGs. Does not
-  write `configs/operating_point.json`. Nested holdout FPR is in `ab.nested_holdout`.
+- `veilscan doctor` checks OP + ckpt sha256. No network.
+- `scripts/fetch_camera_covers.py` + `configs/camera_covers.manifest.json` (BSDS500 test-64).
+- Scan JSON may include `camera` if `configs/operating_point.camera.json` exists.
+- Generator lock unchanged. Camera FPR not measured until fetch + bench.
 
-## Next
+## Next (v0.6.0)
 
-Point `--covers` at a camera folder of n>=50 (operator-owned, not git). Compare
-camera FPR at 0.67 to the generator lock. Deep LOAO ckpts optional.
+Fetch BSDS500 (`--allow-empty-hash` once, then pin sha256). Run
+`veilscan bench --covers data/covers/camera --n 50`. Write RESULTS_v0.6.
+Do not overwrite generator OP. Do not flip specialist-OR.
 
 ## Do not
 
 - Mix LSB into the FSNet cook
-- Strip LSB planes off ResidualCNN
-- Remover / SynthID clone / UniFreq in git
-- Flip specialist-OR without nested holdout
+- Personal photos in git
+- UniFreq in git
+- Remover
 - Gradio from a Grok Build command
-- Commit personal photo folders
