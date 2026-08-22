@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +18,11 @@ IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"}
 
 def load_rgb(path: str | Path) -> np.ndarray:
     path = Path(path)
-    img = Image.open(path)
+    return load_rgb_bytes(path.read_bytes())
+
+
+def load_rgb_bytes(data: bytes) -> np.ndarray:
+    img = Image.open(BytesIO(data))
     if img.mode not in ("RGB", "RGBA"):
         img = img.convert("RGB")
     elif img.mode == "RGBA":

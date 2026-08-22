@@ -36,7 +36,9 @@ def iter_cover_paths(root: str | Path) -> list[Path]:
     return out
 
 
-def load_camera_covers(root: str | Path, n: int, size: int, seed: int = 20260822) -> list[np.ndarray]:
+def load_camera_cover_pack(
+    root: str | Path, n: int, size: int, seed: int = 20260822
+) -> tuple[list[np.ndarray], list[bool]]:
     import cv2
 
     paths = iter_cover_paths(root)
@@ -49,14 +51,21 @@ def load_camera_covers(root: str | Path, n: int, size: int, seed: int = 20260822
     else:
         paths = paths[:n]
     covers: list[np.ndarray] = []
+    jpeg_flags: list[bool] = []
     for p in paths:
         rgb = load_rgb(p)
         if rgb.ndim != 3 or rgb.shape[2] < 3:
             continue
         covers.append(cv2.resize(rgb[..., :3], (size, size), interpolation=cv2.INTER_AREA))
+        jpeg_flags.append(p.suffix.lower() in {".jpg", ".jpeg"})
     if not covers:
         raise FileNotFoundError(f"no readable RGB images under {root}")
-    return covers
+    return covers, jpeg_flags
+
+
+def load_camera_covers(root: str | Path, n: int, size: int, seed: int = 20260822) -> list[np.ndarray]:
+    rgb, _ = load_camera_cover_pack(root, n, size, seed=seed)
+    return rgb
 
 def _json_default(obj: Any) -> Any:
     if isinstance(obj, (np.floating, np.integer)):
@@ -133,6 +142,7 @@ def run_bench(
     detectors: list[str] | None = None,
     covers: list[np.ndarray] | None = None,
     corpus_id: str | None = None,
+    jpeg_container: list[bool] | None = None,
 ) -> dict[str, Any]:
     proto = dict(protocol or load_protocol())
     n = int(n if n is not None else proto.get("n", 20))
@@ -148,7 +158,8 @@ def run_bench(
         covers = covers[:n]
         styles = ["camera"]
         proto = dict(proto)
-        proto["operating_slice"] = {"styles": ["camera"], "attacks": list(attacks)}
+        lock_attacks = [a for a in attacks if a in {"identity", "jpeg_70"}] or list(attacks)
+        proto["operating_slice"] = {"styles": ["camera"], "attacks": lock_attacks}
     else:
         styles = list(styles or proto.get("styles") or ["photo"])
     cfg = cfg or VeilConfig.load()
@@ -179,7 +190,9 @@ def run_bench(
                     cover = synthetic_cover(size, size, np.random.default_rng(cover_seed), style=style)
                 atk_rng = np.random.default_rng(int(rng.integers(1 << 30)))
                 cover_a = apply_attack(cover, attack, atk_rng)
-                c_res = analyze_image(cover_a, cfg, names)
+                src_jpeg = bool(jpeg_container[i]) if jpeg_container is not None and i < len(jpeg_container) else False
+                hint = src_jpeg or attack.startswith("jpeg")
+                c_res = analyze_image(cover_a, cfg, names, jpeg_container=hint)
                 cover_scores.append(float(c_res.score))
                 cover_lsb.append(float(c_res.lsb_score))
                 cover_freq.append(float(c_res.freq_score))
@@ -188,7 +201,7 @@ def run_bench(
                     fam_off = 17 + 97 * families.index(fam)
                     marked = embed(cover, fam, seed=cover_seed + fam_off)
                     marked_a = apply_attack(marked, attack, np.random.default_rng(cover_seed + 91))
-                    m_res = analyze_image(marked_a, cfg, names)
+                    m_res = analyze_image(marked_a, cfg, names, jpeg_container=hint)
                     rec = by_fam.setdefault(fam, {"y": [], "score": [], "lsb": [], "freq": [], "klass": []})
                     rec["y"].extend([0, 1])
                     rec["score"].extend([float(c_res.score), float(m_res.score)])

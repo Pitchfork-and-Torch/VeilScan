@@ -10,7 +10,7 @@ from veilscan.types import SCHEMA_VERSION
 
 
 def test_version() -> None:
-    assert __version__ == "1.0.0"
+    assert __version__ == "1.1.0"
 
 
 def test_schema_version_json() -> None:
@@ -54,7 +54,8 @@ def test_camera_sidecar_file_does_not_replace_generator() -> None:
     assert gen is not None
     assert gen.get("id") == "op-v0.4.0-locked-n50"
     assert cam is not None
-    assert str(cam.get("id") or "").startswith("op-v1.0.0-camera")
+    cam_id = str(cam.get("id") or "")
+    assert cam_id.startswith("op-v1.") and "camera" in cam_id and "div2k" not in cam_id
     assert cam.get("status") == "locked"
     assert float(cam["threshold"]) > float(gen["threshold"])
 

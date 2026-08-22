@@ -70,6 +70,11 @@ def test_bench_camera_covers(tmp_path: Path) -> None:
     loaded = load_camera_covers(tmp_path, n=4, size=64, seed=1)
     assert len(loaded) == 4
     assert loaded[0].shape == (64, 64, 3)
+    from veilscan.eval.bench import load_camera_cover_pack
+
+    rgb, flags = load_camera_cover_pack(tmp_path, n=4, size=64, seed=1)
+    assert len(rgb) == 4
+    assert flags == [False, False, False, False]
     report = run_bench(
         proto,
         n=4,

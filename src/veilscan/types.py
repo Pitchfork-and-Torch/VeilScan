@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 import numpy as np
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 Tier = Literal["fast", "frequency", "residual", "deep", "blackbox", "foundation"]
 
 
@@ -66,6 +66,9 @@ class EnsembleResult:
     camera: dict[str, Any] | None = None
     jpeg_like: bool = False
     jpeg_blockiness: float = 0.0
+    jpeg_container: bool = False
+    jpeg_quality_est: int | None = None
+    jpeg_subsampling: str | None = None
 
     def to_json(self) -> dict[str, Any]:
         d = {
@@ -82,6 +85,9 @@ class EnsembleResult:
             "operating_point_id": self.operating_point_id,
             "jpeg_like": bool(self.jpeg_like),
             "jpeg_blockiness": round(float(self.jpeg_blockiness), 6),
+            "jpeg_container": bool(self.jpeg_container),
+            "jpeg_quality_est": self.jpeg_quality_est,
+            "jpeg_subsampling": self.jpeg_subsampling,
             "explanation": self.explanation,
             "active": self.active,
             "skipped": self.skipped,

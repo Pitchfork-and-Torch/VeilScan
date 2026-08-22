@@ -1,3 +1,18 @@
+# v1.1.0
+
+Native JPEG path. File bytes decide `jpeg_like`, not only 8x8 ringing.
+
+Lamp: https://veilscan.jonbailey.xyz/
+
+- `jpeg_container` / `jpeg_quality_est` / `jpeg_subsampling` (schema 4)
+- `jpeg_like` = JPEG SOI **or** blockiness >= 1.10
+- Camera sidecar `op-v1.1.0-camera-locked-n50` ~0.739
+- Generator 0.67 FPR on BSDS camera stills 0.66 -> **0.07** (lock not flipped)
+- JPEG70 DWT TPR@5%FPR 0.30 -> **0.80** without recooking FSNet
+- JPEG50 measured (DCT TPR 0.18). Not in the OP lock slice
+- Identity LSB on JPEG rasters is no longer a field claim (PNG LSB unchanged)
+- Fusion `legacy`. Patchwork weight 0. No stripper. Proprietary. Private repo.
+
 # v1.0.0
 
 First production cut. Presence ensemble plus keyless plaintext decode.

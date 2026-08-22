@@ -400,7 +400,7 @@ def bench(
     corpus_id: Optional[str] = typer.Option(None, "--corpus-id", help="camera = BSDS sidecar. Other slugs write their own json/OP files."),
 ) -> None:
     """Frozen bench. Generator by default. --covers DIR is the camera adapter."""
-    from veilscan.eval.bench import ROOT, load_camera_covers, load_protocol, run_bench, write_outputs
+    from veilscan.eval.bench import ROOT, load_camera_cover_pack, load_protocol, run_bench, write_outputs
 
     proto = load_protocol(protocol)
     atk = [x.strip() for x in attacks.split(",")] if attacks else None
@@ -412,7 +412,7 @@ def bench(
     if covers:
         want_n = int(n if n is not None else proto.get("n", 20))
         want_size = int(size if size is not None else proto.get("size", 128))
-        plates = load_camera_covers(covers, want_n, want_size, seed=int(proto.get("seed", 20260822)))
+        plates, jpeg_flags = load_camera_cover_pack(covers, want_n, want_size, seed=int(proto.get("seed", 20260822)))
         slug = slug or "camera"
         if json_path is None:
             json_path = ROOT / "docs" / "bench" / f"{slug}.json"
@@ -425,7 +425,16 @@ def bench(
                 op_path = ROOT / "configs" / "operating_point.camera.json"
             else:
                 op_path = ROOT / "configs" / f"operating_point.{slug}.json"
-    report = run_bench(proto, n=n, size=size, attacks=atk, styles=st, covers=plates, corpus_id=slug)
+    report = run_bench(
+        proto,
+        n=n,
+        size=size,
+        attacks=atk,
+        styles=st,
+        covers=plates,
+        corpus_id=slug,
+        jpeg_container=(jpeg_flags if covers else None),
+    )
     written = write_outputs(
         report,
         json_path=json_path,

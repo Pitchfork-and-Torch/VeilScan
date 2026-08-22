@@ -69,10 +69,12 @@ New detector: drop a module in `detectors/`, decorate with `@register`, done.
    over `peak_ok` heads (chi-square, RS, bitplane, DCT, DWT, hybrid,
    tree-ring spectral, ResidualCNN, FSNet-lite). YAML weights still scale
    each head. Patchwork weight is 0 (unsupported on camera stills).
-3. When the array is `jpeg_like` (8x8 blockiness >= 1.10) and FSNet ran,
-   `score = 0.5 * mix + 0.5 * fsnet`. PNG / identity stays on the mix so
-   spatial LSB is not diluted. Scan JSON schema 3 adds `jpeg_like` and
-   `jpeg_blockiness`.
+3. `jpeg_like` is true when the file is a JPEG container (`FF D8`) **or**
+   8x8 blockiness >= 1.10. PNG / BMP / TIFF stay on pixel blockiness so
+   a clean raster does not take the FSNet blend. When `jpeg_like` and
+   FSNet ran, `score = 0.5 * mix + 0.5 * fsnet`. Scan JSON schema 4 adds
+   `jpeg_container`, `jpeg_quality_est`, `jpeg_subsampling` on top of
+   schema 3 `jpeg_like` / `jpeg_blockiness`.
 4. `present = score >= threshold` from the generator operating point
    (`op-v0.4.0-locked-n50` ~0.67), not a hardcoded 0.55. Camera stills
    get a sidecar cut (~0.758) and do not replace default `present`.
@@ -105,7 +107,8 @@ Until those files exist, deep detectors skip.
 - Attacks: JPEG, resize, crop, noise, blur, jitter.
 - Protocol helper: leave-one-family-out over generators.
 
-Living numbers: `docs/RESULTS_v1.0.md`. Generator lock: `docs/RESULTS_v0.5.md`.
+Living numbers: `docs/RESULTS_v1.1.md` (v1.0: `docs/RESULTS_v1.0.md`).
+Generator lock: `docs/RESULTS_v0.5.md`.
 Historical maps: `docs/UPGRADE_PLAN.md`, `docs/NEXT_MASSIVE_UPGRADE.md`.
 
 ## Decode (v0.3+)

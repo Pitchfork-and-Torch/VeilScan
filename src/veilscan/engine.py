@@ -16,6 +16,7 @@ from veilscan.config import (
 from veilscan.dsp import jpeg_blockiness, jpeg_like
 from veilscan.ensemble import fuse
 from veilscan.image_io import tiles
+from veilscan.jpeg_meta import inspect_jpeg
 from veilscan.registry import ensure_loaded, select
 from veilscan.types import AnalyzeContext, DetectionResult, EnsembleResult
 
@@ -25,6 +26,9 @@ def analyze_image(
     cfg: VeilConfig,
     detector_names: Iterable[str] | None = None,
     reference_images: list[np.ndarray] | None = None,
+    *,
+    jpeg_container: bool | None = None,
+    source_bytes: bytes | None = None,
 ) -> EnsembleResult:
     ensure_loaded()
     device = resolve_device(cfg.device)
@@ -32,7 +36,11 @@ def analyze_image(
         device=device,
         reference_images=reference_images,
         checkpoint_dir=cfg.checkpoint_dir,
-        extra={"jpeg_quality_probe": cfg.jpeg_quality_probe, "peak_ok": list(cfg.peak_ok)},
+        extra={
+            "jpeg_quality_probe": cfg.jpeg_quality_probe,
+            "peak_ok": list(cfg.peak_ok),
+            "jpeg_container": bool(jpeg_container),
+        },
     )
     dets = select(detector_names, tier=cfg.tier)
     h, w = rgb.shape[:2]
@@ -40,7 +48,14 @@ def analyze_image(
 
     if len(pieces) == 1:
         results = [_safe(d, rgb, ctx) for d in dets]
-        return _fuse_calibrated(results, cfg, rgb.shape, rgb)
+        return _fuse_calibrated(
+            results,
+            cfg,
+            rgb.shape,
+            rgb,
+            jpeg_container=jpeg_container,
+            source_bytes=source_bytes,
+        )
 
     # Per-detector: take the max tile score (a mark in one tile is enough).
     # Heatmaps stitched by overlap-average.
@@ -80,7 +95,14 @@ def analyze_image(
         extras["tile_mean"] = float(np.mean([r.score for r in live]))
         best.extras = extras
         merged.append(best)
-    return _fuse_calibrated(merged, cfg, rgb.shape, rgb)
+    return _fuse_calibrated(
+        merged,
+        cfg,
+        rgb.shape,
+        rgb,
+        jpeg_container=jpeg_container,
+        source_bytes=source_bytes,
+    )
 
 
 def _fuse_calibrated(
@@ -88,6 +110,8 @@ def _fuse_calibrated(
     cfg: VeilConfig,
     shape: tuple[int, ...],
     rgb: np.ndarray | None = None,
+    jpeg_container: bool | None = None,
+    source_bytes: bytes | None = None,
 ) -> EnsembleResult:
     op = load_operating_point(cfg.operating_point_path)
     mix = merge_operating_point(cfg.fusion, op)
@@ -95,10 +119,12 @@ def _fuse_calibrated(
     if op and str(op.get("status") or "") == "locked" and op.get("threshold") is not None:
         if mix.get("mode") != "specialist_or":
             threshold = float(op["threshold"])
+    jpeg_info = inspect_jpeg(source_bytes)
+    container = bool(jpeg_info.get("container")) or bool(jpeg_container)
     blockiness = 0.0
     if rgb is not None:
         blockiness = jpeg_blockiness(rgb)
-        mix["jpeg_like"] = jpeg_like(rgb)
+    mix["jpeg_like"] = bool(container or (rgb is not None and jpeg_like(rgb)))
     if cfg.apply_calibration:
         from veilscan.calibrate import apply_affine, load_calibration
 
@@ -113,13 +139,21 @@ def _fuse_calibrated(
         fused.score = float(np.clip(fused.score, 0.0, 1.0))
         if mix.get("mode") != "specialist_or":
             fused.present = fused.score >= fused.threshold
-        fused.jpeg_blockiness = float(blockiness)
-        fused.jpeg_like = bool(mix.get("jpeg_like"))
+        _stamp_jpeg(fused, mix, blockiness, container, jpeg_info)
         return _attach_camera(fused, cfg)
     fused = fuse(results, cfg.weights, threshold, shape, peak_ok=cfg.peak_ok, mix=mix)
+    _stamp_jpeg(fused, mix, blockiness, container, jpeg_info)
+    return _attach_camera(fused, cfg)
+
+
+def _stamp_jpeg(fused: EnsembleResult, mix: dict, blockiness: float, container: bool, info: dict) -> None:
     fused.jpeg_blockiness = float(blockiness)
     fused.jpeg_like = bool(mix.get("jpeg_like"))
-    return _attach_camera(fused, cfg)
+    fused.jpeg_container = bool(container)
+    q = info.get("quality_est")
+    fused.jpeg_quality_est = int(q) if q is not None else None
+    sub = info.get("subsampling")
+    fused.jpeg_subsampling = str(sub) if sub else None
 
 
 def _attach_camera(fused: EnsembleResult, cfg: VeilConfig) -> EnsembleResult:
