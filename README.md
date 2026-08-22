@@ -7,13 +7,13 @@ It answers: *does this image contain an invisible watermark?* and, when the payl
 Lamp: https://veilscan.jonbailey.xyz/  
 Private GitHub: https://github.com/Pitchfork-and-Torch/VeilScan
 
-v1.1.0 adds a native JPEG path: file bytes set `jpeg_container`, Q-table quality, and chroma subsampling. `jpeg_like` is true for a JPEG file or a blocky array, so camera stills take the v1.0 FSNet blend. Generator `present` stays ~0.67. On BSDS camera JPEGs that cut now false-fires at 0.07 (was 0.66). Camera sidecar `op-v1.1.0-camera-locked-n50` ~0.739. Patchwork remains unsupported (weight 0). ResidualCNN unchanged. Do not vendor UniFreq or personal photos in git.
+v1.2.0 fine-tunes FSNet for JPEG Q50 without a from-scratch recook. Native JPEG path from v1.1 stays: file bytes set `jpeg_container`. Generator `present` stays ~0.67. On BSDS camera JPEGs that cut false-fires at 0.01. Camera sidecar `op-v1.2.0-camera-locked-n50` ~0.484. JPEG50 DWT TPR 0.42 -> 0.56. JPEG50 DCT is still weak (0.32). Patchwork remains unsupported (weight 0). ResidualCNN unchanged. Do not vendor UniFreq or personal photos in git.
 
 ## Synthetic numbers
 
 `py -3 -m veilscan selftest` is a fast n=6 @ 128px smoke, not an operating point.
 
-`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Camera sidecar `op-v1.1.0-camera-locked-n50`: ~0.739 (FPR 0.05 on BSDS500 test-64). DIV2K confirmation `op-v1.0.0-camera-div2k-locked-n50`: ~0.777 (PNG pack, not re-locked). JPEG files and JPEG-like arrays blend 0.5 FSNet into the legacy mix. `--corpus-id` keeps a second pack from clobbering the BSDS sidecar. `veilscan inspect` runs scan then decode into one JSON/HUD. Numbers: `docs/RESULTS_v1.1.md`.
+`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Camera sidecar `op-v1.2.0-camera-locked-n50`: ~0.484 (FPR 0.05 on BSDS500 test-64). DIV2K confirmation `op-v1.0.0-camera-div2k-locked-n50`: ~0.777 (PNG pack, not re-locked). JPEG files and JPEG-like arrays blend 0.5 FSNet into the legacy mix. `--corpus-id` keeps a second pack from clobbering the BSDS sidecar. `veilscan inspect` runs scan then decode into one JSON/HUD. Numbers: `docs/RESULTS_v1.2.md`.
 
 Complementary split (do not mix):
 
@@ -47,7 +47,7 @@ py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write
 py -3 scripts\fetch_camera_covers.py --dry-run
 py -3 scripts\fetch_camera_covers.py
 py -3 scripts\fetch_camera_covers.py --manifest configs\camera_train_covers.manifest.json --out data\covers\camera-train
-py -3 scripts\train_lite.py --fresh --only fsnet_lite --steps 500 --families dct,spread,dwt,tree_ring --jpeg-prob 0.7 --covers data\covers\camera-train --out checkpoints\candidates
+py -3 scripts\train_lite.py --only fsnet_lite --steps 250 --lr 0.0003 --families dct,spread,dwt,tree_ring --jpeg-prob 0.75 --jpeg-attacks jpeg_50,jpeg_50,jpeg_70,jpeg_90 --covers data\covers\camera-train --cover-mix 0.35 --out checkpoints\candidates
 py -3 scripts\probe_fsnet.py --covers data\covers\camera --ckpt-a checkpoints\fsnet_lite.pt --ckpt-b checkpoints\candidates\fsnet_lite.pt
 py -3 -m veilscan bench --covers data\covers\camera --n 50 --attacks identity,jpeg_70 --write-operating-point
 py -3 scripts\fetch_camera_covers.py --manifest configs\camera_div2k_covers.manifest.json --out data\covers\camera-div2k
@@ -101,7 +101,8 @@ Leave-one-algorithm-out work (AWPD / FSNet, UniFreq-100K) shows LSB and Patchwor
 
 ## Docs
 
-- `docs/RESULTS_v1.1.md` -- current numbers (native JPEG path, camera OP)
+- `docs/RESULTS_v1.2.md` -- current numbers (Q50-aware FSNet, camera OP)
+- `docs/RESULTS_v1.1.md` -- native JPEG path
 - `docs/RESULTS_v1.0.md` -- JPEG-hardened FSNet cook and LOAO
 - `docs/RESEARCH.md` -- AWPD survey
 - `docs/ARCHITECTURE.md` -- plugin contract and fusion

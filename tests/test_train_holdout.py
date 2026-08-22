@@ -17,6 +17,17 @@ def _train_mod():
     return mod
 
 
+def test_jpeg_attacks_must_be_jpeg() -> None:
+    mod = _train_mod()
+    ds = mod.SyntheticWM(4, seed=0, jpeg_prob=1.0, jpeg_attacks=("jpeg_50", "jpeg_70"))
+    assert ds.jpeg_attacks == ("jpeg_50", "jpeg_70")
+    try:
+        mod.SyntheticWM(4, seed=0, jpeg_attacks=("blur",))
+        raise AssertionError("expected ValueError")
+    except ValueError:
+        pass
+
+
 def test_holdout_excludes_family() -> None:
     mod = _train_mod()
     ds = mod.SyntheticWM(8, seed=0, holdout="lsb", jpeg_prob=0.0)

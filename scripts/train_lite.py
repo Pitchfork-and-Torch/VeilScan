@@ -77,6 +77,7 @@ class SyntheticWM(Dataset):
         families: list[str] | None = None,
         cover_paths: list[Path] | None = None,
         cover_mix: float = 0.0,
+        jpeg_attacks: tuple[str, ...] | list[str] | None = None,
     ) -> None:
         self.n = n
         self.size = size
@@ -86,6 +87,10 @@ class SyntheticWM(Dataset):
         self.holdout = holdout
         self.cover_paths = list(cover_paths or [])
         self.cover_mix = float(cover_mix)
+        attacks = tuple(jpeg_attacks) if jpeg_attacks else JPEG_CHOICES
+        if not attacks or any(not str(a).startswith("jpeg") for a in attacks):
+            raise ValueError("jpeg_attacks must be jpeg_* names")
+        self.jpeg_attacks = attacks
         src = list(families) if families else list(FAMILIES)
         self.families = [f for f in src if f != holdout]
         if not self.families:
@@ -112,7 +117,7 @@ class SyntheticWM(Dataset):
             img = cover
             y = 0.0
         if self.jpeg_prob > 0 and rng.random() < self.jpeg_prob:
-            attack = JPEG_CHOICES[int(rng.integers(0, len(JPEG_CHOICES)))]
+            attack = self.jpeg_attacks[int(rng.integers(0, len(self.jpeg_attacks)))]
             img = apply_attack(img, attack, rng)
         x = torch.from_numpy(img.astype(np.float32) / 255.0).permute(2, 0, 1)
         return x, torch.tensor(y, dtype=torch.float32)
@@ -161,6 +166,7 @@ def train_one(
     cover_paths: list[Path] | None = None,
     val_paths: list[Path] | None = None,
     cover_mix: float = 0.0,
+    jpeg_attacks: tuple[str, ...] | list[str] | None = None,
 ) -> dict:
     if fresh and out.is_file():
         out.unlink()
@@ -174,6 +180,7 @@ def train_one(
         cover_style=cover_style,
         cover_paths=cover_paths,
         cover_mix=cover_mix,
+        jpeg_attacks=jpeg_attacks,
     )
     val = SyntheticWM(
         160,
@@ -185,6 +192,7 @@ def train_one(
         cover_style=cover_style,
         cover_paths=val_paths if val_paths is not None else cover_paths,
         cover_mix=cover_mix,
+        jpeg_attacks=jpeg_attacks,
     )
     loader = DataLoader(ds, batch_size=batch_size, shuffle=True, num_workers=0)
     vloader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0)
@@ -231,6 +239,7 @@ def train_one(
         "n_cover_paths": len(cover_paths or []),
         "n_val_paths": len(val_paths or []),
         "cover_mix": cover_mix,
+        "jpeg_attacks": list(ds.jpeg_attacks),
     }
 
 
@@ -241,6 +250,11 @@ def main() -> None:
     p.add_argument("--out", default=str(DEFAULT_CKPT))
     p.add_argument("--holdout-family", default=None, help="Exclude this generator family from training (LOAO).")
     p.add_argument("--jpeg-prob", type=float, default=0.35, help="Probability of JPEG attack on each sample.")
+    p.add_argument(
+        "--jpeg-attacks",
+        default="",
+        help="Comma list of jpeg_* attacks. Repeat a quality to bias (default jpeg_90,jpeg_70,jpeg_50).",
+    )
     p.add_argument("--size", type=int, default=SIZE)
     p.add_argument("--only", default="both", help="residual_cnn | fsnet_lite | both")
     p.add_argument("--fresh", action="store_true", help="Do not resume an existing checkpoint.")
@@ -255,6 +269,9 @@ def main() -> None:
     args = p.parse_args()
     device = resolve_device(args.device)
     fams = [x.strip() for x in args.families.split(",") if x.strip()] or None
+    jpeg_attacks = tuple(x.strip() for x in args.jpeg_attacks.split(",") if x.strip()) or JPEG_CHOICES
+    if any(not a.startswith("jpeg") for a in jpeg_attacks):
+        raise SystemExit("ERROR: --jpeg-attacks must be jpeg_* names")
     train_paths: list[Path] | None = None
     val_paths: list[Path] | None = None
     if args.covers:
@@ -276,7 +293,7 @@ def main() -> None:
             if not args.force:
                 raise SystemExit(2)
     bs = args.batch_size or (32 if device == "cuda" else 8)
-    print("device", device, "holdout", args.holdout_family, "jpeg_prob", args.jpeg_prob, "only", args.only, "bs", bs, "families", fams)
+    print("device", device, "holdout", args.holdout_family, "jpeg_prob", args.jpeg_prob, "jpeg_attacks", jpeg_attacks, "only", args.only, "bs", bs, "families", fams)
     root = Path(args.out)
     if root.resolve() == DEFAULT_CKPT.resolve():
         print("WARN: --out is production checkpoints/. Prefer checkpoints/candidates until a probe beats the current FSNet.")
@@ -300,6 +317,7 @@ def main() -> None:
                 cover_paths=train_paths,
                 val_paths=val_paths,
                 cover_mix=args.cover_mix,
+                jpeg_attacks=jpeg_attacks,
             )
         )
     if args.only in ("both", "fsnet_lite"):
@@ -321,6 +339,7 @@ def main() -> None:
                 cover_paths=train_paths,
                 val_paths=val_paths,
                 cover_mix=args.cover_mix,
+                jpeg_attacks=jpeg_attacks,
             )
         )
     manifest = {
@@ -328,6 +347,7 @@ def main() -> None:
         "device": device,
         "holdout_family": args.holdout_family,
         "jpeg_prob": args.jpeg_prob,
+        "jpeg_attacks": list(jpeg_attacks),
         "steps": args.steps,
         "models": recs,
     }

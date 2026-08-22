@@ -1,3 +1,16 @@
+# v1.2.0
+
+Q50-aware FSNet fine-tune. Native JPEG path from v1.1 stays.
+
+Lamp: https://veilscan.jonbailey.xyz/
+
+- Fine-tuned v1.0 FSNet on camera-train with `--jpeg-attacks jpeg_50,jpeg_50,jpeg_70,jpeg_90`
+- From-scratch Q50 cook rejected (identity DCT TPR 0.96 -> 0.38)
+- JPEG50 ensemble TPR@5%FPR: DCT 0.18 -> 0.32, DWT 0.42 -> 0.56, spread 0.30 -> 0.48, tree-ring 0.80 -> 0.94
+- JPEG70 DWT 0.80 -> 0.88. Identity DCT held
+- Camera sidecar `op-v1.2.0-camera-locked-n50` ~0.484. Generator lock ~0.67 FPR on BSDS 0.01
+- Fusion `legacy`. Patchwork weight 0. ResidualCNN unchanged. No stripper. Proprietary.
+
 # v1.1.0
 
 Native JPEG path. File bytes decide `jpeg_like`, not only 8x8 ringing.

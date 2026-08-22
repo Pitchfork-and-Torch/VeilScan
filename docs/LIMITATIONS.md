@@ -17,20 +17,20 @@
   `configs/operating_point.camera.json` (BSDS500 test-64, n=50). n<50 is
   `provisional`. Do not quote either as ImageNet FPR.
 - **Decision threshold** for default `present` is still the generator lock
-  ~0.67 (`op-v0.4.0-locked-n50`). v1.1 JPEG-container blend dropped BSDS
-  camera FPR at that cut to 0.07 (v1.0 was 0.66). The camera sidecar cut
-  is ~0.739 (`op-v1.1.0-camera-locked-n50`, FPR 0.05). Scan JSON adds
-  `camera` when the sidecar exists. Default `present` is not flipped.
-  DIV2K valid-HR is still a PNG pack (v1.0 sidecar ~0.777). UniFreq-100K
-  is not in tree. JPEG70 DWT TPR@5%FPR is 0.80 (v1.0 was 0.30). JPEG
-  files blend FSNet into the mix.
+  ~0.67 (`op-v0.4.0-locked-n50`). BSDS camera FPR at that cut is 0.01
+  (v1.1 was 0.07, v1.0 was 0.66). The camera sidecar cut is ~0.484
+  (`op-v1.2.0-camera-locked-n50`, FPR 0.05), now below the generator lock
+  because unmarked JPEG scores fell. Scan JSON adds `camera` when the
+  sidecar exists. Default `present` is not flipped. DIV2K valid-HR is
+  still a PNG pack (v1.0 sidecar ~0.777). UniFreq-100K is not in tree.
+  JPEG50 DCT TPR@5%FPR is 0.32. JPEG files blend FSNet into the mix.
 - Fusion mode stays `legacy`. specialist-OR FPR was 0.14 vs 0.05 in-sample.
   Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
   OR unless that nested FPR also holds.
-- **JPEG70 LSB** dies on camera stills (TPR@5%FPR 0.06). Identity LSB on
+- **JPEG70 LSB** dies on camera stills (TPR@5%FPR 0.04). Identity LSB on
   a JPEG raster is also not a field path after the container blend
-  (TPR@5%FPR 0.06). PNG LSB is unchanged. Frequency JPEG70 DWT TPR is
-  0.80. JPEG50 DCT TPR is 0.18. Quote `docs/RESULTS_v1.1.md`.
+  (TPR@5%FPR 0.10). PNG LSB is unchanged. Frequency JPEG70 DWT TPR is
+  0.88. JPEG50 DCT TPR is 0.32. Quote `docs/RESULTS_v1.2.md`.
 - **Patchwork is unsupported** on camera stills. A keyless permutation-null
   pair-mean test (v0.9) is AUC 0.50 / TPR@5%FPR 0.08 on BSDS n=24. Camera
   ensemble TPR stays ~0.02-0.10. YAML weight is 0 so the head cannot pollute

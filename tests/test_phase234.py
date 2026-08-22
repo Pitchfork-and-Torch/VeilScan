@@ -10,7 +10,7 @@ from veilscan.types import SCHEMA_VERSION
 
 
 def test_version() -> None:
-    assert __version__ == "1.1.0"
+    assert __version__ == "1.2.0"
 
 
 def test_schema_version_json() -> None:
@@ -57,7 +57,8 @@ def test_camera_sidecar_file_does_not_replace_generator() -> None:
     cam_id = str(cam.get("id") or "")
     assert cam_id.startswith("op-v1.") and "camera" in cam_id and "div2k" not in cam_id
     assert cam.get("status") == "locked"
-    assert float(cam["threshold"]) > float(gen["threshold"])
+    assert cam.get("id") != gen.get("id")
+    assert float(cam["threshold"]) != float(gen["threshold"])
 
 
 def test_identity_calibration_noop() -> None:
