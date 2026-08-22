@@ -66,9 +66,9 @@ comparable to v1.0. JPEG50 lives in `cells`, not in `operating_slice`.
 - [x] Camera n=50 sidecar rewritten; generator lock file untouched
 - [x] Nested OR still not default
 - [x] Pytest green
-- [ ] Lamp mast + JSON-LD softwareVersion 1.1.0. Site cache-bust **1.4.0**
+- [x] Lamp mast + JSON-LD softwareVersion 1.1.0. Site cache-bust **1.4.0**
       (do not reuse `?v=1.1.0`; that URL already meant an older OG card)
-- [ ] Latest-only private GitHub release `v1.1.0`
+- [x] Latest-only private GitHub release `v1.1.0`
 
 ## 5. Not this cut
 
