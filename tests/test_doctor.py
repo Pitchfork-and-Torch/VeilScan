@@ -15,7 +15,8 @@ def test_doctor_ok_json() -> None:
     cam_id = str(report["camera_operating_point"].get("id") or "")
     assert cam_id.startswith("op-v1.") and "camera" in cam_id and "div2k" not in cam_id
     div = report.get("camera_div2k_operating_point") or {}
-    assert str(div.get("id") or "").startswith("op-v1.0.0-camera-div2k")
+    div_id = str(div.get("id") or "")
+    assert "div2k" in div_id and div_id.startswith("op-v1.")
     names = {row["name"] for row in report["checkpoints"]}
     assert "residual_cnn" in names
     assert "fsnet_lite" in names

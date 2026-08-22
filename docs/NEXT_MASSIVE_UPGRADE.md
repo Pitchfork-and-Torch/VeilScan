@@ -1,13 +1,14 @@
-# Field JPEG stack after v1.4.0
+# Field JPEG stack (done through Stage C)
 
-**Status:** Stage A SHIPPED (v1.4.0 quality-aware blend, schema 5).
-JPEG50 DCT TPR still 0.46. Identity LSB 0.14 (was 0.06).
+**Status:** A v1.4 blend, B v1.5 `--policy`, C v1.6 confirmation SHIPPED.
 
-## Remaining stages
+- DIV2K PNG: generator FPR 0.59 at 0.67. Sidecar ~0.796. Confirmation only.
+- BSDS 256px: TPR collapsed. Canonical lock stays 128px v1.4 ~0.756.
+- LOAO holdout-dct: DCT TPR 0.98 -> 0.08. FSNet is still a specialist.
 
-- **B v1.5:** `--policy generator|camera|both` (default generator).
-- **C v1.6:** DIV2K re-lock, 256px BSDS confirmation, LOAO holdout-dct.
-- **D held:** DCT-Q50 cook only if needed; A did not lift 0.46.
+## Optional leftover
 
-Rails unchanged: do not flip default `present`, no from-scratch Q50, no
-lsb on FSNet, no frozen test pack, no remover.
+JPEG50 DCT ensemble TPR 0.46. Stage D cook only with the v1.3 rails
+(resume weights, no from-scratch Q50, camera FPR at 0.67 <= 0.12).
+
+Do not flip default `present`. Do not replace 128px BSDS lock with 256px.

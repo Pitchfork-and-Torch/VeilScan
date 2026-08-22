@@ -17,11 +17,12 @@
   `configs/operating_point.camera.json` (BSDS500 test-64, n=50). n<50 is
   `provisional`. Do not quote either as ImageNet FPR.
 - **Decision threshold** for default `present` is still the generator lock
-  ~0.67 (`op-v0.4.0-locked-n50`). BSDS camera FPR at that cut is 0.08
-  (v1.2 was 0.01, v1.0 was 0.66). The camera sidecar cut is ~0.758
-  (`op-v1.4.0-camera-locked-n50`, FPR 0.05). Scan JSON schema 5 adds
+  ~0.67 (`op-v0.4.0-locked-n50`). BSDS camera FPR at that cut is 0.08.
+  The camera sidecar cut is ~0.756 (`op-v1.4.0-camera-locked-n50`).
+  DIV2K PNG confirmation ~0.796 with generator FPR 0.59. BSDS 256px TPR
+  collapsed; 128px lock stays. LOAO holdout-dct still collapses. Schema 5
   `jpeg_freq_weight`. Default `present` is not flipped. JPEG50 DCT
-  TPR@5%FPR is 0.46. Blend weight follows JPEG quality.
+  TPR@5%FPR is 0.46.
 - Fusion mode stays `legacy`. specialist-OR FPR was 0.14 vs 0.05 in-sample.
   Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
   OR unless that nested FPR also holds.

@@ -1,9 +1,9 @@
 {
-  "id": "op-v1.0.0-camera-div2k-locked-n50",
+  "id": "op-v1.6.0-camera-div2k-locked-n50",
   "status": "locked",
-  "threshold": 0.777083,
+  "threshold": 0.795951,
   "t_lsb": 0.364777,
-  "t_freq": 0.80634,
+  "t_freq": 0.866357,
   "t_class": 0.981627,
   "fpr_est": 0.05,
   "fpr_target": 0.05,
@@ -16,5 +16,5 @@
     "camera/jpeg_70"
   ],
   "fusion_mode": "legacy",
-  "notes": "v1.0 DIV2K valid-HR confirmation. Does not replace the generator lock or the BSDS scan JSON camera sidecar. specialist_or did not beat legacy FPR; default stays legacy."
+  "notes": "v1.6 DIV2K PNG confirmation. Does not replace generator lock or BSDS camera sidecar. Identity PNG still false-fires at 0.67 (FPR 0.59). specialist_or did not beat legacy FPR."
 }

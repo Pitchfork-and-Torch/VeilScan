@@ -1,3 +1,14 @@
+# v1.6.0
+
+Confirmation. No production recook. 128px BSDS camera sidecar unchanged.
+
+Lamp: https://veilscan.jonbailey.xyz/
+
+- DIV2K PNG sidecar `op-v1.6.0-camera-div2k-locked-n50` ~0.796. Generator FPR 0.59 (identity PNG, no JPEG blend)
+- BSDS 256px TPR collapsed. Do not replace 128px lock. FPR 0.02 at 0.67 is not a win
+- LOAO holdout-dct: production DCT TPR 0.98 -> 0.08. Specialist is still real
+- `--policy` and schema 5 blend unchanged. Default present stays generator
+
 # v1.5.0
 
 Camera policy CLI. Default present stays generator.

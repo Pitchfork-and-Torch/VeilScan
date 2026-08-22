@@ -1,7 +1,7 @@
 # VeilScan upgrade plan (v0.1.0 -> production-grade AWPD)
 
 **Status:** historical v0.1 -> v0.2 map. Written 2026-08-20.
-**Next science contract:** `docs/NEXT_MASSIVE_UPGRADE.md`. Current package v1.4.0 (`docs/RESULTS_v1.4.md`). Field JPEG stack Stage A shipped.
+**Next science contract:** `docs/NEXT_MASSIVE_UPGRADE.md`. Current package v1.6.0 (`docs/RESULTS_v1.6.md`). Field JPEG stack A+B+C shipped.
 Phases 2-4 sprint: `docs/PHASES_2_3_4.md` (landed).  
 **Identity:** presence plus keyless plaintext decode. No removal.
 
