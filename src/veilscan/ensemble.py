@@ -101,11 +101,18 @@ def fuse(
     op_id = mix.get("operating_point_id")
     op_id = str(op_id) if op_id else None
 
+    jpeg_like_flag = bool(mix.get("jpeg_like"))
     if mode == "specialist_or":
         score = float(max(lsb_score, freq_score, class_score, mix_score))
         present = lsb_score >= t_lsb or freq_score >= t_freq or class_score >= t_class
     else:
         score = mix_score
+        # v1.0: JPEG arrays pull toward FSNet so Q70 frequency marks are not
+        # drowned by hot classical heads. Identity / PNG stays legacy mix.
+        if jpeg_like_flag and freq_score > 0:
+            w_freq = float(mix.get("jpeg_freq_weight", 0.5))
+            w_freq = min(max(w_freq, 0.0), 1.0)
+            score = (1.0 - w_freq) * mix_score + w_freq * freq_score
         present = score >= threshold
 
     family_hint = _family_hint(present, lsb_score, freq_score, class_score, t_lsb, t_freq, t_class)
@@ -146,6 +153,7 @@ def fuse(
         freq_score=freq_score,
         class_score=class_score,
         operating_point_id=op_id,
+        jpeg_like=jpeg_like_flag,
     )
 
 

@@ -18,6 +18,7 @@ peak_ok:
 
 fusion:
   mode: legacy
+  jpeg_freq_weight: 0.5
   full_mean: 0.20
   ok_mean: 0.20
   top_mean: 0.20

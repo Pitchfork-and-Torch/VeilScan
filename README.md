@@ -4,13 +4,13 @@ Local, algorithm-agnostic **invisible watermark presence detector** with a **key
 
 It answers: *does this image contain an invisible watermark?* and, when the payload is sequential LSB / PNG text / JPEG comment, *what does the text say?* It does not strip a mark. It does not break SynthID, Digimarc, encrypted stego, or neural watermarks.
 
-v0.9.0 labels **patchwork unsupported** on camera stills (keyless pair-mean permutation null AUC 0.50). YAML weight 0. Generator lock ~0.67 still default `present` (DIV2K FPR 0.83). BSDS camera sidecar ~0.753. Fusion `legacy`. FSNet is the v0.7 mix cook (no `lsb`). ResidualCNN unchanged. Do not vendor UniFreq or personal photos in git.
+v1.0.0 is the first production cut: JPEG-hardened FSNet, JPEG-aware ensemble blend, measured camera OP ~0.758, LOAO proof that FSNet is a frequency specialist. Default `present` stays the generator lock ~0.67 (camera FPR 0.66 at that cut). Patchwork remains unsupported (weight 0). ResidualCNN unchanged. Do not vendor UniFreq or personal photos in git.
 
 ## Synthetic numbers
 
 `py -3 -m veilscan selftest` is a fast n=6 @ 128px smoke, not an operating point.
 
-`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Camera sidecar `op-v0.7.0-camera-locked-n50`: ~0.753 (FPR 0.05 on BSDS500 test-64). DIV2K confirmation `op-v0.8.0-camera-div2k-locked-n50`: ~0.765. Fusion stays `legacy`. `--corpus-id` keeps a second pack from clobbering the BSDS sidecar. `veilscan inspect` runs scan then decode into one JSON/HUD. Numbers: `docs/RESULTS_v0.9.md`.
+`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Camera sidecar `op-v1.0.0-camera-locked-n50`: ~0.758 (FPR 0.05 on BSDS500 test-64). DIV2K confirmation `op-v1.0.0-camera-div2k-locked-n50`: ~0.777. JPEG-like arrays blend 0.5 FSNet into the legacy mix. `--corpus-id` keeps a second pack from clobbering the BSDS sidecar. `veilscan inspect` runs scan then decode into one JSON/HUD. Numbers: `docs/RESULTS_v1.0.md`.
 
 Complementary split (do not mix):
 

@@ -11,5 +11,5 @@ Agnostic invisible-watermark presence detector plus keyless plaintext decode. Lo
 - ASCII punctuation in public files. UTF-8 no BOM.
 - Tests: `py -3 -m pytest` from this folder after `pip install -e .`
 - CLI: `py -3 -m veilscan scan PATH` and `py -3 -m veilscan decode PATH`
-- Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md`. v0.9.0 patchwork unsupported (weight 0). Generator 0.67 FPR 0.83 on DIV2K. BSDS sidecar stays default camera JSON. Fusion legacy. No remover. No personal photos in git. Do not train FSNet on `data/covers/camera` (frozen test).
+- Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md`. v1.0.0 production cut. Camera sidecar ~0.758. Generator present stays ~0.67. Patchwork weight 0. JPEG-aware blend on jpeg_like arrays. No remover. No personal photos in git. Do not train FSNet on `data/covers/camera`.
 - Fusion `peak_ok` lives in `configs/default.yaml`, not hardcoded.

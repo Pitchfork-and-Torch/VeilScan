@@ -256,6 +256,24 @@ def laplacian_negloglike(coeff: np.ndarray) -> float:
     return float(nll - gauss_nll)
 
 
+def jpeg_blockiness(rgb: np.ndarray) -> float:
+    """8x8 grid discontinuity vs 1-pixel neighbors. JPEG roundtrips raise this."""
+    g = to_gray(rgb)
+    if g.shape[0] < 24 or g.shape[1] < 24:
+        return 0.0
+    dx = np.abs(g[:, 1:] - g[:, :-1])
+    dy = np.abs(g[1:, :] - g[:-1, :])
+    step = np.mean(dx) + np.mean(dy) + 1e-12
+    bx = dx[:, 7::8].mean() if dx.shape[1] >= 8 else 0.0
+    by = dy[7::8, :].mean() if dy.shape[0] >= 8 else 0.0
+    return float((bx + by) / step)
+
+
+def jpeg_like(rgb: np.ndarray, threshold: float = 1.10) -> bool:
+    """Pixel-domain JPEG cue. True after jpeg_70/50 and most camera JPEGs."""
+    return jpeg_blockiness(rgb) >= float(threshold)
+
+
 def score_from_stat(stat: float, center: float, scale: float, invert: bool = False) -> float:
     z = (stat - center) / max(scale, 1e-9)
     if invert:

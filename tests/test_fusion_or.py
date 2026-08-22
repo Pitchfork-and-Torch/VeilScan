@@ -6,8 +6,8 @@ def _r(name: str, score: float, skipped: bool = False) -> DetectionResult:
     return DetectionResult(name, score, 0.9, "x", skipped=skipped, tier="deep")
 
 
-def test_schema_version_is_2() -> None:
-    assert SCHEMA_VERSION == 2
+def test_schema_version_is_3() -> None:
+    assert SCHEMA_VERSION == 3
 
 
 def test_legacy_family_hint_lsb() -> None:
@@ -22,7 +22,8 @@ def test_legacy_family_hint_lsb() -> None:
     assert r.lsb_score == 0.91
     assert r.freq_score == 0.12
     js = r.to_json()
-    assert js["schema_version"] == 2
+    assert js["schema_version"] == 3
+    assert "jpeg_like" in js
     assert "family_hint" in js
 
 
@@ -76,3 +77,32 @@ def test_skipped_specialists_are_zero() -> None:
     assert r.freq_score == 0.0
     assert r.present
     assert r.family_hint == "classical"
+
+
+def test_jpeg_like_pulls_toward_freq() -> None:
+    crowd = [
+        _r("residual_cnn", 0.10),
+        _r("fsnet_lite", 0.90),
+        _r("chi_square", 0.70),
+        _r("dct", 0.68),
+    ]
+    mix = {"mode": "legacy", "jpeg_like": True, "jpeg_freq_weight": 0.5, "peak": 0.4}
+    r = fuse(
+        crowd,
+        {"residual_cnn": 1.0, "fsnet_lite": 1.2, "chi_square": 1.0, "dct": 1.0},
+        0.67,
+        (16, 16, 3),
+        mix=mix,
+    )
+    mix_off = dict(mix)
+    mix_off["jpeg_like"] = False
+    r_off = fuse(
+        crowd,
+        {"residual_cnn": 1.0, "fsnet_lite": 1.2, "chi_square": 1.0, "dct": 1.0},
+        0.67,
+        (16, 16, 3),
+        mix=mix_off,
+    )
+    assert r.jpeg_like is True
+    assert r.score > r_off.score
+    assert r.freq_score == 0.90

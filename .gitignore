@@ -13,6 +13,7 @@ checkpoints/*.pt
 !checkpoints/manifest.json
 checkpoints/candidates/
 checkpoints/archive/
+checkpoints/loao/
 checkpoints/*.onnx
 *.onnx
 examples/_demo_out/

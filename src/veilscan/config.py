@@ -28,6 +28,7 @@ DEFAULT_FUSION = {
     "top_k": 3,
     "uncertainty": "peak_ok",
     "mode": "legacy",
+    "jpeg_freq_weight": 0.5,
     "t_lsb": 0.50,
     "t_freq": 0.50,
     "t_class": 0.48,

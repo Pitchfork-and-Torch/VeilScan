@@ -1,9 +1,9 @@
 {
-  "id": "op-v0.7.0-camera-locked-n50",
+  "id": "op-v1.0.0-camera-locked-n50",
   "status": "locked",
-  "threshold": 0.752717,
+  "threshold": 0.757836,
   "t_lsb": 0.345267,
-  "t_freq": 0.875411,
+  "t_freq": 0.771279,
   "t_class": 0.959054,
   "fpr_est": 0.05,
   "fpr_target": 0.05,
@@ -16,5 +16,5 @@
     "camera/jpeg_70"
   ],
   "fusion_mode": "legacy",
-  "notes": "Camera stills pack sidecar. Does not replace the generator lock. Do not cite as UniFreq/ImageNet FPR. specialist_or did not beat legacy FPR; default stays legacy."
+  "notes": "v1.0 BSDS camera sidecar after JPEG-hardened FSNet + jpeg-aware blend. Does not replace the generator lock. specialist_or did not beat legacy FPR; default stays legacy."
 }

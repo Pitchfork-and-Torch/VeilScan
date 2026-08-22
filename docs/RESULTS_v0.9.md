@@ -1,5 +1,7 @@
 # VeilScan v0.9.0
 
+Historical patchwork decision. Current numbers: `docs/RESULTS_v1.0.md`.
+
 Patchwork labeled **unsupported** on camera stills. Keyless permutation-null
 pair-mean test does not separate the eval generator (secret pairing). YAML
 weight 0 so the head cannot pollute `full_mean`.

@@ -18,12 +18,12 @@
   `provisional`. Do not quote either as ImageNet FPR.
 - **Decision threshold** for default `present` is still the generator lock
   ~0.67 (`op-v0.4.0-locked-n50`). Camera stills sit near ensemble 0.71, so
-  that lock false-fires on BSDS500 and DIV2K. The camera sidecar cut is ~0.753
-  (`op-v0.7.0-camera-locked-n50`, FPR 0.05). Scan JSON adds `camera` when
-  the sidecar exists. Default `present` is not flipped in v0.9. DIV2K
-  valid-HR FPR at 0.67 is 0.83; at the BSDS cut 0.753 it is 0.12. UniFreq-100K
-  is not in tree. FSNet no longer saturates on BSDS (`t_freq` 0.875).
-  BSDS identity DCT TPR@5%FPR is 0.96 (v0.6 was 0.06). JPEG70 DCT is 0.44.
+  that lock false-fires on BSDS500 and DIV2K. The camera sidecar cut is ~0.758
+  (`op-v1.0.0-camera-locked-n50`, FPR 0.05). Scan JSON adds `camera` when
+  the sidecar exists. Default `present` is not flipped in v1.0. DIV2K
+  valid-HR FPR at 0.67 is 0.72. UniFreq-100K is not in tree. JPEG70 DCT
+  ensemble TPR@5%FPR is 0.64 (v0.7 was 0.44). JPEG-like arrays blend FSNet
+  into the mix.
 - Fusion mode stays `legacy`. specialist-OR FPR was 0.14 vs 0.05 in-sample.
   Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
   OR unless that nested FPR also holds.

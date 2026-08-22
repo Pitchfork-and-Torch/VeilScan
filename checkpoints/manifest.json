@@ -13,10 +13,10 @@
     {
       "name": "fsnet_lite",
       "file": "fsnet_lite.pt",
-      "sha256": "6e45dbba4852c612679f3c1f957fc8040f0077c4826e0dfab9a9002b9472e580",
-      "val_auc": 0.97,
+      "sha256": "7ead6ac360f3dcce96ca9138bd988c9686988dd7bab4b8c9f555627a7af070f9",
+      "val_auc": 0.971,
       "peak_ok": true,
-      "note": "9-ch stem RGB+LSB+HP. v0.7 camera-train mix (cover-mix 0.4, families dct,spread,dwt,tree_ring, no lsb)."
+      "note": "v1.0 JPEG-hardened. camera-train mix 0.35, jpeg_prob 0.7, families dct,spread,dwt,tree_ring, no lsb."
     }
   ]
 }

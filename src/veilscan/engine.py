@@ -13,6 +13,7 @@ from veilscan.config import (
     merge_operating_point,
     resolve_device,
 )
+from veilscan.dsp import jpeg_blockiness, jpeg_like
 from veilscan.ensemble import fuse
 from veilscan.image_io import tiles
 from veilscan.registry import ensure_loaded, select
@@ -39,7 +40,7 @@ def analyze_image(
 
     if len(pieces) == 1:
         results = [_safe(d, rgb, ctx) for d in dets]
-        return _fuse_calibrated(results, cfg, rgb.shape)
+        return _fuse_calibrated(results, cfg, rgb.shape, rgb)
 
     # Per-detector: take the max tile score (a mark in one tile is enough).
     # Heatmaps stitched by overlap-average.
@@ -79,16 +80,25 @@ def analyze_image(
         extras["tile_mean"] = float(np.mean([r.score for r in live]))
         best.extras = extras
         merged.append(best)
-    return _fuse_calibrated(merged, cfg, rgb.shape)
+    return _fuse_calibrated(merged, cfg, rgb.shape, rgb)
 
 
-def _fuse_calibrated(results: list, cfg: VeilConfig, shape: tuple[int, ...]) -> EnsembleResult:
+def _fuse_calibrated(
+    results: list,
+    cfg: VeilConfig,
+    shape: tuple[int, ...],
+    rgb: np.ndarray | None = None,
+) -> EnsembleResult:
     op = load_operating_point(cfg.operating_point_path)
     mix = merge_operating_point(cfg.fusion, op)
     threshold = float(cfg.threshold)
     if op and str(op.get("status") or "") == "locked" and op.get("threshold") is not None:
         if mix.get("mode") != "specialist_or":
             threshold = float(op["threshold"])
+    blockiness = 0.0
+    if rgb is not None:
+        blockiness = jpeg_blockiness(rgb)
+        mix["jpeg_like"] = jpeg_like(rgb)
     if cfg.apply_calibration:
         from veilscan.calibrate import apply_affine, load_calibration
 
@@ -103,11 +113,13 @@ def _fuse_calibrated(results: list, cfg: VeilConfig, shape: tuple[int, ...]) -> 
         fused.score = float(np.clip(fused.score, 0.0, 1.0))
         if mix.get("mode") != "specialist_or":
             fused.present = fused.score >= fused.threshold
+        fused.jpeg_blockiness = float(blockiness)
+        fused.jpeg_like = bool(mix.get("jpeg_like"))
         return _attach_camera(fused, cfg)
-    return _attach_camera(
-        fuse(results, cfg.weights, threshold, shape, peak_ok=cfg.peak_ok, mix=mix),
-        cfg,
-    )
+    fused = fuse(results, cfg.weights, threshold, shape, peak_ok=cfg.peak_ok, mix=mix)
+    fused.jpeg_blockiness = float(blockiness)
+    fused.jpeg_like = bool(mix.get("jpeg_like"))
+    return _attach_camera(fused, cfg)
 
 
 def _attach_camera(fused: EnsembleResult, cfg: VeilConfig) -> EnsembleResult:

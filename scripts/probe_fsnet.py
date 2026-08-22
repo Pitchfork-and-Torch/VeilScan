@@ -53,11 +53,14 @@ def probe_ckpt(
     rng = np.random.default_rng(seed)
     for i, cover in enumerate(covers):
         marked = embed(cover, family, seed=seed + i)
+        cover_a = cover
+        marked_a = marked
         if attack != "identity":
-            marked = apply_attack(marked, attack, rng)
-        s.append(_score(model, cover, device))
+            cover_a = apply_attack(cover, attack, rng)
+            marked_a = apply_attack(marked, attack, rng)
+        s.append(_score(model, cover_a, device))
         y.append(0)
-        s.append(_score(model, marked, device))
+        s.append(_score(model, marked_a, device))
         y.append(1)
     y_a = np.asarray(y)
     s_a = np.asarray(s, dtype=np.float64)
