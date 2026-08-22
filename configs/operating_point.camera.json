@@ -1,7 +1,7 @@
 {
-  "id": "op-v1.3.0-camera-locked-n50",
+  "id": "op-v1.4.0-camera-locked-n50",
   "status": "locked",
-  "threshold": 0.757765,
+  "threshold": 0.75553,
   "t_lsb": 0.345267,
   "t_freq": 0.777408,
   "t_class": 0.959054,
@@ -16,5 +16,5 @@
     "camera/jpeg_70"
   ],
   "fusion_mode": "legacy",
-  "notes": "v1.3 DCT-heavy Q50 FSNet fine-tune. Does not replace default present ~0.67. specialist_or did not beat legacy FPR; default stays legacy."
+  "notes": "v1.4 quality-aware jpeg_freq_weight (schema 5). Does not replace default present ~0.67. specialist_or did not beat legacy FPR; default stays legacy."
 }

@@ -11,5 +11,5 @@ Agnostic invisible-watermark presence detector plus keyless plaintext decode. Lo
 - ASCII punctuation in public files. UTF-8 no BOM.
 - Tests: `py -3 -m pytest` from this folder after `pip install -e .`
 - CLI: `py -3 -m veilscan scan PATH` and `py -3 -m veilscan decode PATH`
-- Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md`. v1.3.0 DCT-Q50 FSNet. Generator present stays ~0.67. Patchwork weight 0. Do not from-scratch Q50 cooks. No remover. No personal photos in git. Do not train FSNet on `data/covers/camera`.
+- Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md`. v1.4.0 quality-aware blend (schema 5). Generator present stays ~0.67. Patchwork weight 0. Stage B is `--policy`. No from-scratch Q50. No remover. Do not train FSNet on `data/covers/camera`.
 - Fusion `peak_ok` lives in `configs/default.yaml`, not hardcoded.

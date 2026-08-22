@@ -1,20 +1,13 @@
-# Next leftover after v1.3.0
+# Field JPEG stack after v1.4.0
 
-**Status:** v1.3.0 SHIPPED. JPEG50 DCT ensemble TPR is 0.46 (was 0.18 at
-v1.1, 0.32 at v1.2). Still not a solved family.
+**Status:** Stage A SHIPPED (v1.4.0 quality-aware blend, schema 5).
+JPEG50 DCT TPR still 0.46. Identity LSB 0.14 (was 0.06).
 
-Lamp: https://veilscan.jonbailey.xyz/ now lists inspect, JPEG container
-fields, ResidualCNN vs FSNet, doctor, and honest Q50 DCT limits.
+## Remaining stages
 
-## Do not break
+- **B v1.5:** `--policy generator|camera|both` (default generator).
+- **C v1.6:** DIV2K re-lock, 256px BSDS confirmation, LOAO holdout-dct.
+- **D held:** DCT-Q50 cook only if needed; A did not lift 0.46.
 
-- Generator lock `op-v0.4.0-locked-n50` ~0.67. Never overwrite from `--covers`.
-- FSNet cook: no `lsb`. No frozen BSDS test. No from-scratch Q50.
-- ResidualCNN unchanged unless a measured LSB hole appears.
-- Patchwork weight 0. Fusion `legacy` unless nested OR FPR also holds.
-- No remover. No Gradio from a Grok Build command.
-
-## Optional next
-
-Another DCT-Q50 fine-tune, or stop and leave DCT at Q50 labeled weak.
-Do not flip default `present`. DIV2K sidecar is still the v1.0 PNG pack.
+Rails unchanged: do not flip default `present`, no from-scratch Q50, no
+lsb on FSNet, no frozen test pack, no remover.

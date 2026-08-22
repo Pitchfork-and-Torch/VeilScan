@@ -1,28 +1,24 @@
-# Resume (v1.3.0)
+# Resume (v1.4.0)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v1.3.0 DCT-Q50 FSNet.
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v1.4.0 quality-aware blend.
 Public lamp: https://veilscan.jonbailey.xyz/
 
 ## Where we stopped
 
-- Lamp copy matches CLI: inspect, JPEG SOI/Q-table/subsampling, ResidualCNN vs FSNet, doctor, schema 4, JPEG+PNG drop.
-- DCT-heavy Q50 fine-tune of v1.2 weights. Ensemble JPEG50 DCT 0.32 -> 0.46.
-- Camera sidecar `op-v1.3.0-camera-locked-n50` ~0.758.
-- Generator lock ~0.67 FPR on BSDS camera 0.08. Not flipped.
-- Fusion `legacy`. Patchwork weight 0.
+- Schema 5 `jpeg_freq_weight` from JPEG quality. No FSNet recook.
+- Camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756.
+- Generator lock ~0.67 FPR on BSDS 0.08. JPEG50 DCT TPR 0.46 held.
+- Field JPEG stack Stage A shipped. Next: Stage B `--policy`.
 
 ## Next
 
-JPEG50 DCT is still incomplete (0.46). Optional: another fine-tune or
-leave it labeled weak. Do not flip default `present`. Not another YAML
-weight on patchwork. DIV2K sidecar still v1.0 (PNG pack).
+Stage B: `scan|inspect --policy generator|camera|both` (default generator).
+Then Stage C: DIV2K re-lock, 256px confirmation, LOAO. Stage D cook only
+if DCT-Q50 needs it. Do not flip default `present`.
 
 ## Do not
 
 - Mix LSB into the FSNet cook
 - Train on `data/covers/camera`
-- Personal photos in git
-- UniFreq in git
-- Remover
-- Gradio from a Grok Build command
 - From-scratch Q50 cooks
+- Remover / UniFreq / Gradio from Grok

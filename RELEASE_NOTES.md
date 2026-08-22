@@ -1,3 +1,14 @@
+# v1.4.0
+
+Quality-aware FSNet blend. Schema 5. No recook.
+
+Lamp: https://veilscan.jonbailey.xyz/
+
+- `jpeg_freq_weight` from Q-table: 0.25 at Q90+, ~0.48 at Q70, 0.70 at Q50
+- JPEG50 DCT TPR holds 0.46. Identity LSB 0.06 -> 0.14 (lighter high-Q blend)
+- Camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756. Generator lock ~0.67 FPR 0.08
+- Fusion `legacy`. Patchwork weight 0. No stripper.
+
 # v1.3.0
 
 DCT-heavy Q50 FSNet fine-tune. Lamp lists inspect, JPEG container fields, and honest Q50 DCT limits.

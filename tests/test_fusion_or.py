@@ -6,8 +6,8 @@ def _r(name: str, score: float, skipped: bool = False) -> DetectionResult:
     return DetectionResult(name, score, 0.9, "x", skipped=skipped, tier="deep")
 
 
-def test_schema_version_is_4() -> None:
-    assert SCHEMA_VERSION == 4
+def test_schema_version_is_5() -> None:
+    assert SCHEMA_VERSION == 5
 
 
 def test_legacy_family_hint_lsb() -> None:
@@ -22,8 +22,9 @@ def test_legacy_family_hint_lsb() -> None:
     assert r.lsb_score == 0.91
     assert r.freq_score == 0.12
     js = r.to_json()
-    assert js["schema_version"] == 4
+    assert js["schema_version"] == 5
     assert "jpeg_container" in js
+    assert "jpeg_freq_weight" in js
     assert "jpeg_like" in js
     assert "family_hint" in js
 

@@ -192,7 +192,10 @@ def run_bench(
                 cover_a = apply_attack(cover, attack, atk_rng)
                 src_jpeg = bool(jpeg_container[i]) if jpeg_container is not None and i < len(jpeg_container) else False
                 hint = src_jpeg or attack.startswith("jpeg")
-                c_res = analyze_image(cover_a, cfg, names, jpeg_container=hint)
+                q_est = None
+                if attack.startswith("jpeg_") and attack.split("_")[-1].isdigit():
+                    q_est = int(attack.split("_")[-1])
+                c_res = analyze_image(cover_a, cfg, names, jpeg_container=hint, jpeg_quality_est=q_est)
                 cover_scores.append(float(c_res.score))
                 cover_lsb.append(float(c_res.lsb_score))
                 cover_freq.append(float(c_res.freq_score))
@@ -201,7 +204,7 @@ def run_bench(
                     fam_off = 17 + 97 * families.index(fam)
                     marked = embed(cover, fam, seed=cover_seed + fam_off)
                     marked_a = apply_attack(marked, attack, np.random.default_rng(cover_seed + 91))
-                    m_res = analyze_image(marked_a, cfg, names, jpeg_container=hint)
+                    m_res = analyze_image(marked_a, cfg, names, jpeg_container=hint, jpeg_quality_est=q_est)
                     rec = by_fam.setdefault(fam, {"y": [], "score": [], "lsb": [], "freq": [], "klass": []})
                     rec["y"].extend([0, 1])
                     rec["score"].extend([float(c_res.score), float(m_res.score)])

@@ -16,7 +16,7 @@ from veilscan.config import (
 from veilscan.dsp import jpeg_blockiness, jpeg_like
 from veilscan.ensemble import fuse
 from veilscan.image_io import tiles
-from veilscan.jpeg_meta import inspect_jpeg
+from veilscan.jpeg_meta import inspect_jpeg, jpeg_freq_weight
 from veilscan.registry import ensure_loaded, select
 from veilscan.types import AnalyzeContext, DetectionResult, EnsembleResult
 
@@ -29,6 +29,7 @@ def analyze_image(
     *,
     jpeg_container: bool | None = None,
     source_bytes: bytes | None = None,
+    jpeg_quality_est: int | None = None,
 ) -> EnsembleResult:
     ensure_loaded()
     device = resolve_device(cfg.device)
@@ -55,6 +56,7 @@ def analyze_image(
             rgb,
             jpeg_container=jpeg_container,
             source_bytes=source_bytes,
+            jpeg_quality_est=jpeg_quality_est,
         )
 
     # Per-detector: take the max tile score (a mark in one tile is enough).
@@ -102,6 +104,7 @@ def analyze_image(
         rgb,
         jpeg_container=jpeg_container,
         source_bytes=source_bytes,
+        jpeg_quality_est=jpeg_quality_est,
     )
 
 
@@ -112,6 +115,7 @@ def _fuse_calibrated(
     rgb: np.ndarray | None = None,
     jpeg_container: bool | None = None,
     source_bytes: bytes | None = None,
+    jpeg_quality_est: int | None = None,
 ) -> EnsembleResult:
     op = load_operating_point(cfg.operating_point_path)
     mix = merge_operating_point(cfg.fusion, op)
@@ -120,11 +124,19 @@ def _fuse_calibrated(
         if mix.get("mode") != "specialist_or":
             threshold = float(op["threshold"])
     jpeg_info = inspect_jpeg(source_bytes)
+    if jpeg_quality_est is not None:
+        jpeg_info["quality_est"] = int(jpeg_quality_est)
     container = bool(jpeg_info.get("container")) or bool(jpeg_container)
     blockiness = 0.0
     if rgb is not None:
         blockiness = jpeg_blockiness(rgb)
-    mix["jpeg_like"] = bool(container or (rgb is not None and jpeg_like(rgb)))
+    like = bool(container or (rgb is not None and jpeg_like(rgb)))
+    mix["jpeg_like"] = like
+    mix["jpeg_freq_weight"] = jpeg_freq_weight(
+        jpeg_info.get("quality_est"),
+        jpeg_like=like,
+        blockiness=blockiness,
+    )
     if cfg.apply_calibration:
         from veilscan.calibrate import apply_affine, load_calibration
 
@@ -154,6 +166,7 @@ def _stamp_jpeg(fused: EnsembleResult, mix: dict, blockiness: float, container: 
     fused.jpeg_quality_est = int(q) if q is not None else None
     sub = info.get("subsampling")
     fused.jpeg_subsampling = str(sub) if sub else None
+    fused.jpeg_freq_weight = float(mix.get("jpeg_freq_weight") or 0.0)
 
 
 def _attach_camera(fused: EnsembleResult, cfg: VeilConfig) -> EnsembleResult:

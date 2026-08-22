@@ -155,3 +155,27 @@ def _quality_from_luma(dqt_zz: list[int]) -> int:
     else:
         est = 50.0 / mid
     return int(max(1, min(100, round(est))))
+
+
+def jpeg_freq_weight(
+    quality_est: int | None,
+    *,
+    jpeg_like: bool,
+    blockiness: float = 0.0,
+) -> float:
+    """FSNet blend weight. 0 if not jpeg_like. Heavier at low Q."""
+    if not jpeg_like:
+        return 0.0
+    if quality_est is not None:
+        q = int(quality_est)
+        if q <= 50:
+            return 0.70
+        if q >= 90:
+            return 0.25
+        t = (q - 50) / 40.0
+        return float(round(0.70 - t * 0.45, 4))
+    if blockiness >= 1.20:
+        return 0.70
+    if blockiness >= 1.10:
+        return 0.50
+    return 0.25

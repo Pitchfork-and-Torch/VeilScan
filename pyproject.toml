@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "veilscan"
-version = "1.3.0"
+version = "1.4.0"
 description = "Agnostic invisible-watermark presence detector and keyless plaintext decoder (local)."
 readme = "README.md"
 requires-python = ">=3.11"

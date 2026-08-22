@@ -19,10 +19,9 @@
 - **Decision threshold** for default `present` is still the generator lock
   ~0.67 (`op-v0.4.0-locked-n50`). BSDS camera FPR at that cut is 0.08
   (v1.2 was 0.01, v1.0 was 0.66). The camera sidecar cut is ~0.758
-  (`op-v1.3.0-camera-locked-n50`, FPR 0.05). Scan JSON adds `camera` when
-  the sidecar exists. Default `present` is not flipped. DIV2K valid-HR is
-  still a PNG pack. UniFreq-100K is not in tree. JPEG50 DCT TPR@5%FPR is
-  0.46. JPEG files blend FSNet into the mix.
+  (`op-v1.4.0-camera-locked-n50`, FPR 0.05). Scan JSON schema 5 adds
+  `jpeg_freq_weight`. Default `present` is not flipped. JPEG50 DCT
+  TPR@5%FPR is 0.46. Blend weight follows JPEG quality.
 - Fusion mode stays `legacy`. specialist-OR FPR was 0.14 vs 0.05 in-sample.
   Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
   OR unless that nested FPR also holds.
