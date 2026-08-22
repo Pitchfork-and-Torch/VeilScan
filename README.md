@@ -7,7 +7,7 @@ It answers: *does this image contain an invisible watermark?* and, when the payl
 Lamp: https://veilscan.jonbailey.xyz/  
 Private GitHub: https://github.com/Pitchfork-and-Torch/VeilScan
 
-v1.4.0 sets `jpeg_freq_weight` from JPEG quality (schema 5). Q95 blends less, Q50 blends more. No recook. Generator `present` stays ~0.67 (BSDS camera FPR 0.08). Camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756. JPEG50 DCT TPR holds 0.46. Patchwork weight 0. ResidualCNN unchanged.
+v1.5.0 adds `--policy generator|camera|both` (default generator). v1.4 quality-aware blend stays. Generator `present` stays ~0.67. Camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756. JPEG50 DCT TPR 0.46. Patchwork weight 0. ResidualCNN unchanged.
 
 ## Synthetic numbers
 
@@ -40,7 +40,7 @@ py -3 -m veilscan batch path\to\folder --json
 py -3 -m veilscan decode path\to\image.png
 # writes path-veilscan-report.png (HUD overlay + executive brief) next to the file
 py -3 -m veilscan doctor
-py -3 -m veilscan inspect path\to\image.png
+py -3 -m veilscan inspect path\to\image.jpg --policy both
 py -3 -m veilscan selftest
 py -3 -m veilscan selftest --per-detector
 py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point

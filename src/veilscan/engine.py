@@ -169,6 +169,20 @@ def _stamp_jpeg(fused: EnsembleResult, mix: dict, blockiness: float, container: 
     fused.jpeg_freq_weight = float(mix.get("jpeg_freq_weight") or 0.0)
 
 
+def apply_present_policy(fused: EnsembleResult, policy: str | None = None) -> EnsembleResult:
+    p = (policy or "generator").strip().lower()
+    if p not in {"generator", "camera", "both"}:
+        p = "generator"
+    fused.policy = p
+    if p == "camera" and fused.camera:
+        fused.present = bool(fused.camera.get("present"))
+        fused.threshold = float(fused.camera["threshold"])
+        oid = fused.camera.get("operating_point_id")
+        if oid:
+            fused.operating_point_id = str(oid)
+    return fused
+
+
 def _attach_camera(fused: EnsembleResult, cfg: VeilConfig) -> EnsembleResult:
     cam = load_camera_operating_point()
     if not cam or str(cam.get("status") or "") not in {"provisional", "locked"}:

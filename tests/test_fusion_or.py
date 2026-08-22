@@ -25,6 +25,7 @@ def test_legacy_family_hint_lsb() -> None:
     assert js["schema_version"] == 5
     assert "jpeg_container" in js
     assert "jpeg_freq_weight" in js
+    assert js.get("policy") == "generator"
     assert "jpeg_like" in js
     assert "family_hint" in js
 

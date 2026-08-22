@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from veilscan.config import VeilConfig
-from veilscan.engine import analyze_image
+from veilscan.engine import analyze_image, apply_present_policy
 from veilscan.image_io import load_rgb, load_rgb_bytes
 from veilscan.registry import all_detectors, ensure_loaded
 from veilscan.types import EnsembleResult
@@ -37,6 +37,7 @@ def analyze_path(
     config: VeilConfig | None = None,
     detectors: list[str] | None = None,
     reference_dir: str | Path | None = None,
+    policy: str = "generator",
 ) -> EnsembleResult:
     data = Path(path).read_bytes()
     rgb = load_rgb_bytes(data)
@@ -45,13 +46,14 @@ def analyze_path(
         from veilscan.image_io import iter_images
 
         refs = [load_rgb(p) for p in iter_images(reference_dir)[:32]]
-    return analyze(
+    result = analyze(
         rgb,
         config=config,
         detectors=detectors,
         reference_images=refs,
         source_bytes=data,
     )
+    return apply_present_policy(result, policy)
 
 
 def analyze_images(

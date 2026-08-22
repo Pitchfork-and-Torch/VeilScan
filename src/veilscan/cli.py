@@ -76,13 +76,14 @@ def scan(
     threshold: Optional[float] = typer.Option(None),
     detectors: Optional[str] = typer.Option(None, help="Comma-separated detector names"),
     reference_dir: Optional[Path] = typer.Option(None, help="Clean reference images for WMD"),
+    policy: str = typer.Option("generator", help="generator|camera|both"),
 ) -> None:
     """Analyze one image (or refuse directories; use batch)."""
     if path.is_dir():
         raise typer.BadParameter("path is a directory; use `veilscan batch`")
     cfg = _cfg(config, tier, threshold)
     names = [x.strip() for x in detectors.split(",")] if detectors else None
-    result = analyze_path(path, config=cfg, detectors=names, reference_dir=reference_dir)
+    result = analyze_path(path, config=cfg, detectors=names, reference_dir=reference_dir, policy=policy)
     if heatmap:
         rgb = load_rgb(path)
         save_overlay(heatmap, rgb, result.heatmap)
@@ -98,6 +99,7 @@ def batch(
     json_out: bool = typer.Option(False, "--json"),
     config: Optional[Path] = typer.Option(None, "--config", "-c"),
     tier: Optional[str] = typer.Option(None),
+    policy: str = typer.Option("generator", help="generator|camera|both"),
 ) -> None:
     """Scan every image under a folder."""
     from veilscan.image_io import iter_images
@@ -105,8 +107,9 @@ def batch(
     cfg = _cfg(config, tier, None)
     rows = []
     for p in iter_images(path):
-        r = analyze_path(p, config=cfg)
-        rows.append({"path": str(p), **{k: r.to_json()[k] for k in ("present", "score", "confidence", "uncertainty")}})
+        r = analyze_path(p, config=cfg, policy=policy)
+        js = r.to_json()
+        rows.append({"path": str(p), **{k: js[k] for k in ("present", "score", "confidence", "uncertainty", "policy")}})
         if not json_out:
             flag = "WM" if r.present else "clean"
             console.print(f"{flag:5} {r.score:.3f}  {p}")
@@ -160,6 +163,7 @@ def inspect(
     no_report: bool = typer.Option(False, "--no-report", help="Skip the PNG artifact"),
     config: Optional[Path] = typer.Option(None, "--config", "-c"),
     threshold: Optional[float] = typer.Option(None),
+    policy: str = typer.Option("generator", help="generator|camera|both"),
 ) -> None:
     """Scan presence then decode keyless text. One JSON, one HUD stamp."""
     from veilscan.decode import decode_path as do_decode
@@ -168,7 +172,7 @@ def inspect(
     from veilscan.types import SCHEMA_VERSION
 
     cfg = _cfg(config, None, threshold)
-    scan_res = analyze_path(path, config=cfg)
+    scan_res = analyze_path(path, config=cfg, policy=policy)
     dec = do_decode(path)
     if json_out:
         console.print_json(
@@ -460,7 +464,17 @@ def bench(
 def _print_result(path: Path, result, peak_ok: set[str] | None = None) -> None:
     flag = "[red]WATERMARK LIKELY[/red]" if result.present else "[green]NO STRONG MARK[/green]"
     console.print(f"{path}")
-    console.print(f"  {flag}  score={result.score:.3f}  conf={result.confidence:.3f}  unc={result.uncertainty:.3f}")
+    pol = getattr(result, "policy", "generator")
+    console.print(
+        f"  {flag}  score={result.score:.3f}  conf={result.confidence:.3f}  "
+        f"unc={result.uncertainty:.3f}  policy={pol}  thr={result.threshold:.3f}"
+    )
+    cam = getattr(result, "camera", None)
+    if cam:
+        cflag = "yes" if cam.get("present") else "no"
+        console.print(
+            f"  camera present={cflag}  thr={cam.get('threshold')}  id={cam.get('operating_point_id')}"
+        )
     hint = getattr(result, "family_hint", "none")
     console.print(
         f"  family={hint}  lsb={getattr(result, 'lsb_score', 0):.3f}  "

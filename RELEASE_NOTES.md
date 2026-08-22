@@ -1,3 +1,13 @@
+# v1.5.0
+
+Camera policy CLI. Default present stays generator.
+
+Lamp: https://veilscan.jonbailey.xyz/
+
+- `veilscan scan|inspect|batch --policy generator|camera|both`
+- JSON `policy`. Camera sidecar still attached. Default generator even on JPEG files.
+- Quality-aware blend from v1.4 unchanged. No recook.
+
 # v1.4.0
 
 Quality-aware FSNet blend. Schema 5. No recook.

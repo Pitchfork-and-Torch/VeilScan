@@ -70,6 +70,7 @@ class EnsembleResult:
     jpeg_quality_est: int | None = None
     jpeg_subsampling: str | None = None
     jpeg_freq_weight: float = 0.0
+    policy: str = "generator"
 
     def to_json(self) -> dict[str, Any]:
         d = {
@@ -90,6 +91,7 @@ class EnsembleResult:
             "jpeg_quality_est": self.jpeg_quality_est,
             "jpeg_subsampling": self.jpeg_subsampling,
             "jpeg_freq_weight": round(float(self.jpeg_freq_weight), 4),
+            "policy": self.policy,
             "explanation": self.explanation,
             "active": self.active,
             "skipped": self.skipped,

@@ -10,7 +10,7 @@ from veilscan.types import SCHEMA_VERSION
 
 
 def test_version() -> None:
-    assert __version__ == "1.4.0"
+    assert __version__ == "1.5.0"
 
 
 def test_schema_version_json() -> None:
@@ -59,6 +59,40 @@ def test_camera_sidecar_file_does_not_replace_generator() -> None:
     assert cam.get("status") == "locked"
     assert cam.get("id") != gen.get("id")
     assert float(cam["threshold"]) != float(gen["threshold"])
+
+
+def test_present_policy_default_is_generator(tmp_path) -> None:
+    from veilscan.api import analyze_path
+    from veilscan.engine import apply_present_policy
+    from veilscan.generators import synthetic_cover
+    from PIL import Image
+
+    img = synthetic_cover(64, 64, np.random.default_rng(9), style="sine")
+    p = tmp_path / "x.png"
+    Image.fromarray(img).save(p)
+    r = analyze_path(p, detectors=["chi_square"])
+    assert r.policy == "generator"
+    cam = {"operating_point_id": "op-cam-test", "status": "locked", "threshold": 0.99, "present": False, "n": 4}
+    r.camera = dict(cam)
+    r.score = 0.80
+    r.present = True
+    r.threshold = 0.67
+    r.present = True
+    r.threshold = 0.67
+    gen = apply_present_policy(r, "generator")
+    assert gen.present is True
+    assert gen.threshold == 0.67
+    r.present = True
+    r.threshold = 0.67
+    cam_p = apply_present_policy(r, "camera")
+    assert cam_p.present is False
+    assert cam_p.threshold == 0.99
+    r.present = True
+    r.threshold = 0.67
+    both = apply_present_policy(r, "both")
+    assert both.policy == "both"
+    assert both.present is True
+    assert both.camera["present"] is False
 
 
 def test_identity_calibration_noop() -> None:
