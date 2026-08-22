@@ -2,6 +2,8 @@
 
 First production cut. Presence ensemble plus keyless plaintext decode.
 
+Lamp: https://veilscan.jonbailey.xyz/
+
 - JPEG-hardened FSNet (`jpeg_prob` 0.7, camera-train mix 0.35, no lsb)
 - Honest JPEG70 camera DCT: FSNet TPR@5%FPR 0.75 (was 0.58). Ensemble 0.64 (was 0.44)
 - JPEG-aware blend when `jpeg_like` (schema 3: `jpeg_like`, `jpeg_blockiness`)
@@ -9,7 +11,7 @@ First production cut. Presence ensemble plus keyless plaintext decode.
 - LOAO holdout-dct: FSNet DCT TPR 0.94 -> 0.06. Specialist is real
 - Patchwork still unsupported (weight 0). Fusion stays `legacy`
 - Probe attacks covers as well as marked (v0.7 JPEG70 leak fixed)
-- No stripper. Proprietary
+- No stripper. Proprietary. Private repo.
 
 # v0.9.0
 

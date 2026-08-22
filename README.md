@@ -4,6 +4,9 @@ Local, algorithm-agnostic **invisible watermark presence detector** with a **key
 
 It answers: *does this image contain an invisible watermark?* and, when the payload is sequential LSB / PNG text / JPEG comment, *what does the text say?* It does not strip a mark. It does not break SynthID, Digimarc, encrypted stego, or neural watermarks.
 
+Lamp: https://veilscan.jonbailey.xyz/  
+Private GitHub: https://github.com/Pitchfork-and-Torch/VeilScan
+
 v1.0.0 is the first production cut: JPEG-hardened FSNet, JPEG-aware ensemble blend, measured camera OP ~0.758, LOAO proof that FSNet is a frequency specialist. Default `present` stays the generator lock ~0.67 (camera FPR 0.66 at that cut). Patchwork remains unsupported (weight 0). ResidualCNN unchanged. Do not vendor UniFreq or personal photos in git.
 
 ## Synthetic numbers
@@ -44,7 +47,7 @@ py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write
 py -3 scripts\fetch_camera_covers.py --dry-run
 py -3 scripts\fetch_camera_covers.py
 py -3 scripts\fetch_camera_covers.py --manifest configs\camera_train_covers.manifest.json --out data\covers\camera-train
-py -3 scripts\train_lite.py --fresh --only fsnet_lite --steps 500 --families dct,spread,dwt,tree_ring --jpeg-prob 0.25 --covers data\covers\camera-train --out checkpoints\candidates
+py -3 scripts\train_lite.py --fresh --only fsnet_lite --steps 500 --families dct,spread,dwt,tree_ring --jpeg-prob 0.7 --covers data\covers\camera-train --out checkpoints\candidates
 py -3 scripts\probe_fsnet.py --covers data\covers\camera --ckpt-a checkpoints\fsnet_lite.pt --ckpt-b checkpoints\candidates\fsnet_lite.pt
 py -3 -m veilscan bench --covers data\covers\camera --n 50 --attacks identity,jpeg_70 --write-operating-point
 py -3 scripts\fetch_camera_covers.py --manifest configs\camera_div2k_covers.manifest.json --out data\covers\camera-div2k
@@ -98,14 +101,15 @@ Leave-one-algorithm-out work (AWPD / FSNet, UniFreq-100K) shows LSB and Patchwor
 
 ## Docs
 
+- `docs/RESULTS_v1.0.md` -- current numbers (JPEG-hardened FSNet, camera OP, LOAO)
 - `docs/RESEARCH.md` -- AWPD survey
-- `docs/ARCHITECTURE.md` -- plugin contract
+- `docs/ARCHITECTURE.md` -- plugin contract and fusion
 - `docs/LIMITATIONS.md` / `docs/ETHICS.md`
-- `docs/RESULTS_v0.5.md` -- current numbers and locked operating point
+- `docs/RESULTS_v0.5.md` -- generator lock `op-v0.4.0-locked-n50`
 - `docs/UPGRADE_PLAN.md` -- v0.1.0 -> v0.2 map (historical)
 - `docs/NEXT_MASSIVE_UPGRADE.md` -- v0.4 operating-point contract (shipped)
 - `docs/PHASES_2_3_4.md` -- calibration, WMD prune, batch/ONNX (v0.2.0)
-- `docs/RESULTS_v0.2.1.md` through `RESULTS_v0.2.4.md` -- cook notes (superseded)
+- `docs/RESULTS_v0.2.1.md` through `RESULTS_v0.9.md` -- cook notes (superseded)
 
 `py -3 -m veilscan loao` and `selftest --per-detector` are the Phase 0 measurement CLI.
 

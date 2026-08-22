@@ -27,8 +27,9 @@
 - Fusion mode stays `legacy`. specialist-OR FPR was 0.14 vs 0.05 in-sample.
   Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
   OR unless that nested FPR also holds.
-- **JPEG70 LSB** on the locked slice: TPR@5%FPR 0.10 (spatial LSB dies).
-  Frequency DCT TPR@5%FPR 0.86 vs identity 1.00.
+- **JPEG70 LSB** dies on camera stills (TPR@5%FPR 0.06 on the v1.0 BSDS
+  slice). Frequency DCT on that slice is 0.64 at JPEG70 vs 0.84 identity.
+  Quote `docs/RESULTS_v1.0.md`, not older generator-photo DCT numbers.
 - **Patchwork is unsupported** on camera stills. A keyless permutation-null
   pair-mean test (v0.9) is AUC 0.50 / TPR@5%FPR 0.08 on BSDS n=24. Camera
   ensemble TPR stays ~0.02-0.10. YAML weight is 0 so the head cannot pollute

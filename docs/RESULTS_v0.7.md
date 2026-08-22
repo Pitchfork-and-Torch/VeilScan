@@ -1,6 +1,6 @@
 # VeilScan v0.7.0
 
-Historical FSNet recook. Current numbers: `docs/RESULTS_v0.8.md`.
+Historical FSNet recook. Current numbers: `docs/RESULTS_v1.0.md`.
 
 FSNet-lite recook on BSDS500 **train** stills mixed with synthetic photo
 covers. Frozen BSDS500 **test-64** is still the camera bench. Generator lock

@@ -10,6 +10,9 @@ Public lamp: https://veilscan.jonbailey.xyz/
 - JPEG-hardened FSNet + jpeg_like blend. Ensemble JPEG70 DCT TPR 0.64.
 - LOAO holdout-dct proves FSNet is a frequency specialist.
 - Patchwork unsupported. Fusion `legacy`.
+- 2026-08-22 polish: README/ARCHITECTURE/LIMITATIONS/fetch UA, lamp cache
+  1.3.0, GitHub homepage + description, tweet-ready v1.0 copy. No science
+  recook. No present/OR flip.
 
 ## Next
 

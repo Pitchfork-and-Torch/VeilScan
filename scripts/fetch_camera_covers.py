@@ -36,7 +36,7 @@ def _download(url: str, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     req = Request(
         url,
-        headers={"User-Agent": "VeilScan-cover-fetch/0.6 (research stills; +https://github.com/Pitchfork-and-Torch/VeilScan)"},
+        headers={"User-Agent": "VeilScan-cover-fetch/1.0 (research stills; +https://github.com/Pitchfork-and-Torch/VeilScan)"},
     )
     tmp = dest.with_suffix(dest.suffix + ".part")
     with urlopen(req, timeout=600) as src, tmp.open("wb") as out:

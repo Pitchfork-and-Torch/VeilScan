@@ -65,12 +65,22 @@ New detector: drop a module in `detectors/`, decorate with `@register`, done.
 ## Fusion
 
 1. Drop skipped / zero-confidence results.
-2. `score = sum(w_i * s_i) / sum(w_i)` with YAML weights.
-3. `uncertainty = population std of active scores` (disagreement).
-4. `confidence = clip(1 - uncertainty, 0, 1) * coverage` where coverage is
-   fraction of expected detectors that actually ran.
-5. `present = score >= threshold` (default 0.55).
-6. Combined heatmap: mean of resized per-detector maps.
+2. Mix score = `0.20*full_mean + 0.20*ok_mean + 0.20*top_mean + 0.40*peak`
+   over `peak_ok` heads (chi-square, RS, bitplane, DCT, DWT, hybrid,
+   tree-ring spectral, ResidualCNN, FSNet-lite). YAML weights still scale
+   each head. Patchwork weight is 0 (unsupported on camera stills).
+3. When the array is `jpeg_like` (8x8 blockiness >= 1.10) and FSNet ran,
+   `score = 0.5 * mix + 0.5 * fsnet`. PNG / identity stays on the mix so
+   spatial LSB is not diluted. Scan JSON schema 3 adds `jpeg_like` and
+   `jpeg_blockiness`.
+4. `present = score >= threshold` from the generator operating point
+   (`op-v0.4.0-locked-n50` ~0.67), not a hardcoded 0.55. Camera stills
+   get a sidecar cut (~0.758) and do not replace default `present`.
+5. Fusion mode stays `legacy`. `specialist_or` is measured, not default
+   (nested OR FPR 0.20 vs legacy 0.12 on the v1.0 camera slice).
+6. `uncertainty` = std of peak_ok scores. `confidence` =
+   `clip(1 - uncertainty, 0, 1) * coverage`.
+7. Combined heatmap: mean of resized per-detector maps.
 
 ## Image pipeline
 
@@ -95,8 +105,8 @@ Until those files exist, deep detectors skip.
 - Attacks: JPEG, resize, crop, noise, blur, jitter.
 - Protocol helper: leave-one-family-out over generators.
 
-Living numbers: `docs/RESULTS_v0.5.md`. Historical maps: `docs/UPGRADE_PLAN.md`,
-`docs/NEXT_MASSIVE_UPGRADE.md`.
+Living numbers: `docs/RESULTS_v1.0.md`. Generator lock: `docs/RESULTS_v0.5.md`.
+Historical maps: `docs/UPGRADE_PLAN.md`, `docs/NEXT_MASSIVE_UPGRADE.md`.
 
 ## Decode (v0.3+)
 
@@ -108,7 +118,7 @@ JSON: `found`, `family` (`container` | `lsb` | `qr` | `jsteg` | `none`),
 
 Eval planter: `veilscan embed-text` (not a hiding product).
 
-## Non-goals (v0)
+## Non-goals
 
 - Matching a closed SynthID verifier
 - Diffusion inversion backend

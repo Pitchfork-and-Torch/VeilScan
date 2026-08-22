@@ -1,6 +1,6 @@
 # VeilScan v0.8.0
 
-Historical second camera corpus. Current numbers: `docs/RESULTS_v0.9.md`.
+Historical second camera corpus. Current numbers: `docs/RESULTS_v1.0.md`.
 
 Second camera corpus. DIV2K valid-HR (n=50, 128px, identity + jpeg_70).
 Not BSDS500. Not UniFreq. Extracted PNGs stay gitignored.
