@@ -93,13 +93,11 @@ Leave-one-algorithm-out work (AWPD / FSNet, UniFreq-100K) shows LSB and Patchwor
 - `docs/RESEARCH.md` -- AWPD survey
 - `docs/ARCHITECTURE.md` -- plugin contract
 - `docs/LIMITATIONS.md` / `docs/ETHICS.md`
+- `docs/RESULTS_v0.5.md` -- current numbers and locked operating point
 - `docs/UPGRADE_PLAN.md` -- v0.1.0 -> v0.2 map (historical)
-- `docs/NEXT_MASSIVE_UPGRADE.md` -- v0.4 operating-point contract (bench). v0.3.0 is keyless decode.
+- `docs/NEXT_MASSIVE_UPGRADE.md` -- v0.4 operating-point contract (shipped)
 - `docs/PHASES_2_3_4.md` -- calibration, WMD prune, batch/ONNX (v0.2.0)
-- `docs/RESULTS_v0.2.1.md` -- CPU ResidualCNN cook (flat scores; superseded)
-- `docs/RESULTS_v0.2.2.md` -- CUDA ResidualCNN with LSB planes; peak_ok
-- `docs/RESULTS_v0.2.3.md` -- FSNet LSB stem; both deep heads in peak_ok
-- `docs/RESULTS_v0.2.4.md` -- FSNet frequency cook (no LSB family); JPEG70 DCT holds
+- `docs/RESULTS_v0.2.1.md` through `RESULTS_v0.2.4.md` -- cook notes (superseded)
 
 `py -3 -m veilscan loao` and `selftest --per-detector` are the Phase 0 measurement CLI.
 

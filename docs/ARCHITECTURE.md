@@ -95,14 +95,16 @@ Until those files exist, deep detectors skip.
 - Attacks: JPEG, resize, crop, noise, blur, jitter.
 - Protocol helper: leave-one-family-out over generators.
 
-Living upgrade contract: `docs/UPGRADE_PLAN.md`.
+Living numbers: `docs/RESULTS_v0.5.md`. Historical maps: `docs/UPGRADE_PLAN.md`,
+`docs/NEXT_MASSIVE_UPGRADE.md`.
 
-## Decode (v0.3)
+## Decode (v0.3+)
 
-`veilscan.decode` is a separate walk from the presence ensemble. It parses
-file bytes (not canvas pixels), tries container comments first, then
-sequential LSB layouts on lossless rasters. JSON: `found`, `family`
-(`container` | `lsb` | `none`), `text`, `layout`, `confidence`.
+`veilscan.decode` is a separate walk from the presence ensemble. Container
+comments first, then sequential LSB, then row scanlines and tile hotspots.
+`veilscan inspect` runs scan then decode into one JSON and stamps the HUD.
+JSON: `found`, `family` (`container` | `lsb` | `qr` | `jsteg` | `none`),
+`text`, `layout`, `confidence`, optional `bbox`.
 
 Eval planter: `veilscan embed-text` (not a hiding product).
 

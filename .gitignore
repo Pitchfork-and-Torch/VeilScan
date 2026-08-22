@@ -16,4 +16,10 @@ checkpoints/*.onnx
 examples/_demo_out/
 *.png
 !docs/**
+!examples/specimen-hello.png
+docs/bench/camera.json
+docs/bench/camera.md
+docs/bench/camera_operating_point.json
+.coverage
+htmlcov/
 .DS_Store

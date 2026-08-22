@@ -1,13 +1,13 @@
-# Next massive upgrade: v0.3.0 -> operating-point VeilScan (v0.4)
+# Operating-point contract (v0.4) - SHIPPED
 
-**Status:** plan only (written 2026-08-21, retitled 2026-08-21 after v0.3
-keyless decode shipped). Do not treat as done until the acceptance table
-in section 8 is green.  
-**Baseline:** private `Pitchfork-and-Torch/VeilScan` v0.3.0 (keyless decode).  
+**Status:** historical. Landed across v0.4.0 / v0.4.1. Current package is
+**v0.5.0** (`docs/RESULTS_v0.5.md`). Next science: camera-folder FPR via
+`veilscan bench --covers DIR`, not another net.
+
+**Baseline when written:** v0.3.0 keyless decode.  
 **Identity:** presence ensemble plus keyless plaintext decode. No remover.
 No SynthID verifier. No mandatory cloud weights.
 
-This supersedes `docs/PHASES_2_3_4.md` as the *next* contract.
 `docs/UPGRADE_PLAN.md` stays as the historical v0.1 map.
 
 ---

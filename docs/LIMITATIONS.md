@@ -44,7 +44,7 @@ machine has an RTX 4080; the default torch install at authoring was CPU-only.
 
 ## Decode
 
-v0.3.1 recovers **keyless plaintext** and **localizes** LSB patches:
+v0.5 recovers **keyless plaintext** and **localizes** LSB patches:
 
 - sequential LSB in the full raster and in blindly found tiles
 - PNG `tEXt` / `zTXt` / `iTXt`
