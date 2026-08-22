@@ -385,18 +385,41 @@ def bench(
     write_operating_point: bool = typer.Option(False, "--write-operating-point"),
     attacks: Optional[str] = typer.Option(None, help="Comma list, default protocol attacks"),
     styles: Optional[str] = typer.Option(None, help="Comma list sine,photo"),
+    covers: Optional[Path] = typer.Option(None, "--covers", help="Folder of real camera images. Never written into git."),
 ) -> None:
-    """Frozen generator bench. Writes docs/bench/latest.json. Not a camera corpus."""
-    from veilscan.eval.bench import load_protocol, run_bench, write_outputs
+    """Frozen bench. Generator by default. --covers DIR is the camera adapter."""
+    from veilscan.eval.bench import ROOT, load_camera_covers, load_protocol, run_bench, write_outputs
 
     proto = load_protocol(protocol)
     atk = [x.strip() for x in attacks.split(",")] if attacks else None
     st = [x.strip() for x in styles.split(",")] if styles else None
-    report = run_bench(proto, n=n, size=size, attacks=atk, styles=st)
-    written = write_outputs(report, json_path=json_out, write_operating_point=write_operating_point)
+    plates = None
+    json_path = json_out
+    op_path = None
+    if covers:
+        want_n = int(n if n is not None else proto.get("n", 20))
+        want_size = int(size if size is not None else proto.get("size", 128))
+        plates = load_camera_covers(covers, want_n, want_size, seed=int(proto.get("seed", 20260822)))
+        if json_path is None:
+            json_path = ROOT / "docs" / "bench" / "camera.json"
+        if write_operating_point:
+            op_path = ROOT / "docs" / "bench" / "camera_operating_point.json"
+        write_operating_point = bool(write_operating_point)
+    report = run_bench(proto, n=n, size=size, attacks=atk, styles=st, covers=plates)
+    written = write_outputs(
+        report,
+        json_path=json_path,
+        md_path=(json_path.with_suffix(".md") if json_path is not None else None),
+        operating_point_path=op_path,
+        write_operating_point=bool(write_operating_point),
+    )
     op = report.get("operating_point") or {}
-    console.print(f"bench n={report['n']} size={report['size']} protocol={report.get('protocol_id')}")
-    console.print(f"operating_point id={op.get('id')} status={op.get('status')} threshold={op.get('threshold')}")
+    ab = report.get("ab") or {}
+    console.print(f"bench n={report['n']} size={report['size']} corpus={report.get('corpus')} protocol={report.get('protocol_id')}")
+    console.print(f"operating_point id={op.get('id')} status={op.get('status')} threshold={op.get('threshold')} fusion={op.get('fusion_mode')}")
+    nested = ab.get("nested_holdout") or {}
+    if nested:
+        console.print(f"nested_holdout legacy_fpr={nested.get('legacy_fpr')} or_fpr={nested.get('or_fpr')} flip={nested.get('flip_default')}")
     for k, v in written.items():
         console.print(f"  wrote {k} {v}")
 

@@ -94,19 +94,19 @@
             "fpr_at_threshold": 1.0,
             "tpr_at_threshold": 1.0,
             "mean_cover": 0.6438935408006324,
-            "mean_marked": 0.7675521556904029,
+            "mean_marked": 0.7691333404963849,
             "n_cover": 50,
             "n_marked": 50
           },
           "lsb_head": {
-            "auc": 0.5744,
-            "tpr_at_fpr_5": 0.06,
-            "tpr_at_fpr_1": 0.0,
+            "auc": 0.58,
+            "tpr_at_fpr_5": 0.02,
+            "tpr_at_fpr_1": 0.02,
             "f1": 0.0,
             "fpr_at_threshold": 0.0,
             "tpr_at_threshold": 0.0,
             "mean_cover": 0.12937963396310806,
-            "mean_marked": 0.14078309185802937,
+            "mean_marked": 0.14296082921326161,
             "n_cover": 50,
             "n_marked": 50
           },
@@ -118,7 +118,7 @@
             "fpr_at_threshold": 0.0,
             "tpr_at_threshold": 1.0,
             "mean_cover": 0.0012748703430406749,
-            "mean_marked": 0.9490322613716126,
+            "mean_marked": 0.9464167439937592,
             "n_cover": 50,
             "n_marked": 50
           },
@@ -130,7 +130,7 @@
             "fpr_at_threshold": 1.0,
             "tpr_at_threshold": 1.0,
             "mean_cover": 0.8794471062830581,
-            "mean_marked": 0.9418543509224245,
+            "mean_marked": 0.9409525092954548,
             "n_cover": 50,
             "n_marked": 50
           }
@@ -395,50 +395,50 @@
         },
         "dct": {
           "ensemble": {
-            "auc": 0.958,
-            "tpr_at_fpr_5": 0.86,
-            "tpr_at_fpr_1": 0.84,
+            "auc": 0.9652,
+            "tpr_at_fpr_5": 0.94,
+            "tpr_at_fpr_1": 0.9,
             "f1": 0.7050359712230216,
             "fpr_at_threshold": 0.8,
             "tpr_at_threshold": 0.98,
             "mean_cover": 0.5089801805344504,
-            "mean_marked": 0.6501508903614408,
+            "mean_marked": 0.6597216457380546,
             "n_cover": 50,
             "n_marked": 50
           },
           "lsb_head": {
-            "auc": 0.486,
-            "tpr_at_fpr_5": 0.02,
-            "tpr_at_fpr_1": 0.02,
+            "auc": 0.4924,
+            "tpr_at_fpr_5": 0.0,
+            "tpr_at_fpr_1": 0.0,
             "f1": 0.0,
             "fpr_at_threshold": 0.0,
             "tpr_at_threshold": 0.0,
             "mean_cover": 0.11693300366401672,
-            "mean_marked": 0.11487417258322238,
+            "mean_marked": 0.11474970154464245,
             "n_cover": 50,
             "n_marked": 50
           },
           "freq_head": {
-            "auc": 0.996,
+            "auc": 0.9976,
             "tpr_at_fpr_5": 1.0,
-            "tpr_at_fpr_1": 0.9,
-            "f1": 0.9361702127659575,
+            "tpr_at_fpr_1": 0.94,
+            "f1": 0.9583333333333334,
             "fpr_at_threshold": 0.0,
-            "tpr_at_threshold": 0.88,
+            "tpr_at_threshold": 0.92,
             "mean_cover": 0.09187098983675242,
-            "mean_marked": 0.8191583544015885,
+            "mean_marked": 0.8510591983795166,
             "n_cover": 50,
             "n_marked": 50
           },
           "class_head": {
-            "auc": 0.428,
-            "tpr_at_fpr_5": 0.06,
-            "tpr_at_fpr_1": 0.02,
+            "auc": 0.4316,
+            "tpr_at_fpr_5": 0.02,
+            "tpr_at_fpr_1": 0.0,
             "f1": 0.6666666666666666,
             "fpr_at_threshold": 1.0,
             "tpr_at_threshold": 1.0,
             "mean_cover": 0.7420343198175828,
-            "mean_marked": 0.731548077670276,
+            "mean_marked": 0.7312223398824975,
             "n_cover": 50,
             "n_marked": 50
           }
@@ -676,9 +676,16 @@
     "or_fpr": 0.14,
     "legacy_tpr_lsb": 0.5,
     "or_tpr_lsb": 0.61,
-    "legacy_tpr_dct": 0.75,
+    "legacy_tpr_dct": 0.79,
     "or_tpr_dct": 1.0,
     "flip_default": false,
-    "notes": "Cuts and A/B share the same n covers. Not a nested holdout."
+    "nested_holdout": {
+      "n_fit": 50,
+      "n_eval": 50,
+      "legacy_fpr": 0.04,
+      "or_fpr": 0.22,
+      "flip_default": false
+    },
+    "notes": "In-sample A/B plus even/odd nested FPR. Do not flip specialist-OR without nested FPR holding."
   }
 }

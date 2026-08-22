@@ -1,21 +1,25 @@
-# Resume (v0.4.1)
+# Resume (v0.5.0)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.4.1 locked generator-photo operating point + inspect.
-Public lamp: https://veilscan.jonbailey.xyz/ site v1.1.7 (scanline hunt + hotspot box).
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.5.0 vectorized DCT/spread + camera bench adapter.
+Public lamp: https://veilscan.jonbailey.xyz/ site v1.1.7.
 
 ## Where we stopped
 
-- `op-v0.4.0-locked-n50`: threshold 0.67, FPR 0.05 on generator-photo identity+jpeg_70.
-- specialist-OR A/B: or_fpr 0.14 vs legacy 0.05. Default stays `legacy`.
-- `veilscan inspect` = scan + decode + HUD stamp.
+- Generator OP stays locked: `op-v0.4.0-locked-n50` threshold 0.67, fusion `legacy`.
+- `embed_dct` / `embed_spread` are batched scipy ortho DCT (matches cv2).
+- `veilscan bench --covers DIR` runs the same protocol on real JPEGs. Does not
+  write `configs/operating_point.json`. Nested holdout FPR is in `ab.nested_holdout`.
 
 ## Next
 
-External photo corpus adapter (v0.5). Vectorize DCT embedders. Do not flip specialist-OR without a nested holdout.
+Point `--covers` at a camera folder of n>=50 (operator-owned, not git). Compare
+camera FPR at 0.67 to the generator lock. Deep LOAO ckpts optional.
 
 ## Do not
 
 - Mix LSB into the FSNet cook
 - Strip LSB planes off ResidualCNN
 - Remover / SynthID clone / UniFreq in git
+- Flip specialist-OR without nested holdout
 - Gradio from a Grok Build command
+- Commit personal photo folders

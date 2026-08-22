@@ -73,6 +73,28 @@ def idct2_block(coeff: np.ndarray) -> np.ndarray:
     return _idct2_numpy(x)
 
 
+def dct2_batch(blocks: np.ndarray) -> np.ndarray:
+    """Batched 2D DCT on (..., 8, 8). Matches cv2.dct (ortho type-II)."""
+    from scipy.fft import dctn
+
+    x = np.asarray(blocks, dtype=np.float32)
+    return dctn(x, type=2, axes=(-2, -1), norm="ortho").astype(np.float32)
+
+
+def idct2_batch(coeff: np.ndarray) -> np.ndarray:
+    """Batched 2D IDCT on (..., 8, 8). Matches cv2.idct (ortho type-II)."""
+    from scipy.fft import idctn
+
+    x = np.asarray(coeff, dtype=np.float32)
+    return idctn(x, type=2, axes=(-2, -1), norm="ortho").astype(np.float32)
+
+
+def tiles_to_plane(blocks: np.ndarray) -> np.ndarray:
+    """(ny, nx, 8, 8) -> (ny*8, nx*8)."""
+    ny, nx = blocks.shape[:2]
+    return np.swapaxes(blocks, 1, 2).reshape(ny * 8, nx * 8)
+
+
 def _dct_1d(a: np.ndarray, axis: int) -> np.ndarray:
     n = a.shape[axis]
     a = np.moveaxis(a, axis, -1)

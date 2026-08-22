@@ -6,7 +6,7 @@ from collections.abc import Callable
 
 import numpy as np
 
-from veilscan.dsp import block_view, dct2_block, haar_dwt2, haar_idwt2, idct2_block
+from veilscan.dsp import block_view, dct2_batch, haar_dwt2, haar_idwt2, idct2_batch, tiles_to_plane
 
 EmbedFn = Callable[[np.ndarray, np.random.Generator], np.ndarray]
 
@@ -90,22 +90,17 @@ def embed_lsb(
 
 
 def embed_dct(rgb: np.ndarray, rng: np.random.Generator, amp: float = 14.0) -> np.ndarray:
-    out = rgb.astype(np.float64).copy()
+    out = rgb.astype(np.float32).copy()
     for c in range(3):
-        ch = out[..., c]
-        blocks = block_view(ch, 8, 8)
+        blocks = block_view(out[..., c], 8, 8)
         if blocks.size == 0:
             continue
         ny, nx = blocks.shape[:2]
-        recon = np.zeros((ny * 8, nx * 8), dtype=np.float64)
-        for i in range(ny):
-            for j in range(nx):
-                coeff = dct2_block(blocks[i, j].astype(np.float32)).astype(np.float64)
-                # Mid-band payload (spread-spectrum-ish).
-                coeff[3, 4] += amp * (1.0 if rng.random() > 0.5 else -1.0)
-                coeff[4, 3] += amp * 0.7 * (1.0 if rng.random() > 0.5 else -1.0)
-                recon[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = idct2_block(coeff.astype(np.float32))
-        out[: ny * 8, : nx * 8, c] = recon
+        coeff = dct2_batch(blocks)
+        coeff[..., 3, 4] += amp * rng.choice(np.array([-1.0, 1.0], dtype=np.float32), size=(ny, nx))
+        coeff[..., 4, 3] += amp * 0.7 * rng.choice(np.array([-1.0, 1.0], dtype=np.float32), size=(ny, nx))
+        rec = tiles_to_plane(idct2_batch(coeff))
+        out[: rec.shape[0], : rec.shape[1], c] = rec
     return _u8(out)
 
 
@@ -152,21 +147,17 @@ def embed_patchwork(rgb: np.ndarray, rng: np.random.Generator, delta: float = 3.
 
 def embed_spread(rgb: np.ndarray, rng: np.random.Generator, amp: float = 5.0) -> np.ndarray:
     """PN sequence added to DCT AC coefficients."""
-    out = rgb.astype(np.float64).copy()
+    out = rgb.astype(np.float32).copy()
     for c in range(3):
-        ch = out[..., c]
-        blocks = block_view(ch, 8, 8)
+        blocks = block_view(out[..., c], 8, 8)
         if blocks.size == 0:
             continue
         ny, nx = blocks.shape[:2]
-        pn = rng.choice([-1.0, 1.0], size=(ny, nx))
-        recon = np.zeros((ny * 8, nx * 8), dtype=np.float64)
-        for i in range(ny):
-            for j in range(nx):
-                coeff = dct2_block(blocks[i, j].astype(np.float32)).astype(np.float64)
-                coeff[1:, 1:] += amp * pn[i, j]
-                recon[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = idct2_block(coeff.astype(np.float32))
-        out[: ny * 8, : nx * 8, c] = recon
+        pn = rng.choice(np.array([-1.0, 1.0], dtype=np.float32), size=(ny, nx))
+        coeff = dct2_batch(blocks)
+        coeff[..., 1:, 1:] += amp * pn[..., None, None]
+        rec = tiles_to_plane(idct2_batch(coeff))
+        out[: rec.shape[0], : rec.shape[1], c] = rec
     return _u8(out)
 
 

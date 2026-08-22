@@ -15,7 +15,48 @@ from veilscan.engine import analyze_image
 from veilscan.eval.metrics import auc_roc, cut_at_fpr, f1_at, fpr_at, tpr_at, tpr_at_fpr
 from veilscan.eval.robustness import apply_attack
 from veilscan.generators import embed, synthetic_cover
+from veilscan.image_io import load_rgb
 from veilscan.registry import all_detectors, ensure_loaded
+
+_COVER_EXT = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+
+
+def iter_cover_paths(root: str | Path) -> list[Path]:
+    base = Path(root)
+    if not base.is_dir():
+        return []
+    out: list[Path] = []
+    for p in sorted(base.rglob("*")):
+        if not p.is_file() or p.suffix.lower() not in _COVER_EXT:
+            continue
+        low = str(p).replace("\\", "/").lower()
+        if "screenshot" in low or "screen-shot" in low:
+            continue
+        out.append(p)
+    return out
+
+
+def load_camera_covers(root: str | Path, n: int, size: int, seed: int = 20260822) -> list[np.ndarray]:
+    import cv2
+
+    paths = iter_cover_paths(root)
+    if not paths:
+        raise FileNotFoundError(f"no camera images under {root}")
+    rng = np.random.default_rng(seed)
+    if len(paths) > n:
+        pick = rng.choice(len(paths), size=n, replace=False)
+        paths = [paths[int(i)] for i in sorted(pick.tolist())]
+    else:
+        paths = paths[:n]
+    covers: list[np.ndarray] = []
+    for p in paths:
+        rgb = load_rgb(p)
+        if rgb.ndim != 3 or rgb.shape[2] < 3:
+            continue
+        covers.append(cv2.resize(rgb[..., :3], (size, size), interpolation=cv2.INTER_AREA))
+    if not covers:
+        raise FileNotFoundError(f"no readable RGB images under {root}")
+    return covers
 
 def _json_default(obj: Any) -> Any:
     if isinstance(obj, (np.floating, np.integer)):
@@ -90,15 +131,25 @@ def run_bench(
     attacks: list[str] | None = None,
     cfg: VeilConfig | None = None,
     detectors: list[str] | None = None,
+    covers: list[np.ndarray] | None = None,
 ) -> dict[str, Any]:
     proto = dict(protocol or load_protocol())
     n = int(n if n is not None else proto.get("n", 20))
     size = int(size if size is not None else proto.get("size", 128))
     seed = int(proto.get("seed", 20260822))
     hold = int(proto.get("holdout_seed_start", 10000))
-    styles = list(styles or proto.get("styles") or ["photo"])
     families = list(families or proto.get("families") or ["lsb", "dct"])
     attacks = list(attacks or proto.get("attacks") or ["identity"])
+    camera = covers is not None and len(covers) > 0
+    if camera:
+        covers = [np.asarray(c) for c in covers]
+        n = min(n, len(covers))
+        covers = covers[:n]
+        styles = ["camera"]
+        proto = dict(proto)
+        proto["operating_slice"] = {"styles": ["camera"], "attacks": list(attacks)}
+    else:
+        styles = list(styles or proto.get("styles") or ["photo"])
     cfg = cfg or VeilConfig.load()
     cfg.apply_calibration = False
     names = detectors or _detector_names(proto, cfg)
@@ -117,7 +168,14 @@ def run_bench(
             by_fam: dict[str, dict[str, list]] = {}
             for i in range(n):
                 cover_seed = hold + i + (0 if style == "sine" else 50_000)
-                cover = synthetic_cover(size, size, np.random.default_rng(cover_seed), style=style)
+                if camera:
+                    cover = covers[i]
+                    if cover.shape[0] != size or cover.shape[1] != size:
+                        import cv2
+
+                        cover = cv2.resize(cover, (size, size), interpolation=cv2.INTER_AREA)
+                else:
+                    cover = synthetic_cover(size, size, np.random.default_rng(cover_seed), style=style)
                 atk_rng = np.random.default_rng(int(rng.integers(1 << 30)))
                 cover_a = apply_attack(cover, attack, atk_rng)
                 c_res = analyze_image(cover_a, cfg, names)
@@ -179,7 +237,7 @@ def run_bench(
         "attacks": attacks,
         "detectors": names,
         "threshold_used": cfg.threshold,
-        "corpus": "generator",
+        "corpus": "camera" if camera else "generator",
         "cells": cells,
         "notes": proto.get("notes"),
     }
@@ -241,7 +299,7 @@ def choose_operating_point(
         "n": n,
         "date": date.today().isoformat(),
         "protocol": report.get("protocol_id"),
-        "corpus": "generator-photo" if "photo" in styles else "generator",
+        "corpus": "camera" if styles == ["camera"] else ("generator-photo" if "photo" in styles else "generator"),
         "slice": [f"{s}/{a}" for s in styles for a in attacks],
         "fusion_mode": "legacy",
         "notes": "Generator covers, not camera photos. Do not cite as ImageNet FPR.",
@@ -327,6 +385,13 @@ def ab_fusion(
     if dct_leg is not None and dct_or is not None:
         tpr_ok = tpr_ok and dct_or + 1e-9 >= dct_leg - 0.02
     flip = bool(fpr_ok and tpr_ok)
+    nested = nested_holdout_fpr(
+        np.asarray(ens_c, dtype=np.float64),
+        np.asarray(lsb_c, dtype=np.float64),
+        np.asarray(freq_c, dtype=np.float64),
+        np.asarray(klass_c, dtype=np.float64),
+        float(proto.get("fpr_target") or 0.05),
+    )
     return {
         "legacy_fpr": None if legacy_fpr is None else round(float(legacy_fpr), 6),
         "or_fpr": None if or_fpr is None else round(float(or_fpr), 6),
@@ -335,7 +400,41 @@ def ab_fusion(
         "legacy_tpr_dct": None if dct_leg is None else round(float(dct_leg), 6),
         "or_tpr_dct": None if dct_or is None else round(float(dct_or), 6),
         "flip_default": flip,
-        "notes": "Cuts and A/B share the same n covers. Not a nested holdout.",
+        "nested_holdout": nested,
+        "notes": "In-sample A/B plus even/odd nested FPR. Do not flip specialist-OR without nested FPR holding.",
+    }
+
+
+def nested_holdout_fpr(
+    ens: np.ndarray,
+    lsb: np.ndarray,
+    freq: np.ndarray,
+    klass: np.ndarray,
+    fpr_target: float,
+) -> dict[str, Any] | None:
+    n = int(ens.size)
+    if n < 8:
+        return None
+    fit_idx = np.arange(0, n, 2)
+    ev_idx = np.arange(1, n, 2)
+    op_fit = {
+        "threshold": cut_at_fpr(ens[fit_idx], fpr_target),
+        "t_lsb": cut_at_fpr(lsb[fit_idx], fpr_target),
+        "t_freq": cut_at_fpr(freq[fit_idx], fpr_target),
+        "t_class": cut_at_fpr(klass[fit_idx], fpr_target),
+    }
+    zeros = np.zeros(ev_idx.size, dtype=np.int32)
+    legacy = fpr_at(zeros, ens[ev_idx], float(op_fit["threshold"]))
+    or_hits = _or_hits(lsb[ev_idx], freq[ev_idx], klass[ev_idx], op_fit)
+    or_fpr = float(or_hits.mean()) if or_hits.size else None
+    return {
+        "n_fit": int(fit_idx.size),
+        "n_eval": int(ev_idx.size),
+        "legacy_fpr": None if legacy is None or not np.isfinite(legacy) else round(float(legacy), 6),
+        "or_fpr": None if or_fpr is None else round(float(or_fpr), 6),
+        "flip_default": bool(
+            or_fpr is not None and legacy is not None and np.isfinite(legacy) and or_fpr <= float(legacy) + 0.005
+        ),
     }
 
 
@@ -385,6 +484,16 @@ def render_markdown(report: dict[str, Any]) -> str:
                 "",
             ]
         )
+        nested = ab.get("nested_holdout") or {}
+        if nested:
+            lines.extend(
+                [
+                    f"- nested n_fit={nested.get('n_fit')} n_eval={nested.get('n_eval')} "
+                    f"legacy_fpr={nested.get('legacy_fpr')} or_fpr={nested.get('or_fpr')} "
+                    f"flip={nested.get('flip_default')}",
+                    "",
+                ]
+            )
     return "\n".join(lines) + "\n"
 
 

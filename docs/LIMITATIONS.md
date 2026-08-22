@@ -16,10 +16,14 @@
   against UniFreq-100K (dataset not bundled). `veilscan bench` measures a
   **generator** operating point (`configs/operating_point.json`). n<50 is
   `provisional`. Do not quote it as ImageNet FPR.
-- **Decision threshold** is now `operating_point.threshold` ~0.67
+- **Decision threshold** is `operating_point.threshold` ~0.67
   (`op-v0.4.0-locked-n50`, generator-photo identity+jpeg_70, n=50, FPR 0.05).
-  Do not quote that as camera FPR. Fusion mode stays `legacy`: specialist-OR
-  FPR was 0.14 vs legacy 0.05 on the same slice, so it is not the default.
+  That is **not** camera-photo FPR. `veilscan bench --covers DIR` is the
+  adapter for a real folder; results go to `docs/bench/camera.json` and never
+  overwrite the generator lock. UniFreq-100K is not in tree.
+- Fusion mode stays `legacy`. specialist-OR FPR was 0.14 vs 0.05 in-sample.
+  Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
+  OR unless that nested FPR also holds.
 - **JPEG70 LSB** on the locked slice: TPR@5%FPR 0.10 (spatial LSB dies).
   Frequency DCT TPR@5%FPR 0.86 vs identity 1.00. Patchwork identity
   TPR@5%FPR 0.64 so the YAML weight stays.
