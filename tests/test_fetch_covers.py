@@ -102,6 +102,41 @@ def test_empty_hash_requires_flag(tmp_path: Path) -> None:
         assert "empty" in str(exc).lower()
 
 
+def test_fetch_zip_png_glob(tmp_path: Path) -> None:
+    import zipfile
+
+    mod = _load_fetch()
+    inner = "DIV2K_valid_HR"
+    src = tmp_path / "src" / inner
+    src.mkdir(parents=True)
+    for i in range(5):
+        img = synthetic_cover(32, 32, np.random.default_rng(i), style="photo")
+        Image.fromarray(img).save(src / f"{801 + i:04d}.png")
+    archive = tmp_path / "DIV2K_valid_HR.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        for p in src.glob("*.png"):
+            zf.write(p, arcname=f"{inner}/{p.name}")
+    digest = mod.sha256_file(archive)
+    man = {
+        "kind": "archive",
+        "url": archive.as_uri(),
+        "archive": archive.name,
+        "sha256": digest,
+        "member_glob": "DIV2K_valid_HR/*.png",
+        "take": 5,
+    }
+    man_path = tmp_path / "man.json"
+    man_path.write_text(json.dumps(man), encoding="utf-8")
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    (cache / archive.name).write_bytes(archive.read_bytes())
+    out = tmp_path / "out"
+    report = mod.fetch(man_path, out, cache)
+    names = sorted(p.name for p in out.glob("*.png"))
+    assert report["files"] == 5
+    assert names == [f"{801 + i:04d}.png" for i in range(5)]
+
+
 def test_fetch_train_glob_not_test(tmp_path: Path) -> None:
     mod = _load_fetch()
     inner_train = "BSR/BSDS500/data/images/train"

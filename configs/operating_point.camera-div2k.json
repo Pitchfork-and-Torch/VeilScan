@@ -1,0 +1,20 @@
+{
+  "id": "op-v0.8.0-camera-div2k-locked-n50",
+  "status": "locked",
+  "threshold": 0.765029,
+  "t_lsb": 0.364777,
+  "t_freq": 0.892294,
+  "t_class": 0.981627,
+  "fpr_est": 0.05,
+  "fpr_target": 0.05,
+  "n": 50,
+  "date": "2026-08-22",
+  "protocol": "veilscan-bench-v1",
+  "corpus": "camera-div2k",
+  "slice": [
+    "camera/identity",
+    "camera/jpeg_70"
+  ],
+  "fusion_mode": "legacy",
+  "notes": "DIV2K valid-HR confirmation pack. Does not replace the generator lock or the BSDS camera sidecar used in scan JSON. Do not cite as UniFreq/ImageNet FPR. specialist_or did not beat legacy FPR; default stays legacy."
+}

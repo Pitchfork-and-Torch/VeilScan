@@ -21,6 +21,8 @@ examples/_demo_out/
 !examples/specimen-hello.png
 docs/bench/camera.json
 docs/bench/camera.md
+docs/bench/camera-div2k.json
+docs/bench/camera-div2k.md
 docs/bench/camera_operating_point.json
 data/covers/
 .coverage

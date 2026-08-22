@@ -397,6 +397,7 @@ def bench(
     attacks: Optional[str] = typer.Option(None, help="Comma list, default protocol attacks"),
     styles: Optional[str] = typer.Option(None, help="Comma list sine,photo"),
     covers: Optional[Path] = typer.Option(None, "--covers", help="Folder of real camera images. Never written into git."),
+    corpus_id: Optional[str] = typer.Option(None, "--corpus-id", help="camera = BSDS sidecar. Other slugs write their own json/OP files."),
 ) -> None:
     """Frozen bench. Generator by default. --covers DIR is the camera adapter."""
     from veilscan.eval.bench import ROOT, load_camera_covers, load_protocol, run_bench, write_outputs
@@ -407,16 +408,24 @@ def bench(
     plates = None
     json_path = json_out
     op_path = None
+    slug = (corpus_id or "").strip() or None
     if covers:
         want_n = int(n if n is not None else proto.get("n", 20))
         want_size = int(size if size is not None else proto.get("size", 128))
         plates = load_camera_covers(covers, want_n, want_size, seed=int(proto.get("seed", 20260822)))
+        slug = slug or "camera"
         if json_path is None:
-            json_path = ROOT / "docs" / "bench" / "camera.json"
+            json_path = ROOT / "docs" / "bench" / f"{slug}.json"
         if write_operating_point:
-            # Sidecar only. Never DEFAULT_OP (generator lock).
-            op_path = ROOT / "configs" / "operating_point.camera.json"
-    report = run_bench(proto, n=n, size=size, attacks=atk, styles=st, covers=plates)
+            frozen = (ROOT / "data" / "covers" / "camera").resolve()
+            if slug == "camera":
+                if covers.resolve() != frozen:
+                    console.print("ERROR: refusing to overwrite the BSDS camera OP from a different --covers folder. Pass --corpus-id.")
+                    raise typer.Exit(code=2)
+                op_path = ROOT / "configs" / "operating_point.camera.json"
+            else:
+                op_path = ROOT / "configs" / f"operating_point.{slug}.json"
+    report = run_bench(proto, n=n, size=size, attacks=atk, styles=st, covers=plates, corpus_id=slug)
     written = write_outputs(
         report,
         json_path=json_path,
@@ -426,8 +435,12 @@ def bench(
     )
     op = report.get("operating_point") or {}
     ab = report.get("ab") or {}
-    console.print(f"bench n={report['n']} size={report['size']} corpus={report.get('corpus')} protocol={report.get('protocol_id')}")
+    console.print(f"bench n={report['n']} size={report['size']} corpus={report.get('corpus')} corpus_id={report.get('corpus_id')} protocol={report.get('protocol_id')}")
     console.print(f"operating_point id={op.get('id')} status={op.get('status')} threshold={op.get('threshold')} fusion={op.get('fusion_mode')}")
+    locks = (report.get("fpr_at_locks") or {}).get("locks") or {}
+    if locks:
+        bits = [f"{k}={v.get('fpr')}@{v.get('threshold')}" for k, v in locks.items()]
+        console.print("fpr_at_locks " + " ".join(bits))
     nested = ab.get("nested_holdout") or {}
     if nested:
         console.print(f"nested_holdout legacy_fpr={nested.get('legacy_fpr')} or_fpr={nested.get('or_fpr')} flip={nested.get('flip_default')}")

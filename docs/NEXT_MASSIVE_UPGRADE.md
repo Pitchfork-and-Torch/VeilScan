@@ -1,10 +1,10 @@
 # Operating-point contract (v0.4) - SHIPPED
 
 **Status:** historical. Landed across v0.4.0 / v0.4.1. Current package is
-**v0.7.0** (`docs/RESULTS_v0.7.md`). Camera sidecar measured on BSDS500
-test-64 after an FSNet recook on BSDS500 train-200 (no lsb, cover-mix 0.4).
-Generator lock still default `present`. Fusion still `legacy`. Next science
-is a second camera corpus, patchwork, or LOAO folders, not another YAML weight.
+**v0.8.0** (`docs/RESULTS_v0.8.md`). Second camera corpus is DIV2K valid-HR.
+Generator 0.67 FPR there is 0.83. BSDS sidecar stays scan JSON `camera`.
+Fusion still `legacy`. Next science is patchwork, camera JPEG70 DCT, or
+LOAO folders, not another YAML weight.
 
 **Baseline when written:** v0.3.0 keyless decode.  
 **Identity:** presence ensemble plus keyless plaintext decode. No remover.

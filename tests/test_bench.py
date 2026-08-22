@@ -8,6 +8,15 @@ from veilscan.generators import synthetic_cover
 import numpy as np
 
 
+def test_fpr_at_named_thresholds() -> None:
+    from veilscan.eval.bench import fpr_at_named_thresholds
+
+    scores = np.asarray([0.10, 0.20, 0.30, 0.80, 0.90])
+    out = fpr_at_named_thresholds(scores, {"low": 0.15, "high": 0.95})
+    assert out["low"] == 0.8
+    assert out["high"] == 0.0
+
+
 def test_cut_at_fpr_monotonic() -> None:
     covers = np.linspace(0.0, 0.4, 20)
     t = cut_at_fpr(covers, 0.05)
@@ -71,10 +80,25 @@ def test_bench_camera_covers(tmp_path: Path) -> None:
         covers=plates,
     )
     assert report["corpus"] == "camera"
+    assert report["corpus_id"] == "camera"
     assert "camera/identity" in report["cells"]
+    assert "fpr_at_locks" in report
     op = report["operating_point"]
     assert op["corpus"] == "camera"
     assert "camera" in op["id"]
+    other = run_bench(
+        proto,
+        n=4,
+        size=64,
+        families=["lsb"],
+        attacks=["identity"],
+        detectors=["chi_square"],
+        covers=plates,
+        corpus_id="camera-div2k",
+    )
+    assert other["corpus_id"] == "camera-div2k"
+    assert "camera-div2k" in other["operating_point"]["id"]
+    assert other["operating_point"]["corpus"] == "camera-div2k"
     assert "Generator covers" not in (op.get("notes") or "")
     before = DEFAULT_OP.read_text(encoding="utf-8") if DEFAULT_OP.is_file() else None
     try:

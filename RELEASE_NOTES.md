@@ -1,3 +1,16 @@
+# v0.8.0
+
+Second camera corpus (DIV2K valid-HR). Default `present` still not flipped.
+
+- Fetch: `configs/camera_div2k_covers.manifest.json` (sha256 pinned). Extracted PNGs gitignored
+- `--corpus-id` so a second pack cannot overwrite the BSDS camera OP
+- DIV2K n=50 lock `op-v0.8.0-camera-div2k-locked-n50` threshold ~0.765
+- FPR at generator 0.67 on DIV2K: 0.83. FPR at BSDS 0.753: 0.12
+- Scan JSON `camera` sidecar stays BSDS. Fusion stays `legacy`
+- Bench prints `fpr_at_locks` against existing generator and BSDS cuts
+
+Proprietary. Private repo.
+
 # v0.7.0
 
 FSNet-lite recook on BSDS500 train stills. Frozen test-64 stays the camera bench.

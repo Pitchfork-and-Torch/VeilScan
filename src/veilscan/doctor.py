@@ -133,6 +133,19 @@ def run_doctor(cfg: VeilConfig | None = None) -> dict[str, Any]:
         report["camera_operating_point"] = None
         report["warnings"].append("camera operating point not measured")
 
+    div_path = ROOT / "configs" / "operating_point.camera-div2k.json"
+    div = load_operating_point(div_path) if div_path.is_file() else None
+    if div:
+        report["camera_div2k_operating_point"] = {
+            "id": div.get("id"),
+            "status": div.get("status"),
+            "threshold": div.get("threshold"),
+            "n": div.get("n"),
+            "path": str(div_path),
+        }
+    else:
+        report["camera_div2k_operating_point"] = None
+
     bench = ROOT / "docs" / "bench" / "latest.json"
     report["bench"] = {
         "path": str(bench),

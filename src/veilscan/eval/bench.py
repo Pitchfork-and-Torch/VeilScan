@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 import yaml
 
-from veilscan.config import DEFAULT_PEAK_OK, VeilConfig
+from veilscan.config import DEFAULT_PEAK_OK, VeilConfig, load_camera_operating_point, load_operating_point
 from veilscan.engine import analyze_image
 from veilscan.eval.metrics import auc_roc, cut_at_fpr, f1_at, fpr_at, tpr_at, tpr_at_fpr
 from veilscan.eval.robustness import apply_attack
@@ -132,6 +132,7 @@ def run_bench(
     cfg: VeilConfig | None = None,
     detectors: list[str] | None = None,
     covers: list[np.ndarray] | None = None,
+    corpus_id: str | None = None,
 ) -> dict[str, Any]:
     proto = dict(protocol or load_protocol())
     n = int(n if n is not None else proto.get("n", 20))
@@ -238,10 +239,12 @@ def run_bench(
         "detectors": names,
         "threshold_used": cfg.threshold,
         "corpus": "camera" if camera else "generator",
+        "corpus_id": (corpus_id or ("camera" if camera else "generator")),
         "cells": cells,
         "notes": proto.get("notes"),
     }
     report["operating_point"] = choose_operating_point(report, cover_bucket, proto)
+    report["fpr_at_locks"] = fpr_at_locks(cover_bucket, proto)
     report["ab"] = ab_fusion(cover_bucket, marked_bucket, report["operating_point"], proto)
     if report["ab"].get("flip_default"):
         report["operating_point"]["fusion_mode"] = "specialist_or"
@@ -289,9 +292,12 @@ def choose_operating_point(
     status = "provisional" if int(n) < 50 else "locked"
     camera = styles == ["camera"] or report.get("corpus") == "camera"
     if camera:
-        oid = f"op-v0.7.0-camera-{status}-n{n}"
+        from veilscan import __version__
+
+        slug = str(report.get("corpus_id") or "camera")
+        oid = f"op-v{__version__}-{slug}-{status}-n{n}"
         notes = "Camera stills pack sidecar. Does not replace the generator lock. Do not cite as UniFreq/ImageNet FPR."
-        corpus = "camera"
+        corpus = slug
     else:
         oid = f"op-v0.4.0-{status}-n{n}"
         notes = "Generator covers, not camera photos. Do not cite as ImageNet FPR."
@@ -313,6 +319,61 @@ def choose_operating_point(
         "fusion_mode": "legacy",
         "notes": notes,
     }
+
+
+def _concat_cover_ensemble(
+    cover_bucket: dict[tuple[str, str], dict[str, list[float]]],
+    proto: dict[str, Any],
+) -> np.ndarray:
+    slice_cfg = proto.get("operating_slice") or {}
+    styles = list(slice_cfg.get("styles") or ["photo"])
+    attacks = list(slice_cfg.get("attacks") or ["identity"])
+    ens: list[float] = []
+    for style in styles:
+        for attack in attacks:
+            bucket = cover_bucket.get((style, attack))
+            if not bucket:
+                continue
+            ens.extend(bucket["ensemble"])
+    return np.asarray(ens, dtype=np.float64)
+
+
+def fpr_at_named_thresholds(scores: np.ndarray, locks: dict[str, float]) -> dict[str, float]:
+    """FPR treating every score as a cover. Used to test existing locks on a new corpus."""
+    s = np.asarray(scores, dtype=np.float64).reshape(-1)
+    y = np.zeros(s.size, dtype=np.int32)
+    out: dict[str, float] = {}
+    for name, thr in locks.items():
+        val = fpr_at(y, s, float(thr))
+        out[str(name)] = float("nan") if val is None or not np.isfinite(val) else round(float(val), 6)
+    return out
+
+
+def fpr_at_locks(
+    cover_bucket: dict[tuple[str, str], dict[str, list[float]]],
+    proto: dict[str, Any],
+) -> dict[str, Any]:
+    scores = _concat_cover_ensemble(cover_bucket, proto)
+    rows: dict[str, Any] = {
+        "n": int(scores.size),
+        "cover_mean": None if scores.size == 0 else round(float(scores.mean()), 6),
+        "locks": {},
+    }
+    named: dict[str, dict[str, Any]] = {}
+    gen = load_operating_point()
+    cam = load_camera_operating_point()
+    for key, op in (("generator", gen), ("camera_bsds", cam)):
+        if not op or op.get("threshold") is None:
+            continue
+        thr = float(op["threshold"])
+        fpr = fpr_at_named_thresholds(scores, {key: thr}).get(key)
+        named[key] = {
+            "id": op.get("id"),
+            "threshold": thr,
+            "fpr": fpr,
+        }
+    rows["locks"] = named
+    return rows
 
 
 def _or_hits(lsb: np.ndarray, freq: np.ndarray, klass: np.ndarray, op: dict[str, Any]) -> np.ndarray:
@@ -503,6 +564,16 @@ def render_markdown(report: dict[str, Any]) -> str:
                     "",
                 ]
             )
+    locks = report.get("fpr_at_locks") or {}
+    named = locks.get("locks") or {}
+    if named:
+        lines.extend(["## FPR at existing locks", ""])
+        lines.append(f"- n={locks.get('n')} cover_mean={locks.get('cover_mean')}")
+        for key, row in named.items():
+            lines.append(
+                f"- {key}: id=`{row.get('id')}` threshold={row.get('threshold')} fpr={row.get('fpr')}"
+            )
+        lines.append("")
     return "\n".join(lines) + "\n"
 
 
@@ -523,7 +594,8 @@ def write_outputs(
     written = {"json": str(json_path), "md": str(md_path)}
     if write_operating_point:
         op_path = operating_point_path or DEFAULT_OP
-        if report.get("corpus") == "camera" and Path(op_path).resolve() == DEFAULT_OP.resolve():
+        corpus = str(report.get("corpus") or "")
+        if corpus not in {"generator", "generator-photo"} and Path(op_path).resolve() == DEFAULT_OP.resolve():
             raise ValueError("refusing to overwrite generator operating_point.json from a camera bench")
         op_path.write_text(
             json.dumps(_clean_nans(report["operating_point"]), indent=2, allow_nan=False),

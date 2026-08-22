@@ -4,13 +4,13 @@ Local, algorithm-agnostic **invisible watermark presence detector** with a **key
 
 It answers: *does this image contain an invisible watermark?* and, when the payload is sequential LSB / PNG text / JPEG comment, *what does the text say?* It does not strip a mark. It does not break SynthID, Digimarc, encrypted stego, or neural watermarks.
 
-v0.7.0 recooks FSNet-lite on BSDS500 train stills mixed with synthetic photo covers (no `lsb` family). Frozen BSDS500 test-64 stays the camera bench. Default `present` is still the generator-photo lock (~0.67). Camera sidecar `op-v0.7.0-camera-locked-n50` is ~0.753 (FPR 0.05). v0.6 camera identity DCT TPR@5%FPR was 0.06; v0.7 is 0.96. Generator lock still false-fires on those stills (cover mean ~0.71). Fusion default is `legacy` (in-sample OR FPR 0.15 vs 0.05). `veilscan doctor` checks checkpoint sha256. ResidualCNN is unchanged. Deep plugins skip if `checkpoints/*.pt` are missing. Do not vendor UniFreq or personal photos in git. Do not train FSNet on the frozen test pack.
+v0.8.0 adds a **second camera corpus** (DIV2K valid-HR). Generator lock ~0.67 false-fires there too (FPR 0.83). BSDS camera sidecar stays ~0.753 and is slightly optimistic on DIV2K (FPR 0.12). Default `present` is not flipped. Scan JSON `camera` is still BSDS. Fusion stays `legacy`. FSNet remains the v0.7 camera-train mix cook (no `lsb`). ResidualCNN unchanged. Do not vendor UniFreq or personal photos in git. Do not train FSNet on the frozen BSDS test pack.
 
 ## Synthetic numbers
 
 `py -3 -m veilscan selftest` is a fast n=6 @ 128px smoke, not an operating point.
 
-`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Camera sidecar `op-v0.7.0-camera-locked-n50`: ~0.753 (FPR 0.05 on BSDS500 test-64). Fusion stays `legacy`. Camera bench will not clobber the generator lock. `veilscan inspect` runs scan then decode into one JSON/HUD. Numbers: `docs/RESULTS_v0.7.md`.
+`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. Locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Camera sidecar `op-v0.7.0-camera-locked-n50`: ~0.753 (FPR 0.05 on BSDS500 test-64). DIV2K confirmation `op-v0.8.0-camera-div2k-locked-n50`: ~0.765. Fusion stays `legacy`. `--corpus-id` keeps a second pack from clobbering the BSDS sidecar. `veilscan inspect` runs scan then decode into one JSON/HUD. Numbers: `docs/RESULTS_v0.8.md`.
 
 Complementary split (do not mix):
 
@@ -47,6 +47,8 @@ py -3 scripts\fetch_camera_covers.py --manifest configs\camera_train_covers.mani
 py -3 scripts\train_lite.py --fresh --only fsnet_lite --steps 500 --families dct,spread,dwt,tree_ring --jpeg-prob 0.25 --covers data\covers\camera-train --out checkpoints\candidates
 py -3 scripts\probe_fsnet.py --covers data\covers\camera --ckpt-a checkpoints\fsnet_lite.pt --ckpt-b checkpoints\candidates\fsnet_lite.pt
 py -3 -m veilscan bench --covers data\covers\camera --n 50 --attacks identity,jpeg_70 --write-operating-point
+py -3 scripts\fetch_camera_covers.py --manifest configs\camera_div2k_covers.manifest.json --out data\covers\camera-div2k
+py -3 -m veilscan bench --covers data\covers\camera-div2k --corpus-id camera-div2k --n 50 --attacks identity,jpeg_70 --write-operating-point
 py -3 -m veilscan loao --n 3
 ```
 
