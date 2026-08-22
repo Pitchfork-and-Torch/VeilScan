@@ -1,22 +1,21 @@
-# Resume (v1.2.0)
+# Resume (v1.3.0)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v1.2.0 Q50-aware FSNet.
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v1.3.0 DCT-Q50 FSNet.
 Public lamp: https://veilscan.jonbailey.xyz/
 
 ## Where we stopped
 
-- Fine-tuned v1.0 FSNet (not from scratch). Q50 DWT/spread/tree-ring up.
-- JPEG50 DCT ensemble TPR 0.18 -> 0.32. FSNet-head DCT at Q50 still 0.26.
-- Camera sidecar `op-v1.2.0-camera-locked-n50` ~0.484 (below generator lock).
-- Generator lock ~0.67 FPR on BSDS camera 0.01. Not flipped.
-- `--jpeg-attacks` on train_lite.py. Fusion `legacy`. Patchwork weight 0.
+- Lamp copy matches CLI: inspect, JPEG SOI/Q-table/subsampling, ResidualCNN vs FSNet, doctor, schema 4, JPEG+PNG drop.
+- DCT-heavy Q50 fine-tune of v1.2 weights. Ensemble JPEG50 DCT 0.32 -> 0.46.
+- Camera sidecar `op-v1.3.0-camera-locked-n50` ~0.758.
+- Generator lock ~0.67 FPR on BSDS camera 0.08. Not flipped.
+- Fusion `legacy`. Patchwork weight 0.
 
 ## Next
 
-JPEG50 DCT is still the hole (ensemble TPR 0.32, head 0.26). Optional:
-longer fine-tune or a DCT-only Q50 specialist. Do not flip default
-`present`. Not another YAML weight on patchwork. DIV2K sidecar still v1.0
-(PNG pack).
+JPEG50 DCT is still incomplete (0.46). Optional: another fine-tune or
+leave it labeled weak. Do not flip default `present`. Not another YAML
+weight on patchwork. DIV2K sidecar still v1.0 (PNG pack).
 
 ## Do not
 
@@ -26,4 +25,4 @@ longer fine-tune or a DCT-only Q50 specialist. Do not flip default
 - UniFreq in git
 - Remover
 - Gradio from a Grok Build command
-- From-scratch Q50 cooks (identity DCT collapses)
+- From-scratch Q50 cooks

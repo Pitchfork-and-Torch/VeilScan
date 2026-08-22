@@ -1,3 +1,15 @@
+# v1.3.0
+
+DCT-heavy Q50 FSNet fine-tune. Lamp lists inspect, JPEG container fields, and honest Q50 DCT limits.
+
+Lamp: https://veilscan.jonbailey.xyz/
+
+- Fine-tuned v1.2 weights with `--families dct,dct,dct,dwt,spread,tree_ring`
+- FSNet-head jpeg_50 DCT TPR 0.26 -> 0.40. Ensemble 0.32 -> 0.46
+- Identity DCT and JPEG70 DWT held. Generator lock ~0.67 FPR on BSDS 0.08
+- Camera sidecar `op-v1.3.0-camera-locked-n50` ~0.758
+- Fusion `legacy`. Patchwork weight 0. ResidualCNN unchanged. No stripper.
+
 # v1.2.0
 
 Q50-aware FSNet fine-tune. Native JPEG path from v1.1 stays.

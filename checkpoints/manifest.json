@@ -13,10 +13,10 @@
     {
       "name": "fsnet_lite",
       "file": "fsnet_lite.pt",
-      "sha256": "2ea0ead9af468dbdc0bb1a1659a4275e2a75207f9e6f7129c9552f4a71faccc3",
-      "val_auc": 0.967,
+      "sha256": "8064ca659e44bf7b832b3d847ce16a508a1b6d0c7692c90d69381f9d5b6bb195",
+      "val_auc": 0.922,
       "peak_ok": true,
-      "note": "v1.2 Q50 fine-tune of v1.0 weights. camera-train mix 0.35, jpeg_prob 0.75, jpeg_50-heavy, families dct,spread,dwt,tree_ring, no lsb. From-scratch Q50 cook was rejected (identity DCT collapsed)."
+      "note": "v1.3 DCT-heavy Q50 fine-tune of v1.2 weights. families dct,dct,dct,dwt,spread,tree_ring. jpeg_prob 0.8, jpeg_50-heavy. Identity DCT held. No lsb."
     }
   ]
 }

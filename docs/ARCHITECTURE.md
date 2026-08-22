@@ -107,7 +107,7 @@ Until those files exist, deep detectors skip.
 - Attacks: JPEG, resize, crop, noise, blur, jitter.
 - Protocol helper: leave-one-family-out over generators.
 
-Living numbers: `docs/RESULTS_v1.2.md` (v1.1: `docs/RESULTS_v1.1.md`).
+Living numbers: `docs/RESULTS_v1.3.md` (v1.2: `docs/RESULTS_v1.2.md`).
 Generator lock: `docs/RESULTS_v0.5.md`.
 Historical maps: `docs/UPGRADE_PLAN.md`, `docs/NEXT_MASSIVE_UPGRADE.md`.
 
