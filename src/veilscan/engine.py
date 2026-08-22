@@ -6,7 +6,7 @@ from collections.abc import Iterable
 
 import numpy as np
 
-from veilscan.config import VeilConfig, resolve_device
+from veilscan.config import VeilConfig, load_operating_point, merge_operating_point, resolve_device
 from veilscan.ensemble import fuse
 from veilscan.image_io import tiles
 from veilscan.registry import ensure_loaded, select
@@ -77,6 +77,12 @@ def analyze_image(
 
 
 def _fuse_calibrated(results: list, cfg: VeilConfig, shape: tuple[int, ...]) -> EnsembleResult:
+    op = load_operating_point(cfg.operating_point_path)
+    mix = merge_operating_point(cfg.fusion, op)
+    threshold = float(cfg.threshold)
+    if op and str(op.get("status") or "") == "locked" and op.get("threshold") is not None:
+        if mix.get("mode") != "specialist_or":
+            threshold = float(op["threshold"])
     if cfg.apply_calibration:
         from veilscan.calibrate import apply_affine, load_calibration
 
@@ -86,12 +92,13 @@ def _fuse_calibrated(results: list, cfg: VeilConfig, shape: tuple[int, ...]) -> 
             if not r.skipped:
                 r.score = apply_affine(heads.get(r.detector), r.score)
                 r.clamp()
-        fused = fuse(results, cfg.weights, cfg.threshold, shape, peak_ok=cfg.peak_ok, mix=cfg.fusion)
+        fused = fuse(results, cfg.weights, threshold, shape, peak_ok=cfg.peak_ok, mix=mix)
         fused.score = apply_affine(cal.get("ensemble"), fused.score)
         fused.score = float(np.clip(fused.score, 0.0, 1.0))
-        fused.present = fused.score >= fused.threshold
+        if mix.get("mode") != "specialist_or":
+            fused.present = fused.score >= fused.threshold
         return fused
-    return fuse(results, cfg.weights, cfg.threshold, shape, peak_ok=cfg.peak_ok, mix=cfg.fusion)
+    return fuse(results, cfg.weights, threshold, shape, peak_ok=cfg.peak_ok, mix=mix)
 
 
 def _safe(detector, rgb: np.ndarray, ctx: AnalyzeContext) -> DetectionResult:

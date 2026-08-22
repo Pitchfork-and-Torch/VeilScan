@@ -176,9 +176,20 @@ def main() -> None:
     p.add_argument("--batch-size", type=int, default=0, help="0 = 32 on cuda else 8")
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--cover-style", default="mix", help="sine | photo | mix")
+    p.add_argument("--force", action="store_true", help="Allow FSNet to see lsb (destroys the frequency cue).")
     args = p.parse_args()
     device = resolve_device(args.device)
     fams = [x.strip() for x in args.families.split(",") if x.strip()] or None
+    if args.only in ("both", "fsnet_lite"):
+        used = list(fams) if fams else list(FAMILIES)
+        if "lsb" in used:
+            print(
+                "ERROR: FSNet-lite must not train on lsb. The frequency cue collapses. "
+                "Cook ResidualCNN separately for LSB, and pass --families without lsb for FSNet. "
+                "Override only with --force."
+            )
+            if not args.force:
+                raise SystemExit(2)
     bs = args.batch_size or (32 if device == "cuda" else 8)
     print("device", device, "holdout", args.holdout_family, "jpeg_prob", args.jpeg_prob, "only", args.only, "bs", bs, "families", fams)
     root = Path(args.out)

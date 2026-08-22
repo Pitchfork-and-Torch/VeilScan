@@ -41,6 +41,35 @@ def tpr_at_fpr(y_true: np.ndarray, y_score: np.ndarray, fpr_target: float) -> fl
     return float(best)
 
 
+def fpr_at(y_true: np.ndarray, y_score: np.ndarray, threshold: float) -> float:
+    y_true = np.asarray(y_true).astype(np.int32)
+    pred = np.asarray(y_score) >= float(threshold)
+    n = int((y_true == 0).sum())
+    if n <= 0:
+        return float("nan")
+    fp = int(((pred == 1) & (y_true == 0)).sum())
+    return float(fp / n)
+
+
+def tpr_at(y_true: np.ndarray, y_score: np.ndarray, threshold: float) -> float:
+    y_true = np.asarray(y_true).astype(np.int32)
+    pred = np.asarray(y_score) >= float(threshold)
+    p = int((y_true == 1).sum())
+    if p <= 0:
+        return float("nan")
+    tp = int(((pred == 1) & (y_true == 1)).sum())
+    return float(tp / p)
+
+
+def cut_at_fpr(cover_scores: np.ndarray, fpr_target: float = 0.05) -> float:
+    """Lowest threshold whose cover-FPR is <= fpr_target (quantile of covers)."""
+    s = np.asarray(cover_scores, dtype=np.float64)
+    if s.size == 0:
+        return 0.5
+    q = float(np.clip(1.0 - fpr_target, 0.0, 1.0))
+    return float(np.quantile(s, q))
+
+
 def f1_at(y_true: np.ndarray, y_score: np.ndarray, threshold: float) -> float:
     y_true = np.asarray(y_true).astype(np.int32)
     pred = (np.asarray(y_score) >= threshold).astype(np.int32)

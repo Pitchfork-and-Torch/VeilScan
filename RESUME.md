@@ -1,26 +1,25 @@
-# Resume (after v0.3.0 decode)
+# Resume (v0.4.0 slice A)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.3.0 keyless plaintext decode.
-Public lamp: https://veilscan.jonbailey.xyz/ site v1.1.0.
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.4.0 generator bench + family_hint.
+Public lamp: https://veilscan.jonbailey.xyz/ site v1.1.5.
 
 ## Where we stopped
 
-v0.3.0 shipped `veilscan decode` / `embed-text` plus in-tab LSB / PNG text / JPEG COM read.
+Slice A landed: `veilscan bench`, `configs/bench_protocol.yaml`, schema 2 `family_hint`,
+specialist-OR behind `fusion.mode` (default still `legacy`), FSNet `--families lsb` exits 2.
 
-Complementary deep heads still work:
+Operating point is `provisional` until `veilscan bench --n 50 --write-operating-point`.
 
-- ResidualCNN = LSB
-- FSNet-lite = frequency
-- Never train FSNet with `lsb` in `--families`
+Complementary deep heads:
 
-Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md` (v0.4 operating point).
+- ResidualCNN = LSB (keep bit planes)
+- FSNet-lite = frequency (never pass `lsb` in `--families`)
 
-## First session on the bench (M1, not a new net)
+## Next session
 
-1. Desk-check `veilscan` then claim.
-2. Implement `scripts/bench.py` / `veilscan bench` from M1 (start n=20 if short, protocol n>=50).
-3. Freeze `configs/bench_protocol.yaml` + write `docs/bench/latest.json`.
-4. Do not enable `calibration.fitted.json` as default until the bench exists.
+1. Run n=20 identity+jpeg_70 if `docs/bench/latest.json` is missing, then n=50 lock.
+2. A/B `specialist_or` vs `legacy` on that JSON; flip default only if FPR does not rise.
+3. Slice B: lamp scanlines + token scorer; `veilscan inspect`.
 
 ## Do not
 

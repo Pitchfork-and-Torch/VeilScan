@@ -27,6 +27,10 @@ DEFAULT_FUSION = {
     "peak": 0.40,
     "top_k": 3,
     "uncertainty": "peak_ok",
+    "mode": "legacy",
+    "t_lsb": 0.50,
+    "t_freq": 0.50,
+    "t_class": 0.48,
 }
 
 DEFAULTS = {
@@ -38,6 +42,7 @@ DEFAULTS = {
     "jpeg_quality_probe": 95,
     "apply_calibration": True,
     "calibration_path": None,
+    "operating_point_path": None,
     "peak_ok": list(DEFAULT_PEAK_OK),
     "fusion": dict(DEFAULT_FUSION),
     "weights": {
@@ -84,6 +89,7 @@ class VeilConfig:
     fusion: dict[str, Any] = field(default_factory=lambda: dict(DEFAULT_FUSION))
     apply_calibration: bool = True
     calibration_path: str | None = None
+    operating_point_path: str | None = None
     checkpoint_dir: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -120,11 +126,44 @@ class VeilConfig:
                 "fusion",
                 "apply_calibration",
                 "calibration_path",
+                "operating_point_path",
             )
         }
         cfg = cls(**known)
         cfg.checkpoint_dir = data.get("checkpoint_dir")
         return cfg
+
+
+def _pkg_operating_point_path() -> Path:
+    return Path(__file__).resolve().parents[2] / "configs" / "operating_point.json"
+
+
+def load_operating_point(path: str | Path | None = None) -> dict[str, Any] | None:
+    src = Path(path) if path else _pkg_operating_point_path()
+    if not src.is_file():
+        return None
+    import json
+
+    with src.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data if isinstance(data, dict) else None
+
+
+def merge_operating_point(fusion: dict[str, Any], op: dict[str, Any] | None) -> dict[str, Any]:
+    mix = dict(fusion or {})
+    if not op:
+        return mix
+    status = str(op.get("status") or "")
+    if status not in {"provisional", "locked"}:
+        return mix
+    for key, src in (("t_lsb", "t_lsb"), ("t_freq", "t_freq"), ("t_class", "t_class")):
+        if src in op and op[src] is not None:
+            mix[key] = float(op[src])
+    if op.get("id"):
+        mix["operating_point_id"] = str(op["id"])
+    if op.get("fusion_mode"):
+        mix["mode"] = str(op["fusion_mode"])
+    return mix
 
 
 def resolve_device(requested: str) -> str:

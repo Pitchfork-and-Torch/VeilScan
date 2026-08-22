@@ -19,7 +19,21 @@ DEFAULT_PEAK_OK = (
     "fsnet_lite",
 )
 
-DEFAULT_MIX = {"full_mean": 0.20, "ok_mean": 0.20, "top_mean": 0.20, "peak": 0.40, "top_k": 3, "uncertainty": "peak_ok"}
+DEFAULT_MIX = {
+    "full_mean": 0.20,
+    "ok_mean": 0.20,
+    "top_mean": 0.20,
+    "peak": 0.40,
+    "top_k": 3,
+    "uncertainty": "peak_ok",
+    "mode": "legacy",
+    "t_lsb": 0.50,
+    "t_freq": 0.50,
+    "t_class": 0.48,
+}
+
+LSB_HEAD = "residual_cnn"
+FREQ_HEAD = "fsnet_lite"
 
 
 def fuse(
@@ -44,6 +58,7 @@ def fuse(
             image_shape=image_shape,
             active=0,
             skipped=skipped,
+            family_hint="none",
         )
 
     w = np.array([max(weights.get(r.detector, 0.5), 0.0) * r.confidence for r in active], dtype=np.float64)
@@ -69,16 +84,34 @@ def fuse(
         top_mean = full_mean
         ok_mean = full_mean
         unc_src = s
-    score = (
+    mix_score = (
         float(mix.get("full_mean", 0.20)) * full_mean
         + float(mix.get("ok_mean", 0.20)) * ok_mean
         + float(mix.get("top_mean", 0.20)) * top_mean
         + float(mix.get("peak", 0.40)) * peak
     )
+    lsb_score = _named_score(active, LSB_HEAD)
+    freq_score = _named_score(active, FREQ_HEAD)
+    class_heads = [r for r in active if r.detector in allow and r.detector not in {LSB_HEAD, FREQ_HEAD}]
+    class_score = max((r.score for r in class_heads), default=0.0)
+    t_lsb = float(mix.get("t_lsb", 0.50))
+    t_freq = float(mix.get("t_freq", 0.50))
+    t_class = float(mix.get("t_class", threshold))
+    mode = str(mix.get("mode") or "legacy")
+    op_id = mix.get("operating_point_id")
+    op_id = str(op_id) if op_id else None
+
+    if mode == "specialist_or":
+        score = float(max(lsb_score, freq_score, class_score, mix_score))
+        present = lsb_score >= t_lsb or freq_score >= t_freq or class_score >= t_class
+    else:
+        score = mix_score
+        present = score >= threshold
+
+    family_hint = _family_hint(present, lsb_score, freq_score, class_score, t_lsb, t_freq, t_class)
     uncertainty = float(np.std(unc_src)) if unc_src.size > 1 else 0.0
     coverage = min(1.0, len(active) / 8.0)
     confidence = float(np.clip((1.0 - uncertainty) * (0.5 + 0.5 * coverage), 0.0, 1.0))
-    present = score >= threshold
 
     heatmap = _merge_heatmaps(active, image_shape)
 
@@ -89,12 +122,12 @@ def fuse(
     if present:
         expl = (
             f"Ensemble score {score:.3f} >= {threshold:.2f} (watermark likely). "
-            f"Uncertainty {uncertainty:.3f}. Top: {bits}."
+            f"family={family_hint}. Uncertainty {uncertainty:.3f}. Top: {bits}."
         )
     else:
         expl = (
             f"Ensemble score {score:.3f} < {threshold:.2f} (no strong invisible-watermark evidence). "
-            f"Uncertainty {uncertainty:.3f}. Top: {bits}."
+            f"family={family_hint}. Uncertainty {uncertainty:.3f}. Top: {bits}."
         )
     return EnsembleResult(
         present=present,
@@ -108,7 +141,48 @@ def fuse(
         image_shape=image_shape,
         active=len(active),
         skipped=skipped,
+        family_hint=family_hint,
+        lsb_score=lsb_score,
+        freq_score=freq_score,
+        class_score=class_score,
+        operating_point_id=op_id,
     )
+
+
+def _named_score(active: list[DetectionResult], name: str) -> float:
+    for r in active:
+        if r.detector == name:
+            return float(r.score)
+    return 0.0
+
+
+def _family_hint(
+    present: bool,
+    lsb: float,
+    freq: float,
+    klass: float,
+    t_lsb: float,
+    t_freq: float,
+    t_class: float,
+) -> str:
+    if not present:
+        return "none"
+    lsb_hit = lsb >= t_lsb
+    freq_hit = freq >= t_freq
+    class_hit = klass >= t_class
+    if lsb_hit and freq_hit:
+        return "mixed"
+    if lsb_hit and not freq_hit and (not class_hit or lsb >= klass):
+        return "lsb"
+    if freq_hit and not lsb_hit and (not class_hit or freq >= klass):
+        return "frequency"
+    if class_hit and not lsb_hit and not freq_hit:
+        return "classical"
+    if lsb_hit:
+        return "lsb"
+    if freq_hit:
+        return "frequency"
+    return "unknown"
 
 
 def _merge_heatmaps(active: list[DetectionResult], image_shape: tuple[int, ...]) -> np.ndarray | None:

@@ -332,10 +332,40 @@ def export_onnx_cmd(
 
 
 
+@app.command()
+def bench(
+    n: int = typer.Option(None, help="Override protocol n (pytest uses 2; real cut is 20 then 50)"),
+    size: int = typer.Option(None),
+    protocol: Optional[Path] = typer.Option(None, "--protocol", "-p"),
+    json_out: Optional[Path] = typer.Option(None, "--json-out"),
+    write_operating_point: bool = typer.Option(False, "--write-operating-point"),
+    attacks: Optional[str] = typer.Option(None, help="Comma list, default protocol attacks"),
+    styles: Optional[str] = typer.Option(None, help="Comma list sine,photo"),
+) -> None:
+    """Frozen generator bench. Writes docs/bench/latest.json. Not a camera corpus."""
+    from veilscan.eval.bench import load_protocol, run_bench, write_outputs
+
+    proto = load_protocol(protocol)
+    atk = [x.strip() for x in attacks.split(",")] if attacks else None
+    st = [x.strip() for x in styles.split(",")] if styles else None
+    report = run_bench(proto, n=n, size=size, attacks=atk, styles=st)
+    written = write_outputs(report, json_path=json_out, write_operating_point=write_operating_point)
+    op = report.get("operating_point") or {}
+    console.print(f"bench n={report['n']} size={report['size']} protocol={report.get('protocol_id')}")
+    console.print(f"operating_point id={op.get('id')} status={op.get('status')} threshold={op.get('threshold')}")
+    for k, v in written.items():
+        console.print(f"  wrote {k} {v}")
+
+
 def _print_result(path: Path, result, peak_ok: set[str] | None = None) -> None:
     flag = "[red]WATERMARK LIKELY[/red]" if result.present else "[green]NO STRONG MARK[/green]"
     console.print(f"{path}")
     console.print(f"  {flag}  score={result.score:.3f}  conf={result.confidence:.3f}  unc={result.uncertainty:.3f}")
+    hint = getattr(result, "family_hint", "none")
+    console.print(
+        f"  family={hint}  lsb={getattr(result, 'lsb_score', 0):.3f}  "
+        f"freq={getattr(result, 'freq_score', 0):.3f}  class={getattr(result, 'class_score', 0):.3f}"
+    )
     console.print(f"  {result.explanation}")
     table = Table(show_header=True)
     table.add_column("detector")

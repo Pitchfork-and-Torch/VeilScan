@@ -4,20 +4,18 @@ Local, algorithm-agnostic **invisible watermark presence detector** with a **key
 
 It answers: *does this image contain an invisible watermark?* and, when the payload is sequential LSB / PNG text / JPEG comment, *what does the text say?* It does not strip a mark. It does not break SynthID, Digimarc, encrypted stego, or neural watermarks.
 
-v0.3 ships a plugin ensemble of classical spatial tests, multi-transform frequency analysis, residual / SRM-lite features, optional FSNet-lite and residual CNNs (skip until checkpoints exist), WMD-style offset learning when you have a clean reference set, and `veilscan decode` for keyless plaintext.
+v0.4 ships the same plugin ensemble plus a **frozen generator bench** (`veilscan bench`) and JSON `family_hint` (`lsb` / `frequency` / `classical` / `mixed` / `unknown`). Fusion default is still the v0.3 peak mix (`fusion.mode: legacy`). Specialist-OR is implemented and waits on a locked operating point (n>=50). Checkpoints in `checkpoints/*.pt` load ResidualCNN (LSB specialist) and FSNet-lite (frequency specialist). They skip if those files are missing.
 
-## Synthetic selftest (v0, n=4 covers/family, 128px)
+## Synthetic numbers
 
-`py -3 -m veilscan selftest`
+`py -3 -m veilscan selftest` is a fast n=6 @ 128px smoke, not an operating point.
 
-| Family | AUC (rank) | Notes |
-|--------|------------|-------|
-| LSB | ~0.94 | Chi-square / RS; thresholded F1 lags rank |
-| DCT / DWT / spread / patchwork | ~1.0 on this draw | Strongest classical-frequency hits |
-| Tree-Ring approx | ~0.8 rank, weak F1 | Pixel FFT proxy, not DDIM inversion |
-| SVD / hidden-approx | weak / unstable | Honest miss; needs a trained residual net |
+`py -3 -m veilscan bench --n 20 --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo / generator-sine**, not ImageNet, not UniFreq-100K. Until n>=50 and `operating_point.status=locked`, treat FPR as provisional.
 
-Overall on that draw: AUC ~0.83, TPR@5% FPR ~0.59. Small-n selftest variance is real. This is **not** UniFreq-100K leave-one-algorithm-out. Deep plugins are off until you train checkpoints.
+Complementary split (do not mix):
+
+- ResidualCNN trains on LSB-plane cues. Do not strip bit planes.
+- FSNet-lite must **not** see `--families lsb` (the cook exits 2 unless `--force`).
 
 ## Install
 
@@ -40,6 +38,7 @@ py -3 -m veilscan decode path\to\image.png
 # writes path-veilscan-report.png (HUD overlay + executive brief) next to the file
 py -3 -m veilscan selftest
 py -3 -m veilscan selftest --per-detector
+py -3 -m veilscan bench --n 20 --attacks identity,jpeg_70 --write-operating-point
 py -3 -m veilscan loao --n 3
 ```
 
@@ -69,10 +68,11 @@ Research notes: `docs/RESEARCH.md`. Architecture: `docs/ARCHITECTURE.md`. Limits
 ## Train the tiny nets (optional)
 
 ```powershell
-py -3 scripts\train_lite.py --steps 80
+py -3 scripts\train_lite.py --only residual_cnn --steps 80
+py -3 scripts\train_lite.py --only fsnet_lite --families dct,dwt,spread,tree_ring --steps 80
 ```
 
-Needs PyTorch. CUDA is faster; CPU works. Until checkpoints exist, the ensemble is classical + frequency only.
+Needs PyTorch. CUDA is faster; CPU works. Checkpoints already live in this tree. Passing `lsb` to the FSNet cook exits 2.
 
 ## Eval watermarks
 

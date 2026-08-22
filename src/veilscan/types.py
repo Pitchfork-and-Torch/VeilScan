@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 import numpy as np
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 Tier = Literal["fast", "frequency", "residual", "deep", "blackbox", "foundation"]
 
 
@@ -58,6 +58,11 @@ class EnsembleResult:
     image_shape: tuple[int, ...] = ()
     active: int = 0
     skipped: int = 0
+    family_hint: str = "none"
+    lsb_score: float = 0.0
+    freq_score: float = 0.0
+    class_score: float = 0.0
+    operating_point_id: str | None = None
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -67,6 +72,11 @@ class EnsembleResult:
             "confidence": round(float(self.confidence), 6),
             "uncertainty": round(float(self.uncertainty), 6),
             "threshold": self.threshold,
+            "family_hint": self.family_hint,
+            "lsb_score": round(float(self.lsb_score), 6),
+            "freq_score": round(float(self.freq_score), 6),
+            "class_score": round(float(self.class_score), 6),
+            "operating_point_id": self.operating_point_id,
             "explanation": self.explanation,
             "active": self.active,
             "skipped": self.skipped,

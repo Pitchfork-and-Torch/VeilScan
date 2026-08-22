@@ -1,0 +1,674 @@
+{
+  "protocol_id": "veilscan-bench-v1",
+  "protocol_path": "C:\\Users\\Knock\\veilscan\\configs\\bench_protocol.yaml",
+  "n": 20,
+  "size": 128,
+  "seed": 20260822,
+  "styles": [
+    "photo"
+  ],
+  "families": [
+    "lsb",
+    "dct",
+    "dwt",
+    "spread",
+    "tree_ring",
+    "patchwork"
+  ],
+  "attacks": [
+    "identity",
+    "jpeg_70"
+  ],
+  "detectors": [
+    "chi_square",
+    "rs_analysis",
+    "bitplane",
+    "dct",
+    "dwt",
+    "hybrid_dds",
+    "tree_ring_spectral",
+    "residual_cnn",
+    "fsnet_lite"
+  ],
+  "threshold_used": 0.48,
+  "corpus": "generator",
+  "cells": {
+    "photo/identity": {
+      "families": {
+        "lsb": {
+          "ensemble": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.6445130464195453,
+            "mean_marked": 0.7632499872177819,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 1.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.13005265798419713,
+            "mean_marked": 0.9853115409612656,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 0.585,
+            "tpr_at_fpr_5": 0.2,
+            "tpr_at_fpr_1": 0.05,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.001235649078444112,
+            "mean_marked": 0.0015660574528737925,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 0.7275,
+            "tpr_at_fpr_5": 0.2,
+            "tpr_at_fpr_1": 0.1,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.8847499668267425,
+            "mean_marked": 0.8976383105489629,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "dct": {
+          "ensemble": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.6445130464195453,
+            "mean_marked": 0.7689882422492043,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.525,
+            "tpr_at_fpr_5": 0.1,
+            "tpr_at_fpr_1": 0.1,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.13005265798419713,
+            "mean_marked": 0.13364028222858906,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 1.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.001235649078444112,
+            "mean_marked": 0.9450203716754914,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.8847499668267425,
+            "mean_marked": 0.9435855181920061,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "dwt": {
+          "ensemble": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.6445130464195453,
+            "mean_marked": 0.7801969904678601,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.5425,
+            "tpr_at_fpr_5": 0.05,
+            "tpr_at_fpr_1": 0.05,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.13005265798419713,
+            "mean_marked": 0.13462381213903427,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 1.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.001235649078444112,
+            "mean_marked": 0.9623278260231019,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.8847499668267425,
+            "mean_marked": 0.9314681247669683,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "spread": {
+          "ensemble": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.6445130464195453,
+            "mean_marked": 0.7909828632259331,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.605,
+            "tpr_at_fpr_5": 0.0,
+            "tpr_at_fpr_1": 0.0,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.13005265798419713,
+            "mean_marked": 0.14559834077954292,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 1.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.001235649078444112,
+            "mean_marked": 0.979028782248497,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.8847499668267425,
+            "mean_marked": 0.944827870908864,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "tree_ring": {
+          "ensemble": {
+            "auc": 0.965,
+            "tpr_at_fpr_5": 0.95,
+            "tpr_at_fpr_1": 0.95,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.6445130464195453,
+            "mean_marked": 0.7453560543279155,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.5075,
+            "tpr_at_fpr_5": 0.0,
+            "tpr_at_fpr_1": 0.0,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.13005265798419713,
+            "mean_marked": 0.1313783500343561,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.888888888888889,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.8,
+            "mean_cover": 0.001235649078444112,
+            "mean_marked": 0.8372409775853157,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 0.33,
+            "tpr_at_fpr_5": 0.0,
+            "tpr_at_fpr_1": 0.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.8847499668267425,
+            "mean_marked": 0.8747695788306107,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "patchwork": {
+          "ensemble": {
+            "auc": 0.96,
+            "tpr_at_fpr_5": 0.7,
+            "tpr_at_fpr_1": 0.7,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.6445130464195453,
+            "mean_marked": 0.6919925961003062,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.4625,
+            "tpr_at_fpr_5": 0.1,
+            "tpr_at_fpr_1": 0.0,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.13005265798419713,
+            "mean_marked": 0.12346750982105732,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 0.9875,
+            "tpr_at_fpr_5": 0.95,
+            "tpr_at_fpr_1": 0.8,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.001235649078444112,
+            "mean_marked": 0.02097272753017023,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.8847499668267425,
+            "mean_marked": 0.9455828365613905,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        }
+      },
+      "cover": {
+        "ensemble_mean": 0.6445130464195453,
+        "n": 20
+      }
+    },
+    "photo/jpeg_70": {
+      "families": {
+        "lsb": {
+          "ensemble": {
+            "auc": 0.655,
+            "tpr_at_fpr_5": 0.05,
+            "tpr_at_fpr_1": 0.05,
+            "f1": 0.6666666666666667,
+            "fpr_at_threshold": 0.8,
+            "tpr_at_threshold": 0.9,
+            "mean_cover": 0.5023350038968897,
+            "mean_marked": 0.5124081110284475,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.5975,
+            "tpr_at_fpr_5": 0.05,
+            "tpr_at_fpr_1": 0.0,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.11911466773599386,
+            "mean_marked": 0.12842419594526291,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 0.5225,
+            "tpr_at_fpr_5": 0.15,
+            "tpr_at_fpr_1": 0.05,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.07006132919341326,
+            "mean_marked": 0.07771797580644488,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 0.615,
+            "tpr_at_fpr_5": 0.2,
+            "tpr_at_fpr_1": 0.05,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.7332641139834436,
+            "mean_marked": 0.7513589845680695,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "dct": {
+          "ensemble": {
+            "auc": 0.9275,
+            "tpr_at_fpr_5": 0.7,
+            "tpr_at_fpr_1": 0.7,
+            "f1": 0.6909090909090908,
+            "fpr_at_threshold": 0.8,
+            "tpr_at_threshold": 0.95,
+            "mean_cover": 0.5023350038968897,
+            "mean_marked": 0.6298683181407383,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.4625,
+            "tpr_at_fpr_5": 0.1,
+            "tpr_at_fpr_1": 0.0,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.11911466773599386,
+            "mean_marked": 0.11620434056967496,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.8571428571428571,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.75,
+            "mean_cover": 0.07006132919341326,
+            "mean_marked": 0.7365393444895745,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 0.45,
+            "tpr_at_fpr_5": 0.1,
+            "tpr_at_fpr_1": 0.05,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.7332641139834436,
+            "mean_marked": 0.7270232946185475,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "dwt": {
+          "ensemble": {
+            "auc": 0.8925,
+            "tpr_at_fpr_5": 0.55,
+            "tpr_at_fpr_1": 0.55,
+            "f1": 0.7142857142857143,
+            "fpr_at_threshold": 0.8,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.5023350038968897,
+            "mean_marked": 0.5827207406409676,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.495,
+            "tpr_at_fpr_5": 0.05,
+            "tpr_at_fpr_1": 0.05,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.11911466773599386,
+            "mean_marked": 0.11676810458302497,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 0.8175,
+            "tpr_at_fpr_5": 0.7,
+            "tpr_at_fpr_1": 0.7,
+            "f1": 0.5185185185185185,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.35,
+            "mean_cover": 0.07006132919341326,
+            "mean_marked": 0.4131250995211303,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 0.76,
+            "tpr_at_fpr_5": 0.4,
+            "tpr_at_fpr_1": 0.15,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.7332641139834436,
+            "mean_marked": 0.776716868920223,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "spread": {
+          "ensemble": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.7142857142857143,
+            "fpr_at_threshold": 0.8,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.5023350038968897,
+            "mean_marked": 0.7210800621072581,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.67,
+            "tpr_at_fpr_5": 0.05,
+            "tpr_at_fpr_1": 0.05,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.11911466773599386,
+            "mean_marked": 0.14329966101795436,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 1.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.07006132919341326,
+            "mean_marked": 0.9253636211156845,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.7332641139834436,
+            "mean_marked": 0.8951774102830174,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "tree_ring": {
+          "ensemble": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 0.7142857142857143,
+            "fpr_at_threshold": 0.8,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.5023350038968897,
+            "mean_marked": 0.7235583795790131,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.5425,
+            "tpr_at_fpr_5": 0.0,
+            "tpr_at_fpr_1": 0.0,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.11911466773599386,
+            "mean_marked": 0.12179946340620518,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 1.0,
+            "tpr_at_fpr_5": 1.0,
+            "tpr_at_fpr_1": 1.0,
+            "f1": 1.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.07006132919341326,
+            "mean_marked": 0.9755210191011429,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 0.7625,
+            "tpr_at_fpr_5": 0.6,
+            "tpr_at_fpr_1": 0.35,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.7332641139834436,
+            "mean_marked": 0.787432090176251,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        },
+        "patchwork": {
+          "ensemble": {
+            "auc": 0.9225,
+            "tpr_at_fpr_5": 0.65,
+            "tpr_at_fpr_1": 0.55,
+            "f1": 0.7142857142857143,
+            "fpr_at_threshold": 0.8,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.5023350038968897,
+            "mean_marked": 0.5591739077783585,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "lsb_head": {
+            "auc": 0.58,
+            "tpr_at_fpr_5": 0.0,
+            "tpr_at_fpr_1": 0.0,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.11911466773599386,
+            "mean_marked": 0.12599949520081283,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "freq_head": {
+            "auc": 0.835,
+            "tpr_at_fpr_5": 0.55,
+            "tpr_at_fpr_1": 0.3,
+            "f1": 0.0,
+            "fpr_at_threshold": 0.0,
+            "tpr_at_threshold": 0.0,
+            "mean_cover": 0.07006132919341326,
+            "mean_marked": 0.17434941371902823,
+            "n_cover": 20,
+            "n_marked": 20
+          },
+          "class_head": {
+            "auc": 0.8975,
+            "tpr_at_fpr_5": 0.65,
+            "tpr_at_fpr_1": 0.4,
+            "f1": 0.6666666666666666,
+            "fpr_at_threshold": 1.0,
+            "tpr_at_threshold": 1.0,
+            "mean_cover": 0.7332641139834436,
+            "mean_marked": 0.8076793440728751,
+            "n_cover": 20,
+            "n_marked": 20
+          }
+        }
+      },
+      "cover": {
+        "ensemble_mean": 0.5023350038968897,
+        "n": 20
+      }
+    }
+  },
+  "notes": "generator-photo / generator-sine. Do not cite as camera-photo FPR.",
+  "operating_point": {
+    "id": "op-v0.4.0-provisional-n20",
+    "status": "provisional",
+    "threshold": 0.674216,
+    "t_lsb": 0.224773,
+    "t_freq": 0.135945,
+    "t_class": 0.907289,
+    "fpr_est": 0.05,
+    "fpr_target": 0.05,
+    "n": 20,
+    "date": "2026-08-21",
+    "protocol": "veilscan-bench-v1",
+    "corpus": "generator-photo",
+    "slice": [
+      "photo/identity",
+      "photo/jpeg_70"
+    ],
+    "fusion_mode": "legacy",
+    "notes": "Generator covers, not camera photos. Do not cite as ImageNet FPR."
+  }
+}

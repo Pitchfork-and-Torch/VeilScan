@@ -11,5 +11,5 @@ Agnostic invisible-watermark presence detector plus keyless plaintext decode. Lo
 - ASCII punctuation in public files. UTF-8 no BOM.
 - Tests: `py -3 -m pytest` from this folder after `pip install -e .`
 - CLI: `py -3 -m veilscan scan PATH` and `py -3 -m veilscan decode PATH`
-- Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md` (v0.4 operating-point). v0.3.0 is keyless decode. Historical: `docs/UPGRADE_PLAN.md`. No remover.
+- Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md`. v0.4.0 is the generator bench + family_hint (fusion still legacy until n>=50 lock). Historical: `docs/UPGRADE_PLAN.md`. No remover.
 - Fusion `peak_ok` lives in `configs/default.yaml`, not hardcoded.

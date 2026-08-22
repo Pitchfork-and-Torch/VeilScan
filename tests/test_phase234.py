@@ -10,7 +10,7 @@ from veilscan.types import SCHEMA_VERSION
 
 
 def test_version() -> None:
-    assert __version__ == "0.3.3"
+    assert __version__ == "0.4.0"
 
 
 def test_schema_version_json() -> None:
@@ -19,6 +19,9 @@ def test_schema_version_json() -> None:
     r = analyze(img, detectors=["chi_square"])
     js = r.to_json()
     assert js["schema_version"] == SCHEMA_VERSION
+    assert "family_hint" in js
+    assert "lsb_score" in js
+    assert "freq_score" in js
 
 
 def test_identity_calibration_noop() -> None:

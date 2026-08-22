@@ -9,15 +9,29 @@
   or a vendor verifier is weak. The circular-FFT detector is an approximation
   of Tree-Ring, not a replacement for DDIM inversion.
 - **Single-image WMD** is undefined. WMD needs a clean reference set.
-- **Untrained CNNs** would add noise. They are gated off until
-  `checkpoints/*.pt` exist.
-- **Calibration** of scores to real-world false-positive rates is not done
-  against UniFreq-100K (dataset not bundled). v0 calibration is synthetic.
+- **Untrained CNNs** skip until `checkpoints/*.pt` exist. This tree currently
+  ships ResidualCNN + FSNet-lite checkpoints. They are complementary: Residual
+  for LSB, FSNet for frequency. Do not train FSNet on LSB.
+- **Calibration** of scores to camera-photo false-positive rates is not done
+  against UniFreq-100K (dataset not bundled). `veilscan bench` measures a
+  **generator** operating point (`configs/operating_point.json`). n<50 is
+  `provisional`. Do not quote it as ImageNet FPR.
+- **Decision threshold 0.48** is still the default until
+  `operating_point.status=locked` (n>=50). A provisional n=20 generator-photo
+  identity+jpeg_70 slice suggested ~0.67 to hold FPR near 0.05 (cover mean
+  ~0.65). Do not quote that as camera FPR. Fusion mode `specialist_or` is
+  implemented but not the default until that lock.
+- **JPEG70 LSB** on that slice: TPR@5%FPR ~0.05 (spatial LSB dies). Frequency
+  DCT TPR@5%FPR ~0.70 vs identity 1.00 (retention bar). Patchwork identity
+  TPR@5%FPR ~0.70 so the YAML weight stays for now.
 
 ## Robustness
 
 JPEG, downscale, and diffusion regeneration destroy or hide many spatial marks.
 A high score on a pristine PNG can collapse after social-media re-encode.
+Spatial LSB usually dies at JPEG Q70 / Telegram recompress; frequency marks
+may retain. The bench prints both numbers. Patchwork is measured; if TPR stays
+weak it is labeled unsupported rather than given a fake YAML weight.
 
 ## Compute
 
