@@ -17,10 +17,10 @@
   `configs/operating_point.camera.json` (BSDS500 test-64, n=50). n<50 is
   `provisional`. Do not quote either as ImageNet FPR.
 - **Decision threshold** for default `present` is still the generator lock
-  ~0.67 (`op-v0.4.0-locked-n50`). Camera stills sit near ensemble 0.80, so
-  that lock false-fires on BSDS500. The camera sidecar cut is ~0.817
+  ~0.67 (`op-v0.4.0-locked-n50`). Camera stills sit near ensemble 0.71, so
+  that lock false-fires on BSDS500 and DIV2K. The camera sidecar cut is ~0.753
   (`op-v0.7.0-camera-locked-n50`, FPR 0.05). Scan JSON adds `camera` when
-  the sidecar exists. Default `present` is not flipped in v0.8. DIV2K
+  the sidecar exists. Default `present` is not flipped in v0.9. DIV2K
   valid-HR FPR at 0.67 is 0.83; at the BSDS cut 0.753 it is 0.12. UniFreq-100K
   is not in tree. FSNet no longer saturates on BSDS (`t_freq` 0.875).
   BSDS identity DCT TPR@5%FPR is 0.96 (v0.6 was 0.06). JPEG70 DCT is 0.44.
@@ -28,8 +28,11 @@
   Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
   OR unless that nested FPR also holds.
 - **JPEG70 LSB** on the locked slice: TPR@5%FPR 0.10 (spatial LSB dies).
-  Frequency DCT TPR@5%FPR 0.86 vs identity 1.00. Patchwork identity
-  TPR@5%FPR 0.64 so the YAML weight stays.
+  Frequency DCT TPR@5%FPR 0.86 vs identity 1.00.
+- **Patchwork is unsupported** on camera stills. A keyless permutation-null
+  pair-mean test (v0.9) is AUC 0.50 / TPR@5%FPR 0.08 on BSDS n=24. Camera
+  ensemble TPR stays ~0.02-0.10. YAML weight is 0 so the head cannot pollute
+  `full_mean`. A keyed specialist would be a new model, not this head.
 
 ## Robustness
 

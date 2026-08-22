@@ -1,10 +1,10 @@
 # Operating-point contract (v0.4) - SHIPPED
 
 **Status:** historical. Landed across v0.4.0 / v0.4.1. Current package is
-**v0.8.0** (`docs/RESULTS_v0.8.md`). Second camera corpus is DIV2K valid-HR.
-Generator 0.67 FPR there is 0.83. BSDS sidecar stays scan JSON `camera`.
-Fusion still `legacy`. Next science is patchwork, camera JPEG70 DCT, or
-LOAO folders, not another YAML weight.
+**v0.9.0** (`docs/RESULTS_v0.9.md`). Patchwork is unsupported (weight 0).
+Second camera corpus is DIV2K valid-HR (generator 0.67 FPR 0.83). BSDS
+sidecar stays scan JSON `camera`. Fusion still `legacy`. Next science is
+camera JPEG70 DCT or LOAO folders, not another patchwork YAML weight.
 
 **Baseline when written:** v0.3.0 keyless decode.  
 **Identity:** presence ensemble plus keyless plaintext decode. No remover.

@@ -15,7 +15,7 @@ def test_list_detectors_cli() -> None:
 def test_version_cli() -> None:
     r = runner.invoke(app, ["version"])
     assert r.exit_code == 0
-    assert "0.8.0" in r.stdout
+    assert "0.9.0" in r.stdout
 
 
 def test_bench_write_op_refuses_other_covers(tmp_path) -> None:

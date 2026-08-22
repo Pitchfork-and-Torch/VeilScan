@@ -1,22 +1,19 @@
-# Resume (v0.8.0)
+# Resume (v0.9.0)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.8.0 DIV2K second corpus.
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.9.0 patchwork unsupported.
 Public lamp: https://veilscan.jonbailey.xyz/ (mast still decode-first).
 
 ## Where we stopped
 
-- Generator lock `op-v0.4.0-locked-n50` ~0.67 stays default `present`.
-- BSDS camera sidecar `op-v0.7.0-camera-locked-n50` ~0.753 is still scan JSON `camera`.
-- DIV2K valid-HR confirmation `op-v0.8.0-camera-div2k-locked-n50` ~0.765.
-- FPR at 0.67 on DIV2K: 0.83. FPR at BSDS 0.753 on DIV2K: 0.12.
-- Two public stills packs agree: do not flip default `present`.
-- Fusion `legacy`. FSNet still the v0.7 mix cook. ResidualCNN unchanged.
+- Generator lock ~0.67 stays default `present` (DIV2K FPR 0.83).
+- BSDS camera sidecar ~0.753 is still scan JSON `camera`.
+- Patchwork is unsupported on camera (perm-null AUC 0.50). YAML weight 0.
+- Fusion `legacy`. FSNet still the v0.7 mix cook.
 
 ## Next
 
-Patchwork on camera stills, camera JPEG70 DCT, or LOAO folders.
-Do not flip specialist-OR. Do not flip default `present` without a third
-corpus that is actually cool at 0.67 (none so far).
+Camera JPEG70 DCT, or LOAO folders. Do not revive patchwork with a YAML
+weight. Do not flip default `present` or specialist-OR.
 
 ## Do not
 

@@ -316,28 +316,67 @@ class HistogramDetector(BaseDetector):
         return DetectionResult(self.name, float(score), 0.7, expl, extras=extras, tier=self.tier).clamp()
 
 
+def patchwork_perm_null(
+    gray: np.ndarray,
+    *,
+    n_pairs: int = 4000,
+    n_perm: int = 24,
+    seed: int = 20260822,
+) -> dict[str, float]:
+    """Keyless pairing mean vs a permutation null.
+
+    The eval generator uses a secret random pairing. This test uses a public
+    pairing from the image shape so it stays keyless. z is |S_obs - mu_null| / sd.
+    """
+    g = np.asarray(gray, dtype=np.float64)
+    if g.ndim != 2:
+        raise ValueError("gray plane required")
+    flat = g.ravel()
+    n = int(flat.size)
+    n_pairs = int(min(max(n_pairs, 32), n // 4))
+    rng = np.random.default_rng(int(seed) + n)
+    idx = rng.permutation(n)
+    a, b = idx[:n_pairs], idx[n_pairs : 2 * n_pairs]
+    s_obs = float(flat[a].mean() - flat[b].mean())
+    null = np.empty(n_perm, dtype=np.float64)
+    for i in range(n_perm):
+        shuffled = rng.permutation(flat)
+        null[i] = float(shuffled[a].mean() - shuffled[b].mean())
+    mu = float(null.mean())
+    sd = float(null.std() + 1e-12)
+    z = abs(s_obs - mu) / sd
+    return {
+        "s_obs": s_obs,
+        "null_mean": mu,
+        "null_sd": sd,
+        "z": z,
+        "n_pairs": float(n_pairs),
+        "n_perm": float(n_perm),
+    }
+
+
 class PatchworkDetector(BaseDetector):
     name = "patchwork"
     tier = "fast"
 
     def analyze(self, image: np.ndarray, context: AnalyzeContext | None = None) -> DetectionResult:
         gray = to_gray(image)
-        # Agnostic stand-in: signed adjacent-difference histogram should be smooth
-        # for natural photos. Patchwork-like pair tweaks add extra mass at small deltas.
+        extras = patchwork_perm_null(gray)
+        # Keep the old adjacent-diff ratio as a diagnostic, not the score.
         dx = gray[:, 1:] - gray[:, :-1]
-        hist, edges = np.histogram(dx.ravel(), bins=65, range=(-32, 32), density=True)
+        hist, _edges = np.histogram(dx.ravel(), bins=65, range=(-32, 32), density=True)
         center = hist[len(hist) // 2 - 2 : len(hist) // 2 + 3].sum()
         shoulders = hist[len(hist) // 2 - 8 : len(hist) // 2 - 3].sum() + hist[
             len(hist) // 2 + 3 : len(hist) // 2 + 8
         ].sum()
-        ratio = float(center / (shoulders + 1e-12))
-        score = score_from_stat(ratio, center=7.5, scale=2.5)
-        extras = {"diff_peak_ratio": ratio}
+        extras["diff_peak_ratio"] = float(center / (shoulders + 1e-12))
+        z = float(extras["z"])
+        score = score_from_stat(z, center=2.2, scale=1.1)
         expl = (
-            f"Patchwork-style pair test via adjacent-difference peak ratio={ratio:.3f}. "
-            "Without the original key this is only a weak agnostic cue."
+            f"Patchwork pair-mean permutation null z={z:.2f}. "
+            "Keyless; secret pairings stay weak."
         )
-        return DetectionResult(self.name, float(score), 0.35, expl, extras=extras, tier=self.tier).clamp()
+        return DetectionResult(self.name, float(score), 0.4, expl, extras=extras, tier=self.tier).clamp()
 
 
 def register_spatial() -> None:

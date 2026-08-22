@@ -51,7 +51,7 @@ DEFAULTS = {
         "sample_pairs": 0.95,
         "bitplane": 0.85,
         "histogram": 0.7,
-        "patchwork": 0.8,
+        "patchwork": 0.0,
         "dct": 1.0,
         "dft": 0.75,
         "dwt": 0.95,

@@ -1,3 +1,14 @@
+# v0.9.0
+
+Patchwork unsupported on camera stills.
+
+- Keyless permutation-null pair-mean test (public pairing, not the secret key)
+- Head AUC 0.50 / TPR@5%FPR 0.08 on BSDS n=24. YAML weight 0
+- Generator lock, BSDS camera sidecar, and DIV2K confirmation unchanged
+- Fusion stays `legacy`. No stripper
+
+Proprietary. Private repo.
+
 # v0.8.0
 
 Second camera corpus (DIV2K valid-HR). Default `present` still not flipped.

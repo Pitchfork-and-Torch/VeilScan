@@ -2,12 +2,14 @@ import numpy as np
 
 from veilscan.detectors.spatial import (
     ChiSquareDetector,
+    PatchworkDetector,
     RSAnalysisDetector,
     SamplePairDetector,
+    patchwork_perm_null,
     rs_payload_hat,
     spa_payload_hat,
 )
-from veilscan.generators import embed_lsb, synthetic_cover
+from veilscan.generators import embed_lsb, embed_patchwork, synthetic_cover
 
 
 def _sine(seed: int = 11):
@@ -82,3 +84,22 @@ def test_spa_payload_rate_ladder() -> None:
         assert p1 >= p0
     else:
         assert p1 >= 0.0
+
+
+def test_patchwork_perm_null_shape() -> None:
+    cover = _sine(61)
+    rec = patchwork_perm_null(cover[..., 1], n_perm=8)
+    assert rec["z"] >= 0.0
+    assert rec["n_pairs"] >= 32
+    assert rec["n_perm"] == 8.0
+
+
+def test_patchwork_detector_range() -> None:
+    cover = _sine(71)
+    marked = embed_patchwork(cover, np.random.default_rng(72), delta=3.0, n_pairs=4000)
+    d = PatchworkDetector()
+    rc = d.analyze(cover)
+    rm = d.analyze(marked)
+    assert 0.0 <= rc.score <= 1.0
+    assert 0.0 <= rm.score <= 1.0
+    assert "z" in rm.extras
