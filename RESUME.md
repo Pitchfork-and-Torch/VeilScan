@@ -1,20 +1,20 @@
-# Resume (v0.5.1)
+# Resume (v0.6.0)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.5.1 doctor + camera-cover fetch.
-Public lamp: https://veilscan.jonbailey.xyz/ site v1.2.0.
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.6.0 camera sidecar.
+Public lamp: https://veilscan.jonbailey.xyz/ (mast still decode-first).
 
 ## Where we stopped
 
-- `veilscan doctor` checks OP + ckpt sha256. No network.
-- `scripts/fetch_camera_covers.py` + `configs/camera_covers.manifest.json` (BSDS500 test-64).
-- Scan JSON may include `camera` if `configs/operating_point.camera.json` exists.
-- Generator lock unchanged. Camera FPR not measured until fetch + bench.
+- Generator lock `op-v0.4.0-locked-n50` ~0.67 stays default `present`.
+- Camera sidecar `op-v0.6.0-camera-locked-n50` ~0.817, FPR 0.05, n=50 BSDS500.
+- Nested OR FPR 0.98. Fusion `legacy`. FSNet saturates on camera stills.
+- `veilscan doctor` + fetch script shipped in 0.5.1.
 
-## Next (v0.6.0)
+## Next
 
-Fetch BSDS500 (`--allow-empty-hash` once, then pin sha256). Run
-`veilscan bench --covers data/covers/camera --n 50`. Write RESULTS_v0.6.
-Do not overwrite generator OP. Do not flip specialist-OR.
+Do not flip default `present` to camera without a second corpus.
+Do not flip specialist-OR. Optional: FSNet recook on camera covers
+(without `lsb`), or LOAO folders. Lamp copy can cite RESULTS_v0.6.
 
 ## Do not
 

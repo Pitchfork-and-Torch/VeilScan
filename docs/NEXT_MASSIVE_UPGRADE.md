@@ -1,10 +1,10 @@
 # Operating-point contract (v0.4) - SHIPPED
 
 **Status:** historical. Landed across v0.4.0 / v0.4.1. Current package is
-**v0.5.1** (`docs/RESULTS_v0.5.md` still the last measured generator lock).
-Next science: camera-folder FPR via `veilscan bench --covers DIR` after
-`scripts/fetch_camera_covers.py`. Doctor is shipped. Do not overwrite the
-generator lock.
+**v0.6.0** (`docs/RESULTS_v0.6.md`). Camera sidecar measured on BSDS500
+test-64. Generator lock still default `present`. Fusion still `legacy`.
+FSNet saturates on that camera pack. Next science is a second camera
+corpus or an FSNet recook without `lsb`, not another YAML weight.
 
 **Baseline when written:** v0.3.0 keyless decode.  
 **Identity:** presence ensemble plus keyless plaintext decode. No remover.

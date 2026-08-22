@@ -12,15 +12,16 @@
 - **Untrained CNNs** skip until `checkpoints/*.pt` exist. This tree currently
   ships ResidualCNN + FSNet-lite checkpoints. They are complementary: Residual
   for LSB, FSNet for frequency. Do not train FSNet on LSB.
-- **Calibration** of scores to camera-photo false-positive rates is not done
-  against UniFreq-100K (dataset not bundled). `veilscan bench` measures a
-  **generator** operating point (`configs/operating_point.json`). n<50 is
-  `provisional`. Do not quote it as ImageNet FPR.
-- **Decision threshold** is `operating_point.threshold` ~0.67
-  (`op-v0.4.0-locked-n50`, generator-photo identity+jpeg_70, n=50, FPR 0.05).
-  That is **not** camera-photo FPR. `veilscan bench --covers DIR` is the
-  adapter for a real folder; results go to `docs/bench/camera.json` and never
-  overwrite the generator lock. UniFreq-100K is not in tree.
+- **Calibration** against UniFreq-100K is not done (dataset not bundled).
+  Generator OP: `configs/operating_point.json`. Camera sidecar:
+  `configs/operating_point.camera.json` (BSDS500 test-64, n=50). n<50 is
+  `provisional`. Do not quote either as ImageNet FPR.
+- **Decision threshold** for default `present` is still the generator lock
+  ~0.67 (`op-v0.4.0-locked-n50`). Camera stills sit near ensemble 0.80, so
+  that lock false-fires on BSDS500. The camera sidecar cut is ~0.817
+  (`op-v0.6.0-camera-locked-n50`, FPR 0.05). Scan JSON adds `camera` when
+  the sidecar exists. Default `present` is not flipped in v0.6. UniFreq-100K
+  is not in tree. FSNet saturates on this camera pack (`t_freq` 1.0).
 - Fusion mode stays `legacy`. specialist-OR FPR was 0.14 vs 0.05 in-sample.
   Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
   OR unless that nested FPR also holds.

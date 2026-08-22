@@ -1,3 +1,17 @@
+# v0.6.0
+
+Camera stills operating point. Default `present` still uses the generator lock.
+
+- Sidecar `op-v0.6.0-camera-locked-n50` threshold ~0.817, FPR 0.05, n=50 BSDS500 test
+- Generator lock unchanged (~0.67). Camera cover mean ~0.80, so 0.67 false-fires there
+- Scan JSON `camera` sidecar; omitted only if the file is missing
+- Fusion stays `legacy` (nested OR FPR 0.98 on camera). FSNet saturates on this pack
+- LSB identity still separates (TPR@5%FPR 1.0). JPEG70 LSB and camera DCT do not
+- `veilscan doctor` now reports the camera OP
+- Extracted JPEGs stay gitignored. Archive sha256 pinned in the fetch manifest
+
+Proprietary. Private repo.
+
 # v0.5.1
 
 Doctor, camera-cover fetch, optional scan-JSON camera sidecar.

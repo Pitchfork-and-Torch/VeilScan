@@ -10,7 +10,7 @@ from veilscan.types import SCHEMA_VERSION
 
 
 def test_version() -> None:
-    assert __version__ == "0.5.1"
+    assert __version__ == "0.6.0"
 
 
 def test_schema_version_json() -> None:
@@ -22,12 +22,12 @@ def test_schema_version_json() -> None:
     assert "family_hint" in js
     assert "lsb_score" in js
     assert "freq_score" in js
-    assert "camera" not in js
 
 
 def test_camera_sidecar_omitted_and_attached(monkeypatch) -> None:
     rng = np.random.default_rng(0)
     img = synthetic_cover(64, 64, rng, style="sine")
+    monkeypatch.setattr("veilscan.engine.load_camera_operating_point", lambda path=None: None)
     assert "camera" not in analyze(img, detectors=["chi_square"]).to_json()
     monkeypatch.setattr(
         "veilscan.engine.load_camera_operating_point",
@@ -44,6 +44,19 @@ def test_camera_sidecar_omitted_and_attached(monkeypatch) -> None:
     assert js["camera"]["status"] == "provisional"
     assert "present" in js["camera"]
     assert js["present"] is False or js["present"] is True
+
+
+def test_camera_sidecar_file_does_not_replace_generator() -> None:
+    from veilscan.config import load_camera_operating_point, load_operating_point
+
+    gen = load_operating_point()
+    cam = load_camera_operating_point()
+    assert gen is not None
+    assert gen.get("id") == "op-v0.4.0-locked-n50"
+    assert cam is not None
+    assert str(cam.get("id") or "").startswith("op-v0.6.0-camera")
+    assert cam.get("status") == "locked"
+    assert float(cam["threshold"]) > float(gen["threshold"])
 
 
 def test_identity_calibration_noop() -> None:

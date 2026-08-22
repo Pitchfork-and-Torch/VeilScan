@@ -39,5 +39,5 @@ Full tables: `docs/bench/latest.md`.
 
 ## Camera FPR
 
-Not measured. Run `veilscan bench --covers DIR` on an operator-owned folder.
-Results go to `docs/bench/camera.json` and must not overwrite the generator lock.
+Measured in v0.6.0. See `docs/RESULTS_v0.6.md`. Sidecar does not overwrite
+this generator lock.
