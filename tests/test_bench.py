@@ -30,6 +30,8 @@ def test_bench_smoke(tmp_path: Path) -> None:
     op = report["operating_point"]
     assert op["status"] == "provisional"
     assert op["n"] == 2
+    assert "ab" in report
+    assert "flip_default" in report["ab"]
     md = render_markdown(report)
     assert "lsb" in md
     out = write_outputs(

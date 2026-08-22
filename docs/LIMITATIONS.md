@@ -16,14 +16,13 @@
   against UniFreq-100K (dataset not bundled). `veilscan bench` measures a
   **generator** operating point (`configs/operating_point.json`). n<50 is
   `provisional`. Do not quote it as ImageNet FPR.
-- **Decision threshold 0.48** is still the default until
-  `operating_point.status=locked` (n>=50). A provisional n=20 generator-photo
-  identity+jpeg_70 slice suggested ~0.67 to hold FPR near 0.05 (cover mean
-  ~0.65). Do not quote that as camera FPR. Fusion mode `specialist_or` is
-  implemented but not the default until that lock.
-- **JPEG70 LSB** on that slice: TPR@5%FPR ~0.05 (spatial LSB dies). Frequency
-  DCT TPR@5%FPR ~0.70 vs identity 1.00 (retention bar). Patchwork identity
-  TPR@5%FPR ~0.70 so the YAML weight stays for now.
+- **Decision threshold** is now `operating_point.threshold` ~0.67
+  (`op-v0.4.0-locked-n50`, generator-photo identity+jpeg_70, n=50, FPR 0.05).
+  Do not quote that as camera FPR. Fusion mode stays `legacy`: specialist-OR
+  FPR was 0.14 vs legacy 0.05 on the same slice, so it is not the default.
+- **JPEG70 LSB** on the locked slice: TPR@5%FPR 0.10 (spatial LSB dies).
+  Frequency DCT TPR@5%FPR 0.86 vs identity 1.00. Patchwork identity
+  TPR@5%FPR 0.64 so the YAML weight stays.
 
 ## Robustness
 

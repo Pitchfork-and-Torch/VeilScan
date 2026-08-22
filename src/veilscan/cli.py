@@ -141,6 +141,50 @@ def decode(
             console.print(f"  report {dest}")
 
 
+@app.command()
+def inspect(
+    path: Path = typer.Argument(..., exists=True, readable=True),
+    json_out: bool = typer.Option(False, "--json", help="Scan + decode as one JSON object"),
+    out: Optional[Path] = typer.Option(None, "--out", help="HUD + dossier PNG path"),
+    no_report: bool = typer.Option(False, "--no-report", help="Skip the PNG artifact"),
+    config: Optional[Path] = typer.Option(None, "--config", "-c"),
+    threshold: Optional[float] = typer.Option(None),
+) -> None:
+    """Scan presence then decode keyless text. One JSON, one HUD stamp."""
+    from veilscan.decode import decode_path as do_decode
+    from veilscan.decode.container import load_raw_rgb
+    from veilscan.decode.report import default_report_path, render_decode_report
+    from veilscan.types import SCHEMA_VERSION
+
+    cfg = _cfg(config, None, threshold)
+    scan_res = analyze_path(path, config=cfg)
+    dec = do_decode(path)
+    if json_out:
+        console.print_json(
+            data={
+                "schema_version": SCHEMA_VERSION,
+                "path": str(path),
+                "scan": scan_res.to_json(),
+                "decode": dec.to_json(),
+            }
+        )
+    else:
+        _print_result(path, scan_res, peak_ok=set(cfg.peak_ok))
+        if dec.found:
+            console.print(f"  DECODE FOUND  family={dec.family}  layout={dec.layout}  conf={dec.confidence:.3f}")
+            console.print(f"  {dec.text}")
+        else:
+            console.print("  DECODE NO KEYLESS PLAINTEXT")
+        for hs in dec.hotspots[:8]:
+            console.print(f"  hotspot x={hs.x} y={hs.y} {hs.w}x{hs.h} corr={hs.corr:.3f}")
+    if not no_report:
+        rgb, _, _ = load_raw_rgb(path.read_bytes())
+        if rgb is not None:
+            dest = out or default_report_path(path)
+            render_decode_report(rgb, dec, path, dest, scan=scan_res)
+            console.print(f"  report {dest}")
+
+
 @app.command("embed-text")
 def embed_text_cmd(
     inp: Path = typer.Argument(..., exists=True, readable=True),

@@ -123,6 +123,7 @@ def render_decode_report(
     result,
     source: str | Path,
     out: str | Path,
+    scan=None,
 ) -> Path:
     """Write a two-pane forensic PNG. Left: HUD photo. Right: executive brief."""
     src = Path(source)
@@ -237,6 +238,11 @@ def render_decode_report(
         "VEILSCAN   LSB HOTSPOTS",
         f"source: {src.name}   {pw}x{ph}   overlay of scan receipt",
     ]
+    if scan is not None:
+        present = "YES" if getattr(scan, "present", False) else "NO"
+        hint = getattr(scan, "family_hint", "none")
+        sc = float(getattr(scan, "score", 0.0) or 0.0)
+        lines.append(f"scan: present={present}  hint={hint}  score={sc:.3f}")
     if result.found:
         lines.append(
             f"FOUND  family={result.family}  layout={result.layout}  conf={result.confidence:.3f}"
@@ -383,7 +389,7 @@ def _version() -> str:
 
         return __version__
     except Exception:
-        return "0.4.0"
+        return "0.4.1"
 
 
 def default_report_path(source: str | Path) -> Path:

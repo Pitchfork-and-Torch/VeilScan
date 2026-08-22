@@ -106,6 +106,7 @@ def run_bench(
 
     cells: dict[str, Any] = {}
     cover_bucket: dict[tuple[str, str], dict[str, list[float]]] = {}
+    marked_bucket: dict[tuple[str, str], dict[str, dict[str, list[float]]]] = {}
 
     for style in styles:
         for attack in attacks:
@@ -141,6 +142,15 @@ def run_bench(
                 "freq": cover_freq,
                 "klass": cover_class,
             }
+            marked_bucket[(style, attack)] = {
+                fam: {
+                    "ensemble": rec["score"][1::2],
+                    "lsb": rec["lsb"][1::2],
+                    "freq": rec["freq"][1::2],
+                    "klass": rec["klass"][1::2],
+                }
+                for fam, rec in by_fam.items()
+            }
             fam_metrics = {}
             for fam, rec in by_fam.items():
                 fam_metrics[fam] = {
@@ -174,6 +184,19 @@ def run_bench(
         "notes": proto.get("notes"),
     }
     report["operating_point"] = choose_operating_point(report, cover_bucket, proto)
+    report["ab"] = ab_fusion(cover_bucket, marked_bucket, report["operating_point"], proto)
+    if report["ab"].get("flip_default"):
+        report["operating_point"]["fusion_mode"] = "specialist_or"
+        report["operating_point"]["notes"] = (
+            str(report["operating_point"].get("notes") or "")
+            + " specialist_or won A/B on this slice (FPR did not rise)."
+        ).strip()
+    else:
+        report["operating_point"]["fusion_mode"] = "legacy"
+        report["operating_point"]["notes"] = (
+            str(report["operating_point"].get("notes") or "")
+            + " specialist_or did not beat legacy FPR; default stays legacy."
+        ).strip()
     return report
 
 
@@ -225,6 +248,97 @@ def choose_operating_point(
     }
 
 
+def _or_hits(lsb: np.ndarray, freq: np.ndarray, klass: np.ndarray, op: dict[str, Any]) -> np.ndarray:
+    t_lsb = float(op.get("t_lsb") or 0.5)
+    t_freq = float(op.get("t_freq") or 0.5)
+    t_class = float(op.get("t_class") or 0.48)
+    return (lsb >= t_lsb) | (freq >= t_freq) | (klass >= t_class)
+
+
+def ab_fusion(
+    cover_bucket: dict[tuple[str, str], dict[str, list[float]]],
+    marked_bucket: dict[tuple[str, str], dict[str, dict[str, list[float]]]],
+    op: dict[str, Any],
+    proto: dict[str, Any],
+) -> dict[str, Any]:
+    """Same-slice FPR/TPR for legacy threshold vs specialist-OR. Not a nested holdout."""
+    slice_cfg = proto.get("operating_slice") or {}
+    styles = list(slice_cfg.get("styles") or ["photo"])
+    attacks = list(slice_cfg.get("attacks") or ["identity"])
+    thr = float(op.get("threshold") or 0.48)
+    ens_c: list[float] = []
+    lsb_c: list[float] = []
+    freq_c: list[float] = []
+    klass_c: list[float] = []
+    for style in styles:
+        for attack in attacks:
+            bucket = cover_bucket.get((style, attack))
+            if not bucket:
+                continue
+            ens_c.extend(bucket["ensemble"])
+            lsb_c.extend(bucket["lsb"])
+            freq_c.extend(bucket["freq"])
+            klass_c.extend(bucket["klass"])
+    ens_a = np.asarray(ens_c, dtype=np.float64)
+    zeros = np.zeros(ens_a.size, dtype=np.int32)
+    legacy_fpr = fpr_at(zeros, ens_a, thr) if ens_a.size else None
+    or_hits = _or_hits(
+        np.asarray(lsb_c, dtype=np.float64),
+        np.asarray(freq_c, dtype=np.float64),
+        np.asarray(klass_c, dtype=np.float64),
+        op,
+    )
+    or_fpr = float(or_hits.mean()) if or_hits.size else None
+
+    def tpr_pair(fam: str) -> tuple[float | None, float | None]:
+        ens_m: list[float] = []
+        lsb_m: list[float] = []
+        freq_m: list[float] = []
+        klass_m: list[float] = []
+        for style in styles:
+            for attack in attacks:
+                rec = (marked_bucket.get((style, attack)) or {}).get(fam)
+                if not rec:
+                    continue
+                ens_m.extend(rec["ensemble"])
+                lsb_m.extend(rec["lsb"])
+                freq_m.extend(rec["freq"])
+                klass_m.extend(rec["klass"])
+        if not ens_m:
+            return None, None
+        ones = np.ones(len(ens_m), dtype=np.int32)
+        leg = tpr_at(ones, np.asarray(ens_m, dtype=np.float64), thr)
+        orr = float(
+            _or_hits(
+                np.asarray(lsb_m, dtype=np.float64),
+                np.asarray(freq_m, dtype=np.float64),
+                np.asarray(klass_m, dtype=np.float64),
+                op,
+            ).mean()
+        )
+        return leg, orr
+
+    lsb_leg, lsb_or = tpr_pair("lsb")
+    dct_leg, dct_or = tpr_pair("dct")
+    fpr_ok = or_fpr is not None and legacy_fpr is not None and or_fpr <= legacy_fpr + 0.005
+    tpr_ok = True
+    if lsb_leg is not None and lsb_or is not None:
+        tpr_ok = tpr_ok and lsb_or + 1e-9 >= lsb_leg - 0.02
+    if dct_leg is not None and dct_or is not None:
+        tpr_ok = tpr_ok and dct_or + 1e-9 >= dct_leg - 0.02
+    flip = bool(fpr_ok and tpr_ok)
+    return {
+        "legacy_fpr": None if legacy_fpr is None else round(float(legacy_fpr), 6),
+        "or_fpr": None if or_fpr is None else round(float(or_fpr), 6),
+        "legacy_tpr_lsb": None if lsb_leg is None else round(float(lsb_leg), 6),
+        "or_tpr_lsb": None if lsb_or is None else round(float(lsb_or), 6),
+        "legacy_tpr_dct": None if dct_leg is None else round(float(dct_leg), 6),
+        "or_tpr_dct": None if dct_or is None else round(float(dct_or), 6),
+        "flip_default": flip,
+        "notes": "Cuts and A/B share the same n covers. Not a nested holdout.",
+    }
+
+
 def render_markdown(report: dict[str, Any]) -> str:
     lines = [
         "# VeilScan bench",
@@ -254,9 +368,23 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- id: `{op.get('id')}` status `{op.get('status')}`",
             f"- threshold={op.get('threshold')} t_lsb={op.get('t_lsb')} t_freq={op.get('t_freq')} t_class={op.get('t_class')}",
             f"- fpr_est={op.get('fpr_est')} n={op.get('n')}",
+            f"- fusion_mode={op.get('fusion_mode')}",
             "",
         ]
     )
+    ab = report.get("ab") or {}
+    if ab:
+        lines.extend(
+            [
+                "## A/B legacy vs specialist-OR",
+                "",
+                f"- legacy_fpr={ab.get('legacy_fpr')} or_fpr={ab.get('or_fpr')}",
+                f"- LSB TPR legacy={ab.get('legacy_tpr_lsb')} or={ab.get('or_tpr_lsb')}",
+                f"- DCT TPR legacy={ab.get('legacy_tpr_dct')} or={ab.get('or_tpr_dct')}",
+                f"- flip_default={ab.get('flip_default')}",
+                "",
+            ]
+        )
     return "\n".join(lines) + "\n"
 
 

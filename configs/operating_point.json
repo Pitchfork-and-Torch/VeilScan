@@ -1,13 +1,13 @@
 {
-  "id": "op-v0.4.0-provisional-n20",
-  "status": "provisional",
-  "threshold": 0.674216,
-  "t_lsb": 0.224773,
-  "t_freq": 0.135945,
-  "t_class": 0.907289,
+  "id": "op-v0.4.0-locked-n50",
+  "status": "locked",
+  "threshold": 0.669729,
+  "t_lsb": 0.229836,
+  "t_freq": 0.179105,
+  "t_class": 0.908002,
   "fpr_est": 0.05,
   "fpr_target": 0.05,
-  "n": 20,
+  "n": 50,
   "date": "2026-08-21",
   "protocol": "veilscan-bench-v1",
   "corpus": "generator-photo",
@@ -16,5 +16,5 @@
     "photo/jpeg_70"
   ],
   "fusion_mode": "legacy",
-  "notes": "Generator covers, not camera photos. Do not cite as ImageNet FPR."
+  "notes": "Generator covers, not camera photos. Do not cite as ImageNet FPR. specialist_or did not beat legacy FPR; default stays legacy."
 }

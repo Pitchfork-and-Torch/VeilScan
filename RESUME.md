@@ -1,25 +1,17 @@
-# Resume (v0.4.0 slice A)
+# Resume (v0.4.1)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.4.0 generator bench + family_hint.
-Public lamp: https://veilscan.jonbailey.xyz/ site v1.1.5.
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v0.4.1 locked generator-photo operating point + inspect.
+Public lamp: https://veilscan.jonbailey.xyz/ site v1.1.7 (scanline hunt + hotspot box).
 
 ## Where we stopped
 
-Slice A landed: `veilscan bench`, `configs/bench_protocol.yaml`, schema 2 `family_hint`,
-specialist-OR behind `fusion.mode` (default still `legacy`), FSNet `--families lsb` exits 2.
+- `op-v0.4.0-locked-n50`: threshold 0.67, FPR 0.05 on generator-photo identity+jpeg_70.
+- specialist-OR A/B: or_fpr 0.14 vs legacy 0.05. Default stays `legacy`.
+- `veilscan inspect` = scan + decode + HUD stamp.
 
-Operating point is `provisional` until `veilscan bench --n 50 --write-operating-point`.
+## Next
 
-Complementary deep heads:
-
-- ResidualCNN = LSB (keep bit planes)
-- FSNet-lite = frequency (never pass `lsb` in `--families`)
-
-## Next session
-
-1. Run n=20 identity+jpeg_70 if `docs/bench/latest.json` is missing, then n=50 lock.
-2. A/B `specialist_or` vs `legacy` on that JSON; flip default only if FPR does not rise.
-3. Slice B: lamp scanlines + token scorer; `veilscan inspect`.
+External photo corpus adapter (v0.5). Vectorize DCT embedders. Do not flip specialist-OR without a nested holdout.
 
 ## Do not
 

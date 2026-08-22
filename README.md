@@ -10,7 +10,7 @@ v0.4 ships the same plugin ensemble plus a **frozen generator bench** (`veilscan
 
 `py -3 -m veilscan selftest` is a fast n=6 @ 128px smoke, not an operating point.
 
-`py -3 -m veilscan bench --n 20 --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo / generator-sine**, not ImageNet, not UniFreq-100K. Until n>=50 and `operating_point.status=locked`, treat FPR as provisional.
+`py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point` writes `docs/bench/latest.json` from `configs/bench_protocol.yaml`. That corpus is **generator-photo**, not ImageNet, not UniFreq-100K. v0.4.1 locked `op-v0.4.0-locked-n50`: ensemble threshold ~0.67 (FPR 0.05 on that slice). Fusion stays `legacy` because specialist-OR FPR was 0.14 on the same covers. `veilscan inspect` runs scan then decode into one JSON/HUD.
 
 Complementary split (do not mix):
 
@@ -36,9 +36,10 @@ py -3 -m veilscan scan path\to\image.png --json --heatmap out_overlay.png
 py -3 -m veilscan batch path\to\folder --json
 py -3 -m veilscan decode path\to\image.png
 # writes path-veilscan-report.png (HUD overlay + executive brief) next to the file
+py -3 -m veilscan inspect path\to\image.png
 py -3 -m veilscan selftest
 py -3 -m veilscan selftest --per-detector
-py -3 -m veilscan bench --n 20 --attacks identity,jpeg_70 --write-operating-point
+py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point
 py -3 -m veilscan loao --n 3
 ```
 
