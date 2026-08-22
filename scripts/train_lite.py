@@ -11,13 +11,58 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 from veilscan.config import resolve_device
+from veilscan.eval.bench import iter_cover_paths
 from veilscan.eval.robustness import apply_attack
 from veilscan.generators import FAMILIES, embed, synthetic_cover
+from veilscan.image_io import load_rgb
 from veilscan.models.fsnet import FSNetLite
 from veilscan.models.residual_cnn import ResidualCNN
 
 SIZE = 128
 JPEG_CHOICES = ("jpeg_90", "jpeg_70", "jpeg_50")
+ROOT = Path(__file__).resolve().parents[1]
+FROZEN_TEST_COVERS = ROOT / "data" / "covers" / "camera"
+DEFAULT_CKPT = ROOT / "checkpoints"
+
+
+def resize_cover(rgb: np.ndarray, size: int) -> np.ndarray:
+    import cv2
+
+    if rgb.ndim != 3 or rgb.shape[2] < 3:
+        raise ValueError("RGB cover required")
+    return cv2.resize(rgb[..., :3], (size, size), interpolation=cv2.INTER_AREA)
+
+
+def split_cover_paths(paths: list[Path], seed: int = 0, val_frac: float = 0.2) -> tuple[list[Path], list[Path]]:
+    if not paths:
+        raise ValueError("no cover paths")
+    rng = np.random.default_rng(seed)
+    order = rng.permutation(len(paths))
+    n_val = max(1, int(round(len(paths) * val_frac)))
+    if n_val >= len(paths):
+        n_val = max(1, len(paths) // 5) if len(paths) >= 5 else 1
+        n_val = min(n_val, len(paths) - 1) if len(paths) > 1 else 1
+    val_idx = set(int(i) for i in order[:n_val].tolist())
+    train = [paths[int(i)] for i in order if int(i) not in val_idx]
+    val = [paths[int(i)] for i in order if int(i) in val_idx]
+    if not train:
+        train = list(val)
+    return train, val
+
+
+def assert_not_frozen_test(cover_dir: Path, *, allow: bool) -> None:
+    if allow:
+        return
+    try:
+        if cover_dir.resolve() == FROZEN_TEST_COVERS.resolve():
+            raise SystemExit(
+                "ERROR: refuse to train on the frozen BSDS500 test pack "
+                f"({FROZEN_TEST_COVERS}). Fetch train stills with "
+                "scripts/fetch_camera_covers.py --manifest configs/camera_train_covers.manifest.json "
+                "--out data/covers/camera-train. Override only with --allow-test-covers."
+            )
+    except FileNotFoundError:
+        return
 
 
 class SyntheticWM(Dataset):
@@ -30,6 +75,8 @@ class SyntheticWM(Dataset):
         size: int = SIZE,
         cover_style: str = "mix",
         families: list[str] | None = None,
+        cover_paths: list[Path] | None = None,
+        cover_mix: float = 0.0,
     ) -> None:
         self.n = n
         self.size = size
@@ -37,6 +84,8 @@ class SyntheticWM(Dataset):
         self.cover_style = cover_style
         self.rng = np.random.default_rng(seed)
         self.holdout = holdout
+        self.cover_paths = list(cover_paths or [])
+        self.cover_mix = float(cover_mix)
         src = list(families) if families else list(FAMILIES)
         self.families = [f for f in src if f != holdout]
         if not self.families:
@@ -45,9 +94,16 @@ class SyntheticWM(Dataset):
     def __len__(self) -> int:
         return self.n
 
+    def _cover(self, rng: np.random.Generator, idx: int) -> np.ndarray:
+        use_disk = bool(self.cover_paths) and rng.random() >= self.cover_mix
+        if use_disk:
+            path = self.cover_paths[idx % len(self.cover_paths)]
+            return resize_cover(load_rgb(path), self.size)
+        return synthetic_cover(self.size, self.size, rng, style=self.cover_style)
+
     def __getitem__(self, idx: int):
         rng = np.random.default_rng(int(self.rng.integers(1 << 30)) + idx)
-        cover = synthetic_cover(self.size, self.size, rng, style=self.cover_style)
+        cover = self._cover(rng, idx)
         if rng.random() < 0.5:
             fam = self.families[int(rng.integers(0, len(self.families)))]
             img = embed(cover, fam, seed=int(rng.integers(1 << 30)))
@@ -102,6 +158,9 @@ def train_one(
     batch_size: int = 8,
     lr: float = 1e-3,
     cover_style: str = "mix",
+    cover_paths: list[Path] | None = None,
+    val_paths: list[Path] | None = None,
+    cover_mix: float = 0.0,
 ) -> dict:
     if fresh and out.is_file():
         out.unlink()
@@ -113,9 +172,19 @@ def train_one(
         size=size,
         families=families,
         cover_style=cover_style,
+        cover_paths=cover_paths,
+        cover_mix=cover_mix,
     )
     val = SyntheticWM(
-        160, seed=1, holdout=holdout, jpeg_prob=jpeg_prob, size=size, families=families, cover_style=cover_style
+        160,
+        seed=1,
+        holdout=holdout,
+        jpeg_prob=jpeg_prob,
+        size=size,
+        families=families,
+        cover_style=cover_style,
+        cover_paths=val_paths if val_paths is not None else cover_paths,
+        cover_mix=cover_mix,
     )
     loader = DataLoader(ds, batch_size=batch_size, shuffle=True, num_workers=0)
     vloader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0)
@@ -159,6 +228,9 @@ def train_one(
         "val_auc": auc,
         "last_loss": last_loss,
         "checkpoint": str(out.name),
+        "n_cover_paths": len(cover_paths or []),
+        "n_val_paths": len(val_paths or []),
+        "cover_mix": cover_mix,
     }
 
 
@@ -166,7 +238,7 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--steps", type=int, default=80)
     p.add_argument("--device", default="auto")
-    p.add_argument("--out", default=str(Path(__file__).resolve().parents[1] / "checkpoints"))
+    p.add_argument("--out", default=str(DEFAULT_CKPT))
     p.add_argument("--holdout-family", default=None, help="Exclude this generator family from training (LOAO).")
     p.add_argument("--jpeg-prob", type=float, default=0.35, help="Probability of JPEG attack on each sample.")
     p.add_argument("--size", type=int, default=SIZE)
@@ -176,10 +248,23 @@ def main() -> None:
     p.add_argument("--batch-size", type=int, default=0, help="0 = 32 on cuda else 8")
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--cover-style", default="mix", help="sine | photo | mix")
+    p.add_argument("--covers", default="", help="Folder of camera stills. Never the frozen test pack.")
+    p.add_argument("--cover-mix", type=float, default=0.0, help="Prob of synthetic cover when --covers is set.")
+    p.add_argument("--allow-test-covers", action="store_true", help="Allow training on data/covers/camera (leaks the bench).")
     p.add_argument("--force", action="store_true", help="Allow FSNet to see lsb (destroys the frequency cue).")
     args = p.parse_args()
     device = resolve_device(args.device)
     fams = [x.strip() for x in args.families.split(",") if x.strip()] or None
+    train_paths: list[Path] | None = None
+    val_paths: list[Path] | None = None
+    if args.covers:
+        cover_dir = Path(args.covers)
+        assert_not_frozen_test(cover_dir, allow=args.allow_test_covers)
+        paths = iter_cover_paths(cover_dir)
+        if not paths:
+            raise SystemExit(f"ERROR: no images under {cover_dir}")
+        train_paths, val_paths = split_cover_paths(paths, seed=0, val_frac=0.2)
+        print("covers", cover_dir, "train", len(train_paths), "val", len(val_paths), "mix", args.cover_mix)
     if args.only in ("both", "fsnet_lite"):
         used = list(fams) if fams else list(FAMILIES)
         if "lsb" in used:
@@ -193,6 +278,8 @@ def main() -> None:
     bs = args.batch_size or (32 if device == "cuda" else 8)
     print("device", device, "holdout", args.holdout_family, "jpeg_prob", args.jpeg_prob, "only", args.only, "bs", bs, "families", fams)
     root = Path(args.out)
+    if root.resolve() == DEFAULT_CKPT.resolve():
+        print("WARN: --out is production checkpoints/. Prefer checkpoints/candidates until a probe beats the current FSNet.")
     recs = []
     if args.only in ("both", "residual_cnn"):
         recs.append(
@@ -210,6 +297,9 @@ def main() -> None:
                 batch_size=bs,
                 lr=args.lr,
                 cover_style=args.cover_style,
+                cover_paths=train_paths,
+                val_paths=val_paths,
+                cover_mix=args.cover_mix,
             )
         )
     if args.only in ("both", "fsnet_lite"):
@@ -228,6 +318,9 @@ def main() -> None:
                 batch_size=bs,
                 lr=args.lr,
                 cover_style=args.cover_style,
+                cover_paths=train_paths,
+                val_paths=val_paths,
+                cover_mix=args.cover_mix,
             )
         )
     manifest = {

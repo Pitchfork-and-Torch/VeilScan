@@ -11,6 +11,8 @@ checkpoints/*.pt
 !checkpoints/residual_cnn.pt
 !checkpoints/fsnet_lite.pt
 !checkpoints/manifest.json
+checkpoints/candidates/
+checkpoints/archive/
 checkpoints/*.onnx
 *.onnx
 examples/_demo_out/

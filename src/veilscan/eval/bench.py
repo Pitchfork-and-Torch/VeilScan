@@ -289,7 +289,7 @@ def choose_operating_point(
     status = "provisional" if int(n) < 50 else "locked"
     camera = styles == ["camera"] or report.get("corpus") == "camera"
     if camera:
-        oid = f"op-v0.6.0-camera-{status}-n{n}"
+        oid = f"op-v0.7.0-camera-{status}-n{n}"
         notes = "Camera stills pack sidecar. Does not replace the generator lock. Do not cite as UniFreq/ImageNet FPR."
         corpus = "camera"
     else:

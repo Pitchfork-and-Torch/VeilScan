@@ -1,14 +1,14 @@
 {
-  "id": "op-v0.6.0-camera-locked-n50",
+  "id": "op-v0.7.0-camera-locked-n50",
   "status": "locked",
-  "threshold": 0.816569,
+  "threshold": 0.752717,
   "t_lsb": 0.345267,
-  "t_freq": 1.0,
+  "t_freq": 0.875411,
   "t_class": 0.959054,
   "fpr_est": 0.05,
   "fpr_target": 0.05,
   "n": 50,
-  "date": "2026-08-21",
+  "date": "2026-08-22",
   "protocol": "veilscan-bench-v1",
   "corpus": "camera",
   "slice": [

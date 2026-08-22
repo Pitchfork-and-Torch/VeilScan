@@ -1,3 +1,17 @@
+# v0.7.0
+
+FSNet-lite recook on BSDS500 train stills. Frozen test-64 stays the camera bench.
+
+- Cook: `--covers data/covers/camera-train --cover-mix 0.4 --families dct,spread,dwt,tree_ring` (no lsb). Refuses the frozen test pack
+- Camera sidecar `op-v0.7.0-camera-locked-n50` threshold ~0.753 (was ~0.817). `t_freq` 0.875 (was 1.0)
+- Camera identity DCT TPR@5%FPR 0.96 (was 0.06). DWT 0.98. Spread 1.00. Tree-ring 0.90
+- Generator lock unchanged (~0.67). Default `present` not flipped. Fusion stays `legacy`
+- ResidualCNN unchanged. Patchwork on camera stills still unsupported
+- `veilscan doctor` hash for FSNet is `6e45dbba4852c612679f3c1f957fc8040f0077c4826e0dfab9a9002b9472e580`
+- Probe helper: `scripts/probe_fsnet.py`
+
+Proprietary. Private repo.
+
 # v0.6.0
 
 Camera stills operating point. Default `present` still uses the generator lock.

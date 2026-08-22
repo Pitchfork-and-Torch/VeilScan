@@ -39,5 +39,5 @@ Full tables: `docs/bench/latest.md`.
 
 ## Camera FPR
 
-Measured in v0.6.0. See `docs/RESULTS_v0.6.md`. Sidecar does not overwrite
-this generator lock.
+Measured in v0.6.0, recooked in v0.7.0. See `docs/RESULTS_v0.7.md`.
+Sidecar does not overwrite this generator lock.

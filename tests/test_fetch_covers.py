@@ -102,6 +102,44 @@ def test_empty_hash_requires_flag(tmp_path: Path) -> None:
         assert "empty" in str(exc).lower()
 
 
+def test_fetch_train_glob_not_test(tmp_path: Path) -> None:
+    mod = _load_fetch()
+    inner_train = "BSR/BSDS500/data/images/train"
+    inner_test = "BSR/BSDS500/data/images/test"
+    src_dir = tmp_path / "src"
+    (src_dir / inner_train).mkdir(parents=True)
+    (src_dir / inner_test).mkdir(parents=True)
+    for i in range(6):
+        img = synthetic_cover(48, 48, np.random.default_rng(i), style="photo")
+        Image.fromarray(img).save(src_dir / inner_train / f"tr{i:04d}.jpg", quality=90)
+    for i in range(4):
+        img = synthetic_cover(48, 48, np.random.default_rng(80 + i), style="photo")
+        Image.fromarray(img).save(src_dir / inner_test / f"te{i:04d}.jpg", quality=90)
+    archive = tmp_path / "pack.tgz"
+    with tarfile.open(archive, "w:gz") as tf:
+        tf.add(src_dir / "BSR", arcname="BSR")
+    digest = mod.sha256_file(archive)
+    man = {
+        "kind": "archive",
+        "url": archive.as_uri(),
+        "archive": archive.name,
+        "sha256": digest,
+        "member_glob": "BSR/BSDS500/data/images/train/*.jpg",
+        "take": 6,
+    }
+    man_path = tmp_path / "man.json"
+    man_path.write_text(json.dumps(man), encoding="utf-8")
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    (cache / archive.name).write_bytes(archive.read_bytes())
+    out = tmp_path / "out"
+    report = mod.fetch(man_path, out, cache)
+    names = sorted(p.name for p in out.glob("*.jpg"))
+    assert report["files"] == 6
+    assert all(n.startswith("tr") for n in names)
+    assert not any(n.startswith("te") for n in names)
+
+
 def test_dry_run_no_network(tmp_path: Path) -> None:
     mod = _load_fetch()
     man = {

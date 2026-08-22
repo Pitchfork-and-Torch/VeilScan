@@ -1,5 +1,8 @@
 # VeilScan v0.6.0
 
+Historical camera sidecar (FSNet still saturating). Current numbers:
+`docs/RESULTS_v0.7.md`.
+
 Camera stills operating point (BSDS500 test-64, n=50, 128px, identity + jpeg_70).
 Generator lock is unchanged. Default `present` still uses the generator cut.
 Scan JSON may add a `camera` sidecar. Fusion stays `legacy`.

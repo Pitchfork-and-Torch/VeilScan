@@ -1,10 +1,10 @@
 # Operating-point contract (v0.4) - SHIPPED
 
 **Status:** historical. Landed across v0.4.0 / v0.4.1. Current package is
-**v0.6.0** (`docs/RESULTS_v0.6.md`). Camera sidecar measured on BSDS500
-test-64. Generator lock still default `present`. Fusion still `legacy`.
-FSNet saturates on that camera pack. Next science is a second camera
-corpus or an FSNet recook without `lsb`, not another YAML weight.
+**v0.7.0** (`docs/RESULTS_v0.7.md`). Camera sidecar measured on BSDS500
+test-64 after an FSNet recook on BSDS500 train-200 (no lsb, cover-mix 0.4).
+Generator lock still default `present`. Fusion still `legacy`. Next science
+is a second camera corpus, patchwork, or LOAO folders, not another YAML weight.
 
 **Baseline when written:** v0.3.0 keyless decode.  
 **Identity:** presence ensemble plus keyless plaintext decode. No remover.

@@ -12,7 +12,7 @@ def test_doctor_ok_json() -> None:
     assert "checkpoints" in report
     assert report["operating_point"] is not None
     assert report["camera_operating_point"] is not None
-    assert str(report["camera_operating_point"].get("id") or "").startswith("op-v0.6.0-camera")
+    assert str(report["camera_operating_point"].get("id") or "").startswith("op-v0.7.0-camera")
     names = {row["name"] for row in report["checkpoints"]}
     assert "residual_cnn" in names
     assert "fsnet_lite" in names

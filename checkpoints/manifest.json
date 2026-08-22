@@ -13,10 +13,10 @@
     {
       "name": "fsnet_lite",
       "file": "fsnet_lite.pt",
-      "sha256": "0046201231d11b118ebb3c94dddf5dc9e265c90394464ccc4a372169fcdae1cc",
-      "val_auc": 1.0,
+      "sha256": "6e45dbba4852c612679f3c1f957fc8040f0077c4826e0dfab9a9002b9472e580",
+      "val_auc": 0.97,
       "peak_ok": true,
-      "note": "9-ch stem RGB+LSB+HP. Trained WITHOUT lsb family. Frequency specialist; JPEG70 DCT still separates."
+      "note": "9-ch stem RGB+LSB+HP. v0.7 camera-train mix (cover-mix 0.4, families dct,spread,dwt,tree_ring, no lsb)."
     }
   ]
 }

@@ -19,9 +19,10 @@
 - **Decision threshold** for default `present` is still the generator lock
   ~0.67 (`op-v0.4.0-locked-n50`). Camera stills sit near ensemble 0.80, so
   that lock false-fires on BSDS500. The camera sidecar cut is ~0.817
-  (`op-v0.6.0-camera-locked-n50`, FPR 0.05). Scan JSON adds `camera` when
-  the sidecar exists. Default `present` is not flipped in v0.6. UniFreq-100K
-  is not in tree. FSNet saturates on this camera pack (`t_freq` 1.0).
+  (`op-v0.7.0-camera-locked-n50`, FPR 0.05). Scan JSON adds `camera` when
+  the sidecar exists. Default `present` is not flipped in v0.7. UniFreq-100K
+  is not in tree. FSNet no longer saturates on this pack (`t_freq` 0.875).
+  Camera identity DCT TPR@5%FPR is 0.96 (v0.6 was 0.06). JPEG70 DCT is 0.44.
 - Fusion mode stays `legacy`. specialist-OR FPR was 0.14 vs 0.05 in-sample.
   Nested even/odd holdout is reported under `ab.nested_holdout`; do not flip
   OR unless that nested FPR also holds.
