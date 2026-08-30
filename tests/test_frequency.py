@@ -9,7 +9,10 @@ def test_dct_detector() -> None:
     cover = synthetic_cover(128, 128, rng)
     marked = embed_dct(cover, np.random.default_rng(22), amp=12.0)
     d = DCTDetector()
-    assert d.analyze(marked).score > d.analyze(cover).score
+    rm = d.analyze(marked)
+    rc = d.analyze(cover)
+    assert rm.score > rc.score
+    assert rm.extras["pair_34_43"] > rc.extras["pair_34_43"]
 
 
 def test_dwt_detector() -> None:

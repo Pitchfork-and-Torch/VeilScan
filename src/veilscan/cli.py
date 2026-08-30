@@ -481,6 +481,16 @@ def _print_result(path: Path, result, peak_ok: set[str] | None = None) -> None:
         f"freq={getattr(result, 'freq_score', 0):.3f}  class={getattr(result, 'class_score', 0):.3f}"
     )
     console.print(f"  {result.explanation}")
+    if getattr(result, "jpeg_container", False) or getattr(result, "jpeg_like", False):
+        q34 = getattr(result, "jpeg_luma_q_34", None)
+        q43 = getattr(result, "jpeg_luma_q_43", None)
+        console.print(
+            f"  jpeg container={getattr(result, 'jpeg_container', False)}  "
+            f"q={getattr(result, 'jpeg_quality_est', None)}  "
+            f"sub={getattr(result, 'jpeg_subsampling', None)}  "
+            f"freq_w={getattr(result, 'jpeg_freq_weight', 0):.2f}  "
+            f"luma_q(3,4)={q34}  luma_q(4,3)={q43}"
+        )
     table = Table(show_header=True)
     table.add_column("detector")
     table.add_column("score", justify="right")

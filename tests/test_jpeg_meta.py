@@ -35,6 +35,9 @@ def test_jpeg_container_and_quality_order() -> None:
     assert q90["quality_est"] is not None and q50["quality_est"] is not None
     assert q90["quality_est"] > q50["quality_est"]
     assert q90["subsampling"] in {"4:4:4", "4:2:2", "4:2:0"} or q90["subsampling"] is not None
+    assert q50["luma_q_34"] is not None and q50["luma_q_43"] is not None
+    assert q50["luma_q_34"] >= q90["luma_q_34"]
+    assert q50["luma_q_43"] >= q90["luma_q_43"]
 
 
 def test_schema_5_and_analyze_path_jpeg(tmp_path) -> None:
@@ -48,6 +51,9 @@ def test_schema_5_and_analyze_path_jpeg(tmp_path) -> None:
     assert js["jpeg_container"] is True
     assert js["jpeg_like"] is True
     assert js["jpeg_quality_est"] is not None
+    assert js["jpeg_luma_q_34"] is not None
+    assert js["jpeg_luma_q_43"] is not None
+    assert js["jpeg_luma_q_34"] >= 1
     assert 0.4 <= float(js["jpeg_freq_weight"]) <= 0.55
     png = tmp_path / "plate.png"
     Image.fromarray(cover).save(png)

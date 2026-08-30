@@ -11,5 +11,5 @@ Agnostic invisible-watermark presence detector plus keyless plaintext decode. Lo
 - ASCII punctuation in public files. UTF-8 no BOM.
 - Tests: `py -3 -m pytest` from this folder after `pip install -e .`
 - CLI: `py -3 -m veilscan scan PATH` and `py -3 -m veilscan decode PATH`
-- Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md`. v1.7.0 native 128 windows. BSDS camera sidecar stays v1.4 128px. Generator present stays ~0.67. Do not promote 256px OP. No from-scratch Q50. No remover. Do not train FSNet on `data/covers/camera`.
+- Next science contract: `docs/NEXT_MASSIVE_UPGRADE.md`. v1.8.0 Q-table DCT inspect. BSDS camera sidecar stays v1.4 128px. Generator present stays ~0.67. Do not promote 256px OP. No from-scratch Q50. No remover. Do not train FSNet on `data/covers/camera`. JPEG50 DCT leftover stays 0.46 until a probe beats 0.40 FSNet-head TPR@5%.
 - Fusion `peak_ok` lives in `configs/default.yaml`, not hardcoded.

@@ -45,6 +45,8 @@ def inspect_jpeg(data: bytes | bytearray | memoryview | None) -> dict[str, Any]:
         "subsampling": None,
         "components": None,
         "progressive": False,
+        "luma_q_34": None,
+        "luma_q_43": None,
     }
     if not is_jpeg(data):
         return out
@@ -86,7 +88,21 @@ def inspect_jpeg(data: bytes | bytearray | memoryview | None) -> dict[str, Any]:
     luma = qtables.get(0) or (qtables[min(qtables)] if qtables else None)
     if luma and len(luma) == 64:
         out["quality_est"] = _quality_from_luma(luma)
+        out["luma_q_34"] = _luma_step(luma, 3, 4)
+        out["luma_q_43"] = _luma_step(luma, 4, 3)
     return out
+
+
+def _luma_step(luma_zz: list[int], u: int, v: int) -> int | None:
+    """Luma DQT step at raster (u, v). Payload is zigzag order."""
+    raster = int(u) * 8 + int(v)
+    try:
+        zz_i = _ZZ.index(raster)
+    except ValueError:
+        return None
+    if zz_i >= len(luma_zz):
+        return None
+    return int(luma_zz[zz_i])
 
 
 def _read_dqt(payload: bytes, dest: dict[int, list[int]]) -> None:

@@ -167,6 +167,10 @@ def _stamp_jpeg(fused: EnsembleResult, mix: dict, blockiness: float, container: 
     sub = info.get("subsampling")
     fused.jpeg_subsampling = str(sub) if sub else None
     fused.jpeg_freq_weight = float(mix.get("jpeg_freq_weight") or 0.0)
+    q34 = info.get("luma_q_34")
+    q43 = info.get("luma_q_43")
+    fused.jpeg_luma_q_34 = int(q34) if q34 is not None else None
+    fused.jpeg_luma_q_43 = int(q43) if q43 is not None else None
 
 
 def apply_present_policy(fused: EnsembleResult, policy: str | None = None) -> EnsembleResult:

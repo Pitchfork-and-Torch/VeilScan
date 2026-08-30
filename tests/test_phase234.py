@@ -10,7 +10,7 @@ from veilscan.types import SCHEMA_VERSION
 
 
 def test_version() -> None:
-    assert __version__ == "1.7.0"
+    assert __version__ == "1.8.0"
 
 
 def test_schema_version_json() -> None:

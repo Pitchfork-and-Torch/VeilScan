@@ -1,3 +1,13 @@
+# v1.8.0
+
+Q-table DCT inspect. No production recook. JPEG50 DCT TPR leftover stays 0.46.
+
+Lamp: https://veilscan.jonbailey.xyz/
+
+- `inspect_jpeg` / scan JSON / CLI print luma DQT steps at bins (3,4) and (4,3)
+- DCT extras include `pair_34_43`. Score mix, present, and 128px lock unchanged
+- Eval DCT amp 14 sits under Q50 luma steps ~51/56. No from-scratch Q50. No FSNet recook
+
 # v1.7.0
 
 Native 128 windows on large stills. No production recook.

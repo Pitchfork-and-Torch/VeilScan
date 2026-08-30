@@ -32,28 +32,38 @@ class DCTDetector(BaseDetector):
         nb_y, nb_x, _, _ = blocks.shape
         mid_energy = np.zeros((nb_y, nb_x), dtype=np.float64)
         mid_coeffs = []
+        pair_vals = []
+        mask = _mid_band_mask(8)
         for i in range(nb_y):
             for j in range(nb_x):
                 c = dct2_block(blocks[i, j])
-                mask = _mid_band_mask(8)
                 mid = c[mask]
                 mid_energy[i, j] = float(np.mean(mid ** 2))
                 mid_coeffs.append(mid.ravel())
+                pair_vals.append(abs(float(c[3, 4])) + abs(float(c[4, 3])))
         mid_all = np.concatenate(mid_coeffs)
         e = float(np.mean(mid_energy))
         k = kurtosis(mid_all)
         lap = laplacian_negloglike(mid_all)
+        pair = float(np.mean(pair_vals)) if pair_vals else 0.0
         # Extra mid-band energy and less-Laplacian AC => watermark-like.
+        # Pair bins (3,4)+(4,3) match embed_dct. Do not retune fusion.
         score = (
             0.55 * score_from_stat(np.log1p(e), center=0.95, scale=0.35)
             + 0.30 * score_from_stat(k, center=40.0, scale=18.0, invert=True)
             + 0.15 * score_from_stat(lap, center=-0.4, scale=0.25)
         )
         hm = np.repeat(np.repeat(mid_energy / (mid_energy.max() + 1e-9), 8, 0), 8, 1)
-        extras = {"mid_energy": e, "kurtosis": k, "laplacian_nll_gap": lap}
+        extras = {
+            "mid_energy": e,
+            "kurtosis": k,
+            "laplacian_nll_gap": lap,
+            "pair_34_43": pair,
+        }
         expl = (
             f"Block DCT mid-band. energy={e:.3f}, kurtosis={k:.2f}, "
-            f"Laplacian gap={lap:.3f}. Robust classical marks live here."
+            f"Laplacian gap={lap:.3f}, pair(3,4)+(4,3)={pair:.2f}. "
+            "Robust classical marks live here."
         )
         return DetectionResult(self.name, float(score), 0.8, expl, heatmap=hm, extras=extras, tier=self.tier).clamp()
 

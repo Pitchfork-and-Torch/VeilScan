@@ -70,6 +70,8 @@ class EnsembleResult:
     jpeg_quality_est: int | None = None
     jpeg_subsampling: str | None = None
     jpeg_freq_weight: float = 0.0
+    jpeg_luma_q_34: int | None = None
+    jpeg_luma_q_43: int | None = None
     policy: str = "generator"
 
     def to_json(self) -> dict[str, Any]:
@@ -91,6 +93,8 @@ class EnsembleResult:
             "jpeg_quality_est": self.jpeg_quality_est,
             "jpeg_subsampling": self.jpeg_subsampling,
             "jpeg_freq_weight": round(float(self.jpeg_freq_weight), 4),
+            "jpeg_luma_q_34": self.jpeg_luma_q_34,
+            "jpeg_luma_q_43": self.jpeg_luma_q_43,
             "policy": self.policy,
             "explanation": self.explanation,
             "active": self.active,
