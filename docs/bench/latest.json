@@ -1,6 +1,6 @@
 {
   "protocol_id": "veilscan-bench-v1",
-  "protocol_path": "C:\\Users\\Knock\\veilscan\\configs\\bench_protocol.yaml",
+  "protocol_path": "configs/bench_protocol.yaml",
   "n": 50,
   "size": 128,
   "seed": 20260822,
