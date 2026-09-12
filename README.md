@@ -11,7 +11,7 @@ It does not strip a mark. It does not break SynthID, Digimarc, encrypted stego, 
 Lamp: https://veilscan.jonbailey.xyz/  
 Private GitHub: https://github.com/Pitchfork-and-Torch/VeilScan
 
-v2.2.0 adds native JSteg hunt and optional PATH adapters (`--wordlist`). Presence OP is unchanged: generator `present` ~0.67, BSDS camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756. JPEG50 leftover stays parked. Do not recook FSNet.
+v2.3.0 adds a hunt HUD (`report.png`) and schema-2 agent JSON. Presence OP is unchanged: generator `present` ~0.67, BSDS camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756. JPEG50 leftover stays parked. Do not recook FSNet.
 
 ## Synthetic numbers
 
@@ -44,6 +44,7 @@ py -3 -m veilscan batch path\to\folder --json
 py -3 -m veilscan decode path\to\image.png
 # writes path-veilscan-report.png (HUD overlay + executive brief) next to the file
 py -3 -m veilscan hunt path\to\image.png --json --out hunt-out
+# hunt-out/report.png  hunt-out/findings.json  (schema 2: flags, flag_count, summary)
 py -3 -m veilscan hunt path\to\image.png --deep --out hunt-out
 py -3 -m veilscan hunt path\to\image.jpg --wordlist wordlist.txt --out hunt-out
 py -3 -m veilscan gym

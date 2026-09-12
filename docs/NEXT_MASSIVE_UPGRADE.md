@@ -4,7 +4,7 @@
 image/container files. `veilscan scan` stays the AWPD presence module.
 No watermark remover.
 
-Package: `2.2.0`. Private GitHub. Proprietary license. Public lamp stays
+Package: `2.3.0`. Private GitHub. Proprietary license. Public lamp stays
 generic marketing (`veilscan.jonbailey.xyz`) and does not document extractors.
 
 ## Parked leftover (do not recook)
@@ -47,9 +47,15 @@ Ruby zsteg is not imported. No Java Stegsolve.
 - F5/nsF5 extract is a note, not a claim
 - No rockyou in git. No 2^32 seed brute in Python (stegseek --seed if on PATH)
 
+## v2.3.0 shipped (Phase 4)
+
+- `hunt --out DIR` writes `report.png` (HUD) + `findings.json` (schema 2) + carved blobs
+- JSON: `status`, `summary`, `flag_count`, `finding_count` so an agent can parse flags without the HUD
+- CLI default out dir `{stem}-veilscan-hunt` next to the file; `--no-report` skips it
+- `--stop-on-flag` already shipped in v2.0
+
 ## Still later (do not pretend they shipped)
 
-4. Hunt HUD PNG + agent JSON polish
 5. WAV LSB + spectrogram stills
 6. n>=20 gym TPR >= 0.90, then one live unseen CTF image as external proof
 

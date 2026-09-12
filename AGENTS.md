@@ -13,7 +13,7 @@ Local watermark presence detector plus keyless decode plus forensic hunt extract
 - CLI: `py -3 -m veilscan scan PATH`, `decode PATH`, `hunt PATH`, `gym`
 - Science leftover (parked): JPEG50 DCT TPR 0.46. Do not recook FSNet. Do not
   flip `present`. Do not replace 128px BSDS lock. No from-scratch Q50.
-- Hunt contract: `docs/NEXT_MASSIVE_UPGRADE.md`. v2.2.0 is Phase 0-3
-  (carve + zsteg-class + JSteg + optional PATH adapters). Gym required TPR 1.0.
+- Hunt contract: `docs/NEXT_MASSIVE_UPGRADE.md`. v2.3.0 is Phase 0-4
+  (carve + zsteg + JSteg + adapters + hunt HUD). Gym required TPR 1.0.
 - Fusion `peak_ok` lives in `configs/default.yaml`, not hardcoded.
 - Stay private GitHub, proprietary LICENSE. Do not document extractors on the lamp.

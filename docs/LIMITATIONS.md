@@ -72,10 +72,11 @@ SynthID, Digimarc, Tree-Ring payloads, or HiDDeN-class neural marks.
 
 `veilscan hunt` (v2) is a separate extractor: container text, trailing/embedded
 files, FLAG{} harvest, zsteg-class LSB, palette-index LSB, bitplane QR,
-native JSteg, and optional PATH adapters with `--wordlist`.
+native JSteg, optional PATH adapters with `--wordlist`, and a hunt HUD PNG.
 Steghide/OutGuess/JPHide extract only if those binaries are on PATH.
 F5/nsF5 extract is not implemented. Do not vendor rockyou.
 Short photo LSB tokens like PTQ:B7C are not decode hits.
+An agent should read `findings.json` flags, not OCR the HUD.
 Spatial LSB usually dies after JPEG / Telegram recompress. Hotspots can
 still mark the patched region. A recovered string is not proof of authorship.
 

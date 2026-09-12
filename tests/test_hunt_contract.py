@@ -14,7 +14,7 @@ TOKEN = "INV_WM:LEFT_EYE:2026"
 
 
 def test_version_is_v2() -> None:
-    assert __version__ == "2.2.0"
+    assert __version__ == "2.3.0"
 
 
 def test_hunt_help() -> None:
@@ -27,6 +27,7 @@ def test_hunt_help() -> None:
     assert "--flag-re" in opts
     assert "--deep" in opts
     assert "--wordlist" in opts
+    assert "--no-report" in opts
     r = runner.invoke(app, ["hunt", "--help"], color=False)
     assert r.exit_code == 0, r.output
 
@@ -70,8 +71,9 @@ def test_hunt_cli_json_trailing_zip(tmp_path: Path) -> None:
     r = runner.invoke(app, ["hunt", str(zip_case.path), "--json", "--out", str(out)])
     assert r.exit_code == 0, r.output
     assert "FLAG{trailing-zip}" in r.stdout
-    assert '"schema_version": 1' in r.stdout or f'"schema_version": {HUNT_SCHEMA}' in r.stdout
+    assert f'"schema_version": {HUNT_SCHEMA}' in r.stdout or '"schema_version": 2' in r.stdout
     assert (out / "findings.json").is_file()
+    assert (out / "report.png").is_file()
     result = hunt_path(zip_case.path)
     assert zip_case.flag in result.flags
 
@@ -91,7 +93,33 @@ def test_hunt_writes_bitplane_sheet(tmp_path: Path) -> None:
     result = hunt_path(rgb_case.path, out_dir=out)
     assert rgb_case.flag in result.flags
     assert (out / "bitplanes.png").is_file()
+    assert (out / "report.png").is_file()
     assert "bitplanes.png" in result.artifacts
+    assert "report.png" in result.artifacts
+
+
+def test_hunt_hud_agent_json(tmp_path: Path) -> None:
+    import json
+
+    from PIL import Image
+
+    from veilscan.hunt.gym import write_gym
+
+    cases = write_gym(tmp_path)
+    zip_case = next(c for c in cases if c.name == "trailing-zip")
+    out = tmp_path / "hud-out"
+    result = hunt_path(zip_case.path, out_dir=out)
+    js = json.loads((out / "findings.json").read_text(encoding="utf-8"))
+    assert js["schema_version"] == 2
+    assert js["status"] == "flags"
+    assert js["flag_count"] >= 1
+    assert zip_case.flag in js["flags"]
+    assert js["summary"]
+    assert (out / "report.png").is_file()
+    im = Image.open(out / "report.png")
+    assert im.size[0] >= 600
+    assert im.size[1] >= 400
+    assert result.flags == js["flags"]
 
 
 def test_jsteg_roundtrip_when_jpeglib_present(tmp_path: Path) -> None:

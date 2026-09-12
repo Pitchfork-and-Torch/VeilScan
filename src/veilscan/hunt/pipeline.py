@@ -250,8 +250,6 @@ def _finish(result: HuntResult, flags: list[str], t0: float, dest: Path | None) 
     if dest is not None:
         import json
 
-        payload = result.to_json()
-        (dest / "findings.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         lines = [
             f"VeilScan hunt  sha256={result.sha256}",
             f"kind={result.kind} size={result.size} elapsed_ms={result.elapsed_ms:.1f}",
@@ -265,4 +263,27 @@ def _finish(result: HuntResult, flags: list[str], t0: float, dest: Path | None) 
         (dest / "report.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
         result.artifacts.append("findings.json")
         result.artifacts.append("report.txt")
+        rgb = None
+        try:
+            from veilscan.hunt.image import load_hunt_image
+
+            src_bytes = Path(result.path).read_bytes() if result.path and Path(result.path).is_file() else None
+            if src_bytes:
+                _idx, rgba, _ = load_hunt_image(src_bytes)
+                if rgba is not None:
+                    rgb = rgba
+        except Exception:
+            rgb = None
+        from veilscan.hunt.hud import render_hunt_report
+
+        bp = dest / "bitplanes.png"
+        render_hunt_report(
+            result,
+            dest / "report.png",
+            rgb=rgb,
+            bitplane_path=bp if bp.is_file() else None,
+        )
+        result.artifacts.append("report.png")
+        payload = result.to_json()
+        (dest / "findings.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     return result

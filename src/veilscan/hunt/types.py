@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-HUNT_SCHEMA = 1
+HUNT_SCHEMA = 2
 
 
 @dataclass
@@ -55,6 +55,25 @@ class HuntResult:
     notes: list[str] = field(default_factory=list)
     artifacts: list[str] = field(default_factory=list)
 
+    def status(self) -> str:
+        if self.flags:
+            return "flags"
+        if self.findings:
+            return "findings"
+        return "empty"
+
+    def summary(self) -> str:
+        n_f = len(self.flags)
+        n_h = len(self.findings)
+        if n_f:
+            preview = self.flags[0]
+            if n_f == 1:
+                return f"1 flag  {preview}"
+            return f"{n_f} flags  {preview}"
+        if n_h:
+            return f"{n_h} findings  no FLAG{{}}"
+        return "no flags  no extract hits"
+
     def to_json(self) -> dict[str, Any]:
         return {
             "schema_version": self.schema_version,
@@ -63,6 +82,10 @@ class HuntResult:
             "kind": self.kind,
             "size": self.size,
             "elapsed_ms": round(float(self.elapsed_ms), 1),
+            "status": self.status(),
+            "summary": self.summary(),
+            "flag_count": len(self.flags),
+            "finding_count": len(self.findings),
             "flags": list(self.flags),
             "notes": list(self.notes),
             "artifacts": list(self.artifacts),

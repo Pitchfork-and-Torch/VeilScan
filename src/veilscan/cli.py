@@ -204,20 +204,25 @@ def inspect(
 def hunt(
     path: Path = typer.Argument(..., exists=True, readable=True),
     json_out: bool = typer.Option(False, "--json", help="Machine-readable HuntResult"),
-    out: Optional[Path] = typer.Option(None, "--out", help="Write findings.json, report.txt, carved blobs"),
+    out: Optional[Path] = typer.Option(None, "--out", help="Write report.png, findings.json, carved blobs"),
     flag_re: Optional[str] = typer.Option(None, "--flag-re", help="Override flag regex"),
     stop_on_flag: bool = typer.Option(False, "--stop-on-flag"),
     wordlist: Optional[Path] = typer.Option(None, "--wordlist", help="Password list for PATH stego adapters"),
     deep: bool = typer.Option(False, "--deep", help="zsteg bits 0-7 instead of 0-3"),
+    no_report: bool = typer.Option(False, "--no-report", help="Skip hunt out directory"),
 ) -> None:
     """Extract hidden payloads from an authorized image or container (CTF hunt)."""
     from veilscan.hunt import hunt_path as do_hunt
+    from veilscan.hunt.hud import default_hunt_dir
 
     if path.is_dir():
         raise typer.BadParameter("path is a directory")
+    dest = out
+    if dest is None and not no_report:
+        dest = default_hunt_dir(path)
     result = do_hunt(
         path,
-        out_dir=out,
+        out_dir=dest,
         flag_re=flag_re,
         stop_on_flag=stop_on_flag,
         wordlist=wordlist,
@@ -228,6 +233,7 @@ def hunt(
         return
     console.print(f"{path}")
     console.print(f"  kind={result.kind}  sha256={result.sha256[:12]}...  {result.size} bytes  {result.elapsed_ms:.0f} ms")
+    console.print(f"  {result.summary()}")
     if result.flags:
         console.print(f"  FLAGS  {', '.join(result.flags)}")
     else:
@@ -238,8 +244,9 @@ def hunt(
         console.print(f"  [{mark}] {f.family}/{f.method}  {preview}")
     for note in result.notes:
         console.print(f"  note: {note}")
-    if out:
-        console.print(f"  out {out}")
+    if dest:
+        console.print(f"  out {dest}")
+        console.print(f"  report {dest / 'report.png'}")
 
 
 @app.command()

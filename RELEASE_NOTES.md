@@ -1,3 +1,11 @@
+# v2.3.0
+
+Hunt HUD. Presence OP unchanged.
+
+- `report.png` two-pane hunt brief (source, bitplanes, flags, findings)
+- `findings.json` schema 2: status, summary, flag_count, finding_count
+- Default out dir `{stem}-veilscan-hunt`; `--no-report` skips it
+
 # v2.2.0
 
 JPEG known-tool hunt. Presence OP unchanged.
