@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import typer
 from typer.testing import CliRunner
 
 from veilscan import __version__, hunt_path
@@ -17,11 +18,15 @@ def test_version_is_v2() -> None:
 
 
 def test_hunt_help() -> None:
-    r = runner.invoke(app, ["hunt", "--help"])
+    # Rich help inserts ANSI between the two dashes in "--json"
+    # ("-\x1b[0m\x1b[1m-json"), so substring checks on rendered help fail in CI.
+    hunt_cmd = typer.main.get_command(app).commands["hunt"]
+    opts = {flag for p in hunt_cmd.params for flag in p.opts}
+    assert "--json" in opts
+    assert "--out" in opts
+    assert "--flag-re" in opts
+    r = runner.invoke(app, ["hunt", "--help"], color=False)
     assert r.exit_code == 0, r.output
-    assert "--json" in r.output
-    assert "--out" in r.output
-    assert "--flag-re" in r.output
 
 
 def test_short_photo_token_rejected() -> None:
