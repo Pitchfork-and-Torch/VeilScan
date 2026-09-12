@@ -14,7 +14,7 @@ TOKEN = "INV_WM:LEFT_EYE:2026"
 
 
 def test_version_is_v2() -> None:
-    assert __version__ == "2.0.0"
+    assert __version__ == "2.1.0"
 
 
 def test_hunt_help() -> None:
@@ -25,6 +25,7 @@ def test_hunt_help() -> None:
     assert "--json" in opts
     assert "--out" in opts
     assert "--flag-re" in opts
+    assert "--deep" in opts
     r = runner.invoke(app, ["hunt", "--help"], color=False)
     assert r.exit_code == 0, r.output
 
@@ -36,13 +37,22 @@ def test_short_photo_token_rejected() -> None:
     assert score_text(TOKEN, framed=True) >= 0.85
 
 
-def test_gym_extracts_phase1_flags(tmp_path: Path) -> None:
+def test_gym_extracts_phase1_and_phase2_flags(tmp_path: Path) -> None:
     report = run_gym(tmp_path)
-    assert report["n"] == 4
-    assert report["hits"] == 4
+    assert report["n"] == 8
+    assert report["hits"] == 8
     assert report["tpr"] == 1.0
     names = {row["name"] for row in report["cases"]}
-    assert names == {"png-tEXt-flag", "jpeg-com-flag", "trailing-zip", "png-unknown-chunk"}
+    assert names == {
+        "png-tEXt-flag",
+        "jpeg-com-flag",
+        "trailing-zip",
+        "png-unknown-chunk",
+        "zsteg-rgb-bit0",
+        "alpha-lsb",
+        "palette-lsb",
+        "bitplane-qr",
+    }
 
 
 def test_hunt_cli_json_trailing_zip(tmp_path: Path) -> None:
@@ -66,6 +76,32 @@ def test_gym_cli(tmp_path: Path) -> None:
     assert "tpr=1.000" in r.output or "tpr=1.00" in r.output
 
 
+def test_hunt_writes_bitplane_sheet(tmp_path: Path) -> None:
+    from veilscan.hunt.gym import write_gym
+
+    cases = write_gym(tmp_path)
+    rgb_case = next(c for c in cases if c.name == "zsteg-rgb-bit0")
+    out = tmp_path / "sheet-out"
+    result = hunt_path(rgb_case.path, out_dir=out)
+    assert rgb_case.flag in result.flags
+    assert (out / "bitplanes.png").is_file()
+    assert "bitplanes.png" in result.artifacts
+
+
+def test_palette_survives_without_rgb_expand(tmp_path: Path) -> None:
+    from PIL import Image
+
+    from veilscan.hunt.gym import plant_palette_lsb
+
+    flag = "FLAG{palette-lsb}"
+    p = tmp_path / "p.png"
+    p.write_bytes(plant_palette_lsb(flag, size=80, seed=41))
+    assert Image.open(p).mode == "P"
+    result = hunt_path(p)
+    assert flag in result.flags
+    assert any(f.family == "palette" for f in result.findings)
+
+
 def test_kitten_photo_does_not_decode_junk_token() -> None:
     photo = Path.home() / "Desktop" / "HR9f2gjWgAc2xxS.png"
     if not photo.is_file():
@@ -78,3 +114,5 @@ def test_kitten_photo_does_not_decode_junk_token() -> None:
         assert dec.text and "PTQ:B7C" not in dec.text
     hunted = hunt_path(photo)
     assert not any("PTQ:B7C" in f for f in hunted.flags)
+    assert hunted.flags == []
+    assert not any(f.flag_hit for f in hunted.findings)

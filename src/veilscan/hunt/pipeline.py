@@ -7,12 +7,16 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from veilscan.decode.container import sniff_kind
+from veilscan.decode.container import lsb_safe_kind, sniff_kind
+from veilscan.hunt.bitplanes import qr_findings, render_bitplane_sheet
 from veilscan.hunt.carve import carve
 from veilscan.hunt.chunks import extract_chunks
 from veilscan.hunt.flags import compile_flag_re, find_flags, find_flags_bytes
+from veilscan.hunt.image import load_hunt_image
+from veilscan.hunt.palette import iter_palette_findings
 from veilscan.hunt.strings import extract_strings
 from veilscan.hunt.types import HuntFinding, HuntResult
+from veilscan.hunt.zsteg import iter_zsteg_findings
 
 
 def hunt_path(
@@ -22,6 +26,7 @@ def hunt_path(
     flag_re: Optional[str] = None,
     stop_on_flag: bool = False,
     wordlist: Optional[Path] = None,
+    deep: bool = False,
 ) -> HuntResult:
     p = Path(path)
     data = p.read_bytes()
@@ -32,6 +37,7 @@ def hunt_path(
         flag_re=flag_re,
         stop_on_flag=stop_on_flag,
         wordlist=wordlist,
+        deep=deep,
     )
     result.path = str(p)
     return result
@@ -45,6 +51,7 @@ def hunt_bytes(
     flag_re: Optional[str] = None,
     stop_on_flag: bool = False,
     wordlist: Optional[Path] = None,
+    deep: bool = False,
 ) -> HuntResult:
     t0 = time.perf_counter()
     cre = compile_flag_re(flag_re)
@@ -162,9 +169,50 @@ def hunt_bytes(
 
     raw_flags = find_flags_bytes(data, cre)
     add_flags(raw_flags)
+    if maybe_stop():
+        return _finish(result, flags, t0, dest)
+
+    index, rgba, load_notes = load_hunt_image(data)
+    result.notes.extend(load_notes)
+
+    def ingest(f: HuntFinding) -> None:
+        extra_flags = list((f.extra or {}).get("flags") or [])
+        if extra_flags:
+            add_flags(extra_flags)
+        elif f.text:
+            add_flags(find_flags(f.text, cre))
+        result.findings.append(f)
+
+    if index is not None:
+        for f in iter_palette_findings(index, cre, deep=deep, stop_on_flag=stop_on_flag):
+            ingest(f)
+            if maybe_stop():
+                return _finish(result, flags, t0, dest)
+
+    if rgba is not None and lsb_safe_kind(kind) and index is None:
+        for f in iter_zsteg_findings(rgba, cre, deep=deep, stop_on_flag=stop_on_flag):
+            ingest(f)
+            if maybe_stop():
+                return _finish(result, flags, t0, dest)
+
+    if rgba is not None:
+        for f in qr_findings(rgba, cre):
+            ingest(f)
+            if maybe_stop():
+                return _finish(result, flags, t0, dest)
+
+    if dest is not None:
+        if index is not None:
+            sheet = dest / "bitplanes.png"
+            render_bitplane_sheet(index, sheet)
+            result.artifacts.append("bitplanes.png")
+        elif rgba is not None:
+            sheet = dest / "bitplanes.png"
+            render_bitplane_sheet(rgba, sheet)
+            result.artifacts.append("bitplanes.png")
 
     if not result.findings and not flags:
-        result.notes.append("No container text, trailing payload, or FLAG{} on raw bytes.")
+        result.notes.append("No container text, trailing payload, LSB bitstream, or FLAG{} found.")
         result.notes.append("Encrypted stego and keyed JPEG tools need a later hunt phase or --wordlist adapter.")
 
     return _finish(result, flags, t0, dest)

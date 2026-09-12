@@ -13,6 +13,8 @@ import numpy as np
 from PIL import Image
 
 from veilscan.decode.container import plant_jpeg_com, plant_png_text
+from veilscan.decode.embed_text import embed_text_png_bytes
+from veilscan.decode.lsb import message_to_bits
 from veilscan.generators import synthetic_cover
 from veilscan.hunt.pipeline import hunt_path
 
@@ -64,6 +66,52 @@ def plant_unknown_chunk(rgb: np.ndarray, flag: str) -> bytes:
     return insert_png_chunk_before_iend(png, b"faLg", flag.encode("utf-8"))
 
 
+def _plant_plane(plane: np.ndarray, flag: str, bit: int = 0) -> np.ndarray:
+    bits = message_to_bits(flag, msb_first=True)
+    out = np.ascontiguousarray(plane.copy())
+    flat = out.reshape(-1)
+    n = min(flat.size, bits.size)
+    clear = np.uint8(0xFF ^ (1 << bit))
+    flat[:n] = (flat[:n] & clear) | (bits[:n] << bit)
+    return out
+
+
+def plant_alpha_lsb(rgb: np.ndarray, flag: str) -> bytes:
+    alpha = _plant_plane(np.full(rgb.shape[:2], 200, dtype=np.uint8), flag, bit=0)
+    rgba = np.dstack([rgb, alpha])
+    buf = io.BytesIO()
+    Image.fromarray(rgba, mode="RGBA").save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def plant_palette_lsb(flag: str, size: int = 64, seed: int = 41) -> bytes:
+    rng = np.random.default_rng(seed)
+    idx = _plant_plane(rng.integers(0, 256, (size, size), dtype=np.uint8), flag, bit=0)
+    pal = []
+    for i in range(256):
+        pal.extend((i, i, i))
+    im = Image.fromarray(idx, mode="P")
+    im.putpalette(pal)
+    buf = io.BytesIO()
+    im.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def plant_bitplane_qr(rgb: np.ndarray, flag: str) -> bytes:
+    import cv2
+
+    enc = cv2.QRCodeEncoder.create()
+    qr = enc.encode(flag)
+    qr_bin = (np.asarray(qr) > 0).astype(np.uint8)
+    h, w = rgb.shape[:2]
+    big = cv2.resize(qr_bin, (w, h), interpolation=cv2.INTER_NEAREST)
+    out = np.ascontiguousarray(rgb.copy())
+    out[:, :, 0] = (out[:, :, 0] & np.uint8(0xFE)) | big
+    buf = io.BytesIO()
+    Image.fromarray(out).save(buf, format="PNG")
+    return buf.getvalue()
+
+
 def write_gym(out_dir: Path) -> list[GymCase]:
     out_dir.mkdir(parents=True, exist_ok=True)
     cases: list[GymCase] = []
@@ -87,6 +135,26 @@ def write_gym(out_dir: Path) -> list[GymCase]:
     p = out_dir / "png-unknown-chunk.png"
     p.write_bytes(plant_unknown_chunk(_cover(34), flag_chunk))
     cases.append(GymCase("png-unknown-chunk", p, flag_chunk))
+
+    flag_rgb = "FLAG{zsteg-rgb-bit0}"
+    p = out_dir / "zsteg-rgb-bit0.png"
+    p.write_bytes(embed_text_png_bytes(_cover(35, 80), flag_rgb, layout_id="rgb-bit0-msb"))
+    cases.append(GymCase("zsteg-rgb-bit0", p, flag_rgb))
+
+    flag_a = "FLAG{alpha-lsb}"
+    p = out_dir / "alpha-lsb.png"
+    p.write_bytes(plant_alpha_lsb(_cover(36, 80), flag_a))
+    cases.append(GymCase("alpha-lsb", p, flag_a))
+
+    flag_pal = "FLAG{palette-lsb}"
+    p = out_dir / "palette-lsb.png"
+    p.write_bytes(plant_palette_lsb(flag_pal, size=80, seed=41))
+    cases.append(GymCase("palette-lsb", p, flag_pal))
+
+    flag_qr = "FLAG{bitplane-qr}"
+    p = out_dir / "bitplane-qr.png"
+    p.write_bytes(plant_bitplane_qr(_cover(37, 128), flag_qr))
+    cases.append(GymCase("bitplane-qr", p, flag_qr))
 
     return cases
 

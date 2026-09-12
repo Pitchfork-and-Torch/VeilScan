@@ -208,6 +208,7 @@ def hunt(
     flag_re: Optional[str] = typer.Option(None, "--flag-re", help="Override flag regex"),
     stop_on_flag: bool = typer.Option(False, "--stop-on-flag"),
     wordlist: Optional[Path] = typer.Option(None, "--wordlist", help="Reserved for passphrase adapters"),
+    deep: bool = typer.Option(False, "--deep", help="zsteg bits 0-7 instead of 0-3"),
 ) -> None:
     """Extract hidden payloads from an authorized image or container (CTF hunt)."""
     from veilscan.hunt import hunt_path as do_hunt
@@ -220,6 +221,7 @@ def hunt(
         flag_re=flag_re,
         stop_on_flag=stop_on_flag,
         wordlist=wordlist,
+        deep=deep,
     )
     if json_out:
         console.print_json(data=result.to_json())

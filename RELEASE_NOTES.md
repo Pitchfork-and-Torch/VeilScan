@@ -1,3 +1,13 @@
+# v2.1.0
+
+zsteg-class hunt. Presence OP unchanged.
+
+- Native channel/bit/order LSB walks (no Ruby zsteg)
+- Palette-index LSB before RGB expand
+- Bitplane sheet + QR on bit planes (`--out` writes bitplanes.png)
+- `--deep` uses bits 0-7
+- Gym 8/8: prior four plus zsteg-rgb-bit0, alpha-lsb, palette-lsb, bitplane-qr
+
 # v2.0.0
 
 Forensic hunt extract. Presence OP unchanged.

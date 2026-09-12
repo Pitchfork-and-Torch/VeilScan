@@ -4,7 +4,7 @@
 image/container files. `veilscan scan` stays the AWPD presence module.
 No watermark remover.
 
-Package: `2.0.0`. Private GitHub. Proprietary license. Public lamp stays
+Package: `2.1.0`. Private GitHub. Proprietary license. Public lamp stays
 generic marketing (`veilscan.jonbailey.xyz`) and does not document extractors.
 
 ## Parked leftover (do not recook)
@@ -28,9 +28,18 @@ That leftover is not the income path.
 
 Gym bar for this slice: 4/4 unaided, no Linux binaries.
 
+## v2.1.0 shipped (Phase 2)
+
+- Native zsteg-class walks: r/g/b/a/rgb/bgr/rgba x bits 0-3 (0-7 with `--deep`) x msb/lsb x row/col/snake
+- zlib / file-magic / OPENSTEGO / CAMOUFLAGE harvest on packed bitstreams
+- Palette-index LSB before PIL expand
+- Bitplane sheet (`bitplanes.png`) + OpenCV QR on bit planes
+- Gym +4: `zsteg-rgb-bit0`, `alpha-lsb`, `palette-lsb`, `bitplane-qr` (8/8)
+
+Ruby zsteg is not imported. No Java Stegsolve.
+
 ## Still later (do not pretend they shipped)
 
-2. zsteg-class channel/bit/order + alpha + palette-index LSB + bitplane sheet
 3. JSteg gym path; optional stegseek adapter; `--wordlist` (no rockyou in git)
 4. Hunt HUD PNG + agent JSON polish
 5. WAV LSB + spectrogram stills
