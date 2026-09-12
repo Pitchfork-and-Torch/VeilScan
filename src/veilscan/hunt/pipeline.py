@@ -62,8 +62,8 @@ def hunt_bytes(
         kind=kind,
         size=len(data),
     )
-    if wordlist is not None:
-        result.notes.append(f"wordlist {wordlist} accepted; passphrase adapters are a later phase")
+    if kind == "jpeg":
+        result.notes.append("F5/nsF5 payload extract is not implemented.")
 
     dest = Path(out_dir) if out_dir else None
     if dest:
@@ -172,9 +172,6 @@ def hunt_bytes(
     if maybe_stop():
         return _finish(result, flags, t0, dest)
 
-    index, rgba, load_notes = load_hunt_image(data)
-    result.notes.extend(load_notes)
-
     def ingest(f: HuntFinding) -> None:
         extra_flags = list((f.extra or {}).get("flags") or [])
         if extra_flags:
@@ -182,6 +179,35 @@ def hunt_bytes(
         elif f.text:
             add_flags(find_flags(f.text, cre))
         result.findings.append(f)
+
+    if kind == "jpeg":
+        from veilscan.hunt.jpeg import iter_jsteg_findings, jsteg_available
+
+        if not jsteg_available():
+            result.notes.append("jpeglib missing; JSteg extract skipped")
+        else:
+            for f in iter_jsteg_findings(data, source, cre, stop_on_flag=stop_on_flag):
+                ingest(f)
+                if maybe_stop():
+                    return _finish(result, flags, t0, dest)
+        from veilscan.hunt.adapters import run_adapters
+
+        img_path = Path(source) if source and Path(source).is_file() else None
+        if img_path is None and dest is not None:
+            img_path = dest / "input.jpg"
+            img_path.write_bytes(data)
+        if img_path is not None:
+            af, notes = run_adapters(img_path, wordlist=wordlist, dest=dest, cre=cre)
+            result.notes.extend(notes)
+            for f in af:
+                ingest(f)
+                if maybe_stop():
+                    return _finish(result, flags, t0, dest)
+        elif wordlist is not None:
+            result.notes.append("wordlist unused (need a filesystem JPEG path for adapters)")
+
+    index, rgba, load_notes = load_hunt_image(data)
+    result.notes.extend(load_notes)
 
     if index is not None:
         for f in iter_palette_findings(index, cre, deep=deep, stop_on_flag=stop_on_flag):

@@ -207,7 +207,7 @@ def hunt(
     out: Optional[Path] = typer.Option(None, "--out", help="Write findings.json, report.txt, carved blobs"),
     flag_re: Optional[str] = typer.Option(None, "--flag-re", help="Override flag regex"),
     stop_on_flag: bool = typer.Option(False, "--stop-on-flag"),
-    wordlist: Optional[Path] = typer.Option(None, "--wordlist", help="Reserved for passphrase adapters"),
+    wordlist: Optional[Path] = typer.Option(None, "--wordlist", help="Password list for PATH stego adapters"),
     deep: bool = typer.Option(False, "--deep", help="zsteg bits 0-7 instead of 0-3"),
 ) -> None:
     """Extract hidden payloads from an authorized image or container (CTF hunt)."""
@@ -259,9 +259,17 @@ def gym(
         return
     console.print(f"gym n={report['n']} hits={report['hits']} tpr={report['tpr']:.3f}  {dest}")
     for row in report["cases"]:
-        flag = "OK" if row["hit"] else "MISS"
-        console.print(f"  {flag:4} {row['name']}  {row['flag']}")
-    if report["tpr"] < 1.0:
+        if row.get("skipped"):
+            flag = "SKIP"
+            extra = row["skipped"]
+        elif row["hit"]:
+            flag = "OK"
+            extra = row["flag"]
+        else:
+            flag = "MISS"
+            extra = row["flag"]
+        console.print(f"  {flag:4} {row['name']}  {extra}")
+    if report.get("required_miss"):
         raise typer.Exit(code=2)
 
 

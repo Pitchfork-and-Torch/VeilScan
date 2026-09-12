@@ -1,3 +1,13 @@
+# v2.2.0
+
+JPEG known-tool hunt. Presence OP unchanged.
+
+- Native JSteg DCT AC LSB extract via jpeglib (pip extra)
+- `--wordlist` for PATH adapters (stegseek, steghide, outguess, jpseek)
+- Gym `jsteg-flag.jpg` when jpeglib present; `steghide-password.jpg` skips without steghide
+- F5/nsF5 is a note, not an extract
+- No rockyou in git
+
 # v2.1.0
 
 zsteg-class hunt. Presence OP unchanged.

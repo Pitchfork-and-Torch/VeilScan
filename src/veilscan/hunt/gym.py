@@ -24,6 +24,9 @@ class GymCase:
     name: str
     path: Path
     flag: str
+    required: bool = True
+    skipped: str | None = None
+    wordlist: Path | None = None
 
 
 def _cover(seed: int, size: int = 64) -> np.ndarray:
@@ -97,6 +100,55 @@ def plant_palette_lsb(flag: str, size: int = 64, seed: int = 41) -> bytes:
     return buf.getvalue()
 
 
+def plant_jsteg(rgb: np.ndarray, flag: str, quality: int = 90) -> bytes:
+    import tempfile
+
+    import jpeglib
+
+    from veilscan.decode.jsteg import ZZ
+
+    bits = message_to_bits(flag, msb_first=True)
+    tmp_in = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
+    tmp_out = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
+    tmp_in.close()
+    tmp_out.close()
+    try:
+        Image.fromarray(rgb).save(tmp_in.name, format="JPEG", quality=quality)
+        im = jpeglib.read_dct(tmp_in.name)
+        y = np.array(im.Y, copy=True)
+        bi = 0
+        nbr, nbc = y.shape[:2]
+        for by in range(nbr):
+            for bx in range(nbc):
+                flat = y[by, bx].reshape(64).copy()
+                for idx in ZZ:
+                    if int(idx) == 0:
+                        continue
+                    v = int(flat[idx])
+                    if v == 0:
+                        continue
+                    if bi >= bits.size:
+                        break
+                    nv = (v & ~1) | int(bits[bi])
+                    if nv == 0:
+                        nv = 2
+                    flat[idx] = nv
+                    bi += 1
+                y[by, bx] = flat.reshape(8, 8)
+                if bi >= bits.size:
+                    break
+            if bi >= bits.size:
+                break
+        if bi < bits.size:
+            raise ValueError(f"jsteg plant did not fit ({bi}/{bits.size})")
+        im.Y = y
+        im.write_dct(tmp_out.name)
+        return Path(tmp_out.name).read_bytes()
+    finally:
+        Path(tmp_in.name).unlink(missing_ok=True)
+        Path(tmp_out.name).unlink(missing_ok=True)
+
+
 def plant_bitplane_qr(rgb: np.ndarray, flag: str) -> bytes:
     import cv2
 
@@ -156,6 +208,38 @@ def write_gym(out_dir: Path) -> list[GymCase]:
     p.write_bytes(plant_bitplane_qr(_cover(37, 128), flag_qr))
     cases.append(GymCase("bitplane-qr", p, flag_qr))
 
+    from veilscan.decode.jsteg import available as jsteg_ok
+
+    flag_js = "FLAG{jsteg-ac}"
+    p = out_dir / "jsteg-flag.jpg"
+    if jsteg_ok():
+        p.write_bytes(plant_jsteg(_cover(38, 128), flag_js))
+        cases.append(GymCase("jsteg-flag", p, flag_js))
+    else:
+        cases.append(GymCase("jsteg-flag", p, flag_js, required=False, skipped="jpeglib missing"))
+
+    flag_sh = "FLAG{steghide-password}"
+    p = out_dir / "steghide-password.jpg"
+    cover_jpg = out_dir / "_steghide-cover.jpg"
+    Image.fromarray(_cover(39, 160)).save(cover_jpg, format="JPEG", quality=90)
+    from veilscan.hunt.adapters import plant_steghide
+
+    wl = out_dir / "gym-wordlist.txt"
+    wl.write_text("wrongpass\nveilscan-gym\n", encoding="utf-8")
+    if plant_steghide(cover_jpg, (flag_sh + "\n").encode("utf-8"), "veilscan-gym", p):
+        cases.append(GymCase("steghide-password", p, flag_sh, required=False, wordlist=wl))
+    else:
+        cases.append(
+            GymCase(
+                "steghide-password",
+                p,
+                flag_sh,
+                required=False,
+                skipped="steghide not on PATH",
+                wordlist=wl,
+            )
+        )
+
     return cases
 
 
@@ -163,9 +247,24 @@ def run_gym(out_dir: Path) -> dict:
     cases = write_gym(out_dir)
     rows = []
     ok = 0
+    attempted = 0
     for case in cases:
+        if case.skipped:
+            rows.append(
+                {
+                    "name": case.name,
+                    "flag": case.flag,
+                    "hit": False,
+                    "skipped": case.skipped,
+                    "flags": [],
+                    "elapsed_ms": 0.0,
+                    "required": case.required,
+                }
+            )
+            continue
+        attempted += 1
         hunt_out = out_dir / f"out-{case.name}"
-        result = hunt_path(case.path, out_dir=hunt_out)
+        result = hunt_path(case.path, out_dir=hunt_out, wordlist=case.wordlist)
         hit = case.flag in result.flags or any(case.flag in (f.text or "") for f in result.findings)
         if hit:
             ok += 1
@@ -174,14 +273,24 @@ def run_gym(out_dir: Path) -> dict:
                 "name": case.name,
                 "flag": case.flag,
                 "hit": hit,
+                "skipped": None,
                 "flags": result.flags,
                 "elapsed_ms": result.elapsed_ms,
+                "required": case.required,
             }
         )
-    n = len(cases)
+    required_miss = [
+        row["name"]
+        for row in rows
+        if row["required"] and not row.get("skipped") and not row["hit"]
+    ]
+    req = [row for row in rows if row["required"] and not row.get("skipped")]
+    req_hits = sum(1 for row in req if row["hit"])
     return {
-        "n": n,
-        "hits": ok,
-        "tpr": (ok / n) if n else 0.0,
+        "n": len(req),
+        "hits": req_hits,
+        "tpr": (req_hits / len(req)) if req else 1.0,
+        "optional_hits": ok - req_hits,
+        "required_miss": required_miss,
         "cases": rows,
     }

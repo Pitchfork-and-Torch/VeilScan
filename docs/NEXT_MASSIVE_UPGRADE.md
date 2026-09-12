@@ -4,7 +4,7 @@
 image/container files. `veilscan scan` stays the AWPD presence module.
 No watermark remover.
 
-Package: `2.1.0`. Private GitHub. Proprietary license. Public lamp stays
+Package: `2.2.0`. Private GitHub. Proprietary license. Public lamp stays
 generic marketing (`veilscan.jonbailey.xyz`) and does not document extractors.
 
 ## Parked leftover (do not recook)
@@ -38,9 +38,17 @@ Gym bar for this slice: 4/4 unaided, no Linux binaries.
 
 Ruby zsteg is not imported. No Java Stegsolve.
 
+## v2.2.0 shipped (Phase 3)
+
+- Native JSteg DCT AC LSB plant+extract via `jpeglib` (pip extra, not a PATH binary)
+- `--wordlist` for PATH adapters: stegseek, steghide, outguess, jpseek
+- Missing adapter = skip note; gym required TPR still 1.0
+- Gym `jsteg-flag.jpg` when jpeglib present; `steghide-password.jpg` when steghide plants
+- F5/nsF5 extract is a note, not a claim
+- No rockyou in git. No 2^32 seed brute in Python (stegseek --seed if on PATH)
+
 ## Still later (do not pretend they shipped)
 
-3. JSteg gym path; optional stegseek adapter; `--wordlist` (no rockyou in git)
 4. Hunt HUD PNG + agent JSON polish
 5. WAV LSB + spectrogram stills
 6. n>=20 gym TPR >= 0.90, then one live unseen CTF image as external proof

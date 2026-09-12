@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "veilscan"
-version = "2.1.0"
+version = "2.2.0"
 description = "Local watermark presence detector, keyless decode, and forensic hunt extract."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "jpeglib>=0.13"]
 gui = ["gradio>=4.0"]
 api = ["fastapi>=0.110", "uvicorn>=0.27"]
 onnx = ["onnx>=1.16"]

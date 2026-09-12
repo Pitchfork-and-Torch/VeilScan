@@ -14,7 +14,7 @@ TOKEN = "INV_WM:LEFT_EYE:2026"
 
 
 def test_version_is_v2() -> None:
-    assert __version__ == "2.1.0"
+    assert __version__ == "2.2.0"
 
 
 def test_hunt_help() -> None:
@@ -26,6 +26,7 @@ def test_hunt_help() -> None:
     assert "--out" in opts
     assert "--flag-re" in opts
     assert "--deep" in opts
+    assert "--wordlist" in opts
     r = runner.invoke(app, ["hunt", "--help"], color=False)
     assert r.exit_code == 0, r.output
 
@@ -37,13 +38,12 @@ def test_short_photo_token_rejected() -> None:
     assert score_text(TOKEN, framed=True) >= 0.85
 
 
-def test_gym_extracts_phase1_and_phase2_flags(tmp_path: Path) -> None:
+def test_gym_extracts_required_flags(tmp_path: Path) -> None:
     report = run_gym(tmp_path)
-    assert report["n"] == 8
-    assert report["hits"] == 8
     assert report["tpr"] == 1.0
-    names = {row["name"] for row in report["cases"]}
-    assert names == {
+    assert report["required_miss"] == []
+    names = {row["name"] for row in report["cases"] if not row.get("skipped")}
+    core = {
         "png-tEXt-flag",
         "jpeg-com-flag",
         "trailing-zip",
@@ -53,6 +53,12 @@ def test_gym_extracts_phase1_and_phase2_flags(tmp_path: Path) -> None:
         "palette-lsb",
         "bitplane-qr",
     }
+    assert core <= names
+    by = {row["name"]: row for row in report["cases"]}
+    if not by["jsteg-flag"].get("skipped"):
+        assert by["jsteg-flag"]["hit"] is True
+    if not by["steghide-password"].get("skipped"):
+        assert by["steghide-password"]["hit"] is True
 
 
 def test_hunt_cli_json_trailing_zip(tmp_path: Path) -> None:
@@ -86,6 +92,38 @@ def test_hunt_writes_bitplane_sheet(tmp_path: Path) -> None:
     assert rgb_case.flag in result.flags
     assert (out / "bitplanes.png").is_file()
     assert "bitplanes.png" in result.artifacts
+
+
+def test_jsteg_roundtrip_when_jpeglib_present(tmp_path: Path) -> None:
+    from veilscan.decode.jsteg import available
+    from veilscan.hunt.gym import plant_jsteg, _cover
+
+    if not available():
+        return
+    flag = "FLAG{jsteg-ac}"
+    p = tmp_path / "jsteg-flag.jpg"
+    p.write_bytes(plant_jsteg(_cover(38, 128), flag))
+    result = hunt_path(p)
+    assert flag in result.flags
+    assert any(f.family == "jsteg" for f in result.findings)
+
+
+def test_adapters_note_when_no_binaries(tmp_path: Path) -> None:
+    from veilscan.hunt.adapters import which_tools
+
+    tools = which_tools()
+    if any(tools.values()):
+        return
+    from veilscan.decode.container import plant_jpeg_com
+    from veilscan.hunt.gym import _cover
+
+    p = tmp_path / "plain.jpg"
+    p.write_bytes(plant_jpeg_com(_cover(32), "hello"))
+    wl = tmp_path / "wl.txt"
+    wl.write_text("veilscan-gym\n", encoding="utf-8")
+    result = hunt_path(p, wordlist=wl)
+    joined = " ".join(result.notes).lower()
+    assert "adapter" in joined or "stegseek" in joined or "wordlist unused" in joined
 
 
 def test_palette_survives_without_rgb_expand(tmp_path: Path) -> None:

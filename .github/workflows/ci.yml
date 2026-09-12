@@ -14,7 +14,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - name: libjpeg
+        run: sudo apt-get update && sudo apt-get install -y libjpeg-dev
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,jpeg]"
       - name: Pytest
         run: pytest -q

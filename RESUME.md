@@ -1,26 +1,26 @@
-# Resume (v2.1.0)
+# Resume (v2.2.0)
 
-Private GitHub: `Pitchfork-and-Torch/VeilScan` v2.1.0 hunt Phase 0-2.
+Private GitHub: `Pitchfork-and-Torch/VeilScan` v2.2.0 hunt Phase 0-3.
 Public lamp: https://veilscan.jonbailey.xyz/ (generic presence marketing only)
 
 ## Where we stopped
 
-- Hunt extracts container text, trailing files, FLAG{}, zsteg-class LSB, palette index LSB, bitplane QR.
-- Gym 8 fixtures including rgb bit0, alpha, palette, bitplane QR.
-- Decode token rail rejects short photo LSB TAG:VAL (PTQ:B7C).
+- Hunt: container, trailing files, zsteg-class LSB, palette, bitplane QR, native JSteg.
+- Optional PATH adapters: stegseek / steghide / outguess / jpseek + `--wordlist`.
+- Gym required TPR 1.0. steghide fixture skips when the binary is missing.
 - Presence stack unchanged. JPEG50 leftover parked.
 
 ## Next
 
-Phase 3: JSteg gym path, optional stegseek adapter, `--wordlist`.
-Then hunt HUD, WAV.
+Phase 4: hunt HUD PNG.
+Then WAV LSB + spectrogram, then n>=20 gym / live CTF proof.
 
 ## Do not
 
 - Mix LSB into the FSNet cook
-- Train on `data/covers/camera`
 - From-scratch Q50 cooks
 - Remover / UniFreq / Gradio from Grok
 - Publish hunt internals on the lamp
 - Vendor rockyou
 - Import Ruby zsteg or Java Stegsolve
+- Claim F5/nsF5 extract
