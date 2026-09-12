@@ -200,6 +200,69 @@ def inspect(
             console.print(f"  report {dest}")
 
 
+@app.command()
+def hunt(
+    path: Path = typer.Argument(..., exists=True, readable=True),
+    json_out: bool = typer.Option(False, "--json", help="Machine-readable HuntResult"),
+    out: Optional[Path] = typer.Option(None, "--out", help="Write findings.json, report.txt, carved blobs"),
+    flag_re: Optional[str] = typer.Option(None, "--flag-re", help="Override flag regex"),
+    stop_on_flag: bool = typer.Option(False, "--stop-on-flag"),
+    wordlist: Optional[Path] = typer.Option(None, "--wordlist", help="Reserved for passphrase adapters"),
+) -> None:
+    """Extract hidden payloads from an authorized image or container (CTF hunt)."""
+    from veilscan.hunt import hunt_path as do_hunt
+
+    if path.is_dir():
+        raise typer.BadParameter("path is a directory")
+    result = do_hunt(
+        path,
+        out_dir=out,
+        flag_re=flag_re,
+        stop_on_flag=stop_on_flag,
+        wordlist=wordlist,
+    )
+    if json_out:
+        console.print_json(data=result.to_json())
+        return
+    console.print(f"{path}")
+    console.print(f"  kind={result.kind}  sha256={result.sha256[:12]}...  {result.size} bytes  {result.elapsed_ms:.0f} ms")
+    if result.flags:
+        console.print(f"  FLAGS  {', '.join(result.flags)}")
+    else:
+        console.print("  FLAGS  (none)")
+    for f in result.findings[:12]:
+        mark = "FLAG" if f.flag_hit else "hit"
+        preview = (f.text or f.evidence or "")[:80].replace("\n", " ")
+        console.print(f"  [{mark}] {f.family}/{f.method}  {preview}")
+    for note in result.notes:
+        console.print(f"  note: {note}")
+    if out:
+        console.print(f"  out {out}")
+
+
+@app.command()
+def gym(
+    out: Optional[Path] = typer.Option(None, "--out", help="Fixture directory (temp if omitted)"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Plant eval fixtures and score hunt extract TPR. Not a hiding product."""
+    import tempfile
+
+    from veilscan.hunt.gym import run_gym
+
+    dest = out or Path(tempfile.mkdtemp(prefix="veilscan-gym-"))
+    report = run_gym(dest)
+    if json_out:
+        console.print_json(data=report)
+        return
+    console.print(f"gym n={report['n']} hits={report['hits']} tpr={report['tpr']:.3f}  {dest}")
+    for row in report["cases"]:
+        flag = "OK" if row["hit"] else "MISS"
+        console.print(f"  {flag:4} {row['name']}  {row['flag']}")
+    if report["tpr"] < 1.0:
+        raise typer.Exit(code=2)
+
+
 @app.command("embed-text")
 def embed_text_cmd(
     inp: Path = typer.Argument(..., exists=True, readable=True),

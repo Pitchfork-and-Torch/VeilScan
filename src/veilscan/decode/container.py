@@ -21,6 +21,13 @@ PREFERRED_KEYS = {
     "copyright",
     "xpcomment",
     "artist",
+    "flag",
+    "hint",
+    "secret",
+    "payload",
+    "hidden",
+    "note",
+    "key",
 }
 SKIP_KEYS = {
     "software",
@@ -274,7 +281,7 @@ def _keep_key(name: str) -> bool:
     if key in PREFERRED_KEYS:
         return True
     # Unknown keys: keep if they look like a human comment slot.
-    if any(part in key for part in ("comment", "descript", "message", "watermark", "title")):
+    if any(part in key for part in ("comment", "descript", "message", "watermark", "title", "flag", "secret", "hint")):
         return True
     return False
 

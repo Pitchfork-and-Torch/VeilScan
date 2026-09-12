@@ -1,3 +1,14 @@
+# v2.0.0
+
+Forensic hunt extract. Presence OP unchanged.
+
+Private GitHub only. Lamp stays generic.
+
+- `veilscan hunt FILE` carves trailing/embedded files, dumps PNG/JPEG/GIF/WEBP container text, harvests FLAG{}
+- `veilscan gym` plants four eval fixtures (tEXt, JPEG COM, trailing zip, unknown PNG chunk)
+- Decode token rail rejects short photo LSB TAG:VAL (PTQ:B7C). INV_WM:LEFT_EYE:2026 still scores
+- JPEG50 leftover remains parked. No FSNet recook. No remover
+
 # v1.8.0
 
 Q-table DCT inspect. No production recook. JPEG50 DCT TPR leftover stays 0.46.

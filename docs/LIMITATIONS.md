@@ -69,6 +69,10 @@ still localizes longer patches.
 
 It will not print encrypted stego (Steghide / OpenStego with a password),
 SynthID, Digimarc, Tree-Ring payloads, or HiDDeN-class neural marks.
+
+`veilscan hunt` (v2) is a separate extractor: container text, trailing/embedded
+files, FLAG{} harvest. It is not a Steghide cracker until a later phase.
+Short photo LSB tokens like PTQ:B7C are not decode hits.
 Spatial LSB usually dies after JPEG / Telegram recompress. Hotspots can
 still mark the patched region. A recovered string is not proof of authorship.
 

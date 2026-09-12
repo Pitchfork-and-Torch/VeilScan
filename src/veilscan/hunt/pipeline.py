@@ -1,0 +1,194 @@
+"""Ordered hunt: identity, chunks, carve, strings, flags. No Linux binaries required."""
+
+from __future__ import annotations
+
+import hashlib
+import time
+from pathlib import Path
+from typing import Optional
+
+from veilscan.decode.container import sniff_kind
+from veilscan.hunt.carve import carve
+from veilscan.hunt.chunks import extract_chunks
+from veilscan.hunt.flags import compile_flag_re, find_flags, find_flags_bytes
+from veilscan.hunt.strings import extract_strings
+from veilscan.hunt.types import HuntFinding, HuntResult
+
+
+def hunt_path(
+    path: str | Path,
+    *,
+    out_dir: Optional[Path] = None,
+    flag_re: Optional[str] = None,
+    stop_on_flag: bool = False,
+    wordlist: Optional[Path] = None,
+) -> HuntResult:
+    p = Path(path)
+    data = p.read_bytes()
+    result = hunt_bytes(
+        data,
+        source=str(p),
+        out_dir=out_dir,
+        flag_re=flag_re,
+        stop_on_flag=stop_on_flag,
+        wordlist=wordlist,
+    )
+    result.path = str(p)
+    return result
+
+
+def hunt_bytes(
+    data: bytes,
+    source: str | None = None,
+    *,
+    out_dir: Optional[Path] = None,
+    flag_re: Optional[str] = None,
+    stop_on_flag: bool = False,
+    wordlist: Optional[Path] = None,
+) -> HuntResult:
+    t0 = time.perf_counter()
+    cre = compile_flag_re(flag_re)
+    kind = sniff_kind(data)
+    result = HuntResult(
+        path=source,
+        sha256=hashlib.sha256(data).hexdigest(),
+        kind=kind,
+        size=len(data),
+    )
+    if wordlist is not None:
+        result.notes.append(f"wordlist {wordlist} accepted; passphrase adapters are a later phase")
+
+    dest = Path(out_dir) if out_dir else None
+    if dest:
+        dest.mkdir(parents=True, exist_ok=True)
+
+    flags: list[str] = []
+    seen_flag: set[str] = set()
+
+    def add_flags(hits: list[str]) -> None:
+        for f in hits:
+            if f not in seen_flag:
+                seen_flag.add(f)
+                flags.append(f)
+
+    def maybe_stop() -> bool:
+        return bool(stop_on_flag and flags)
+
+    for ch in extract_chunks(data):
+        hits = find_flags(ch.text, cre)
+        add_flags(hits)
+        result.findings.append(
+            HuntFinding(
+                family=ch.family,
+                method=ch.method,
+                confidence=0.95 if hits else 0.80,
+                evidence=ch.extra or ch.key,
+                text=ch.text,
+                offset=ch.offset,
+                length=len(ch.text),
+                flag_hit=bool(hits),
+                extra={"key": ch.key} if ch.key else {},
+            )
+        )
+        if maybe_stop():
+            return _finish(result, flags, t0, dest)
+
+    for hit in carve(data):
+        blob_flags = find_flags_bytes(hit.payload, cre)
+        add_flags(blob_flags)
+        artifact = None
+        if dest is not None:
+            artifact = f"carve_{hit.kind}_{hit.offset}.bin"
+            (dest / artifact).write_bytes(hit.payload[: 8 * 1024 * 1024])
+            result.artifacts.append(artifact)
+        result.findings.append(
+            HuntFinding(
+                family="carve",
+                method=hit.kind,
+                confidence=0.97 if hit.inner_files or blob_flags else 0.85,
+                evidence=hit.note,
+                offset=hit.offset,
+                length=hit.length,
+                artifact_name=artifact,
+                flag_hit=bool(blob_flags),
+            )
+        )
+        for name, raw in hit.inner_files:
+            inner_hits = find_flags_bytes(raw, cre)
+            add_flags(inner_hits)
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                text = raw.decode("latin-1", "replace") if len(raw) <= 8192 else None
+            inner_art = None
+            if dest is not None:
+                safe = "".join(ch if ch.isalnum() or ch in ".-_" else "_" for ch in name) or "inner"
+                inner_art = f"zip_{hit.offset}_{safe}"
+                (dest / inner_art).write_bytes(raw[: 8 * 1024 * 1024])
+                result.artifacts.append(inner_art)
+            result.findings.append(
+                HuntFinding(
+                    family="carve",
+                    method="zip-member",
+                    confidence=0.99 if inner_hits else 0.90,
+                    evidence=f"{name} inside {hit.kind} @ {hit.offset}",
+                    text=text if text and len(text) <= 4096 else None,
+                    artifact_name=inner_art,
+                    flag_hit=bool(inner_hits),
+                    extra={"member": name},
+                )
+            )
+        if maybe_stop():
+            return _finish(result, flags, t0, dest)
+
+    for s in extract_strings(data):
+        hits = find_flags(s, cre)
+        if not hits and len(s) < 12:
+            continue
+        if hits:
+            add_flags(hits)
+            result.findings.append(
+                HuntFinding(
+                    family="strings",
+                    method="ascii-run",
+                    confidence=0.92,
+                    evidence="printable run on raw bytes",
+                    text=s,
+                    flag_hit=True,
+                )
+            )
+            if maybe_stop():
+                return _finish(result, flags, t0, dest)
+
+    raw_flags = find_flags_bytes(data, cre)
+    add_flags(raw_flags)
+
+    if not result.findings and not flags:
+        result.notes.append("No container text, trailing payload, or FLAG{} on raw bytes.")
+        result.notes.append("Encrypted stego and keyed JPEG tools need a later hunt phase or --wordlist adapter.")
+
+    return _finish(result, flags, t0, dest)
+
+
+def _finish(result: HuntResult, flags: list[str], t0: float, dest: Path | None) -> HuntResult:
+    result.flags = flags
+    result.elapsed_ms = (time.perf_counter() - t0) * 1000.0
+    if dest is not None:
+        import json
+
+        payload = result.to_json()
+        (dest / "findings.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        lines = [
+            f"VeilScan hunt  sha256={result.sha256}",
+            f"kind={result.kind} size={result.size} elapsed_ms={result.elapsed_ms:.1f}",
+            f"flags: {', '.join(flags) if flags else '(none)'}",
+            "",
+        ]
+        for f in result.findings:
+            bit = "FLAG" if f.flag_hit else "hit"
+            preview = (f.text or "")[:120].replace("\n", " ")
+            lines.append(f"[{bit}] {f.family}/{f.method} {f.evidence} {preview}")
+        (dest / "report.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        result.artifacts.append("findings.json")
+        result.artifacts.append("report.txt")
+    return result

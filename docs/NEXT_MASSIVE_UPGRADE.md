@@ -1,23 +1,45 @@
-# Field JPEG stack (done through Stage D)
+# VeilScan v2 hunt contract
 
-**Status:** A v1.4 blend, B v1.5 `--policy`, C v1.6 confirmation,
-D v1.7 native 128 windows SHIPPED.
+**Identity:** `veilscan hunt` extracts hidden payloads from authorized
+image/container files. `veilscan scan` stays the AWPD presence module.
+No watermark remover.
 
-- DIV2K PNG: generator FPR 0.59 at 0.67. Sidecar ~0.796. Confirmation only.
-- BSDS 256px: v1.6 TPR collapsed because deep heads downscaled the whole
-  plate. v1.7 native 128 windows restore identity DCT TPR 1.00 at 256px.
-  Canonical lock stays 128px v1.4 ~0.756.
-- LOAO holdout-dct: DCT TPR 0.98 -> 0.08. FSNet is still a specialist.
-- Q50 recook from v1.3 weights rejected (FSNet-head jpeg_50 DCT 0.40 ->
-  0.30 / 0.34). Production weights unchanged.
+Package: `2.0.0`. Private GitHub. Proprietary license. Public lamp stays
+generic marketing (`veilscan.jonbailey.xyz`) and does not document extractors.
 
-## Leftover
+## Parked leftover (do not recook)
 
-JPEG50 DCT ensemble TPR at 128px is still 0.46. v1.8.0 exposes luma Q at
-the DCT mark bins so the leftover is inspectable: eval amp 14 vs Q50
-steps ~51/56. Further cooks only with the v1.3 rails (resume weights, no
-from-scratch Q50, camera FPR at 0.67 <= 0.12) and only if a probe beats
-0.40 FSNet-head TPR@5%.
+JPEG50 DCT ensemble TPR at 128px is 0.46. Eval amp 14 vs Q50 luma steps
+~51/56. v1.8 inspect prints those steps. Do not recook FSNet. Do not flip
+default `present` (~0.67). Do not replace the 128px BSDS camera lock
+(~0.756). No from-scratch Q50. No `specialist_or` fusion. No LSB on FSNet.
 
-Do not flip default `present`. Do not replace 128px BSDS lock with 256px.
-Do not flip fusion to `specialist_or`.
+That leftover is not the income path.
+
+## v2.0.0 shipped (Phase 0 + Phase 1)
+
+- `veilscan hunt FILE [--json] [--out DIR] [--flag-re] [--stop-on-flag]`
+- `veilscan gym` plants four eval fixtures and scores extract TPR
+- Native carve: trailing after PNG IEND / JPEG EOI, ZIP/PDF/RAR/7z/gzip magics
+- All PNG text and unknown ancillary chunks (no PREFERRED_KEYS drop on hunt)
+- JPEG COM + APPn + EXIF; GIF comments; WEBP chunks
+- strings + FLAG{} harvest
+- Decode token rail: short photo LSB `TAG:VAL` (PTQ:B7C) no longer `found`
+
+Gym bar for this slice: 4/4 unaided, no Linux binaries.
+
+## Still later (do not pretend they shipped)
+
+2. zsteg-class channel/bit/order + alpha + palette-index LSB + bitplane sheet
+3. JSteg gym path; optional stegseek adapter; `--wordlist` (no rockyou in git)
+4. Hunt HUD PNG + agent JSON polish
+5. WAV LSB + spectrogram stills
+6. n>=20 gym TPR >= 0.90, then one live unseen CTF image as external proof
+
+## Rails
+
+- Authorized files only. Extract is not strip.
+- Generators / gym plants are eval-only.
+- Optional PATH adapters never required for core gym.
+- No Gradio/uvicorn from Grok Build.
+- No Volatility, PCAP, or disk images in v2.

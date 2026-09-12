@@ -6,8 +6,18 @@ import re
 
 from veilscan.decode.layouts import MAX_MESSAGE_BYTES, MIN_FRAMED_CHARS, MIN_UNFRAMED_CHARS
 
-_TOKEN_RE = re.compile(r"^[A-Z]{2,}[A-Z0-9_]*:[A-Z0-9_.:/=+\-]{2,64}$")
-_TOKEN_FIND = re.compile(r"[A-Z]{2,}[A-Z0-9_]*:[A-Z0-9_.:/=+\-]{2,64}")
+# Photo LSB noise mints short TAG:VAL (e.g. PTQ:B7C). Require a long body or a
+# second segment so eval tokens like INV_WM:LEFT_EYE:2026 still pass.
+_TOKEN_RE = re.compile(
+    r"^[A-Z]{3,}[A-Z0-9_]*:"
+    r"(?:[A-Z0-9_./=+\-]{6,64}(?::[A-Z0-9_./=+\-]{2,64})*"
+    r"|[A-Z0-9_]+(?::[A-Z0-9_./=+\-]{2,64})+)$"
+)
+_TOKEN_FIND = re.compile(
+    r"[A-Z]{3,}[A-Z0-9_]*:"
+    r"(?:[A-Z0-9_./=+\-]{6,64}(?::[A-Z0-9_./=+\-]{2,64})*"
+    r"|[A-Z0-9_]+(?::[A-Z0-9_./=+\-]{2,64})+)"
+)
 _WEIRD = set(",'\"%+#$&*;<>[]{}\\|`~")
 
 _PRINTABLE_EXTRA = set("\t\n\r")
@@ -43,7 +53,15 @@ def printable_ratio(text: str) -> float:
 
 
 def looks_like_token(text: str) -> bool:
-    return bool(_TOKEN_RE.match(text.strip()))
+    t = text.strip()
+    if not _TOKEN_RE.match(t):
+        return False
+    if ":" not in t:
+        return False
+    _head, tail = t.split(":", 1)
+    if len(t) < 12 and ":" not in tail:
+        return False
+    return True
 
 
 def looks_like_english(text: str) -> bool:

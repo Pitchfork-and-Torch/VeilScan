@@ -1,13 +1,17 @@
 # VeilScan
 
-Local, algorithm-agnostic **invisible watermark presence detector** with a **keyless plaintext** reader.
+Local, algorithm-agnostic **invisible watermark presence detector**, **keyless plaintext** reader, and **forensic hunt** extractor.
 
-It answers: *does this image contain an invisible watermark?* and, when the payload is sequential LSB / PNG text / JPEG comment, *what does the text say?* It does not strip a mark. It does not break SynthID, Digimarc, encrypted stego, or neural watermarks.
+`scan` answers: *does this image contain an invisible watermark?*
+`decode` answers, when the payload is sequential LSB / PNG text / JPEG comments: *what does the text say?*
+`hunt` extracts container text, trailing/embedded files, and FLAG{} from authorized image/container files.
+
+It does not strip a mark. It does not break SynthID, Digimarc, encrypted stego, or neural watermarks.
 
 Lamp: https://veilscan.jonbailey.xyz/  
 Private GitHub: https://github.com/Pitchfork-and-Torch/VeilScan
 
-v1.8.0 prints luma Q-table steps at the DCT mark bins (3,4) and (4,3) on inspect/scan. Native 128 windows stay. Generator `present` stays ~0.67. BSDS camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756. Patchwork weight 0. Q50 recook rejected. JPEG50 DCT TPR leftover 0.46 (amp 14 vs Q50 steps ~51/56).
+v2.0.0 adds `hunt` / `gym` (Phase 0+1 container forensics). Presence OP is unchanged: generator `present` ~0.67, BSDS camera sidecar `op-v1.4.0-camera-locked-n50` ~0.756. JPEG50 DCT leftover stays parked (amp 14 vs Q50 steps ~51/56). Do not recook FSNet.
 
 ## Synthetic numbers
 
@@ -39,6 +43,8 @@ py -3 -m veilscan scan path\to\image.png --json --heatmap out_overlay.png
 py -3 -m veilscan batch path\to\folder --json
 py -3 -m veilscan decode path\to\image.png
 # writes path-veilscan-report.png (HUD overlay + executive brief) next to the file
+py -3 -m veilscan hunt path\to\image.png --json --out hunt-out
+py -3 -m veilscan gym
 py -3 -m veilscan doctor
 py -3 -m veilscan inspect path\to\image.jpg --policy both
 py -3 -m veilscan selftest

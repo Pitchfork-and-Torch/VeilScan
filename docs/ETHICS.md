@@ -1,10 +1,12 @@
 # Ethics and responsible use
 
-VeilScan is a **local detector** for invisible image watermarks. Intended uses:
+VeilScan is a **local detector** for invisible image watermarks and a
+**forensic hunt extractor** for authorized files. Intended uses:
 
 - copyright / provenance screening
 - forensic triage ("is there a mark?")
 - keyless plaintext recovery (sequential LSB, PNG text, JPEG comments) on files you are authorized to inspect
+- CTF / DFIR hunt extract (`veilscan hunt`) on files you are authorized to inspect
 - dataset hygiene (filter watermarked training data)
 - research on agnostic presence detection (AWPD)
 
@@ -17,6 +19,8 @@ This repository:
 - ships embedders and `embed-text` only as evaluation fixtures
 - will not add a "clean this image" mode
 - decode prints keyless plaintext only; it is not a universal watermark decoder
+- hunt extracts container text, trailing/embedded files, and FLAG{} on authorized inputs
+- hunt may later brute known-tool passphrases against a wordlist the operator supplies; do not vendor rockyou
 
 Do not use VeilScan to bypass copyright, provenance, or C2PA-style
 authenticity systems. Do not use the generators to hide unauthorized data
