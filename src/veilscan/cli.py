@@ -212,11 +212,19 @@ def hunt(
     no_report: bool = typer.Option(False, "--no-report", help="Skip hunt out directory"),
 ) -> None:
     """Extract hidden payloads from an authorized image or container (CTF hunt)."""
+    import re
+
     from veilscan.hunt import hunt_path as do_hunt
+    from veilscan.hunt.flags import compile_flag_re
     from veilscan.hunt.hud import default_hunt_dir
 
     if path.is_dir():
         raise typer.BadParameter("path is a directory")
+    if flag_re is not None:
+        try:
+            compile_flag_re(flag_re)
+        except re.error as exc:
+            raise typer.BadParameter(f"invalid regex: {exc}", param_hint="--flag-re") from exc
     dest = out
     if dest is None and not no_report:
         dest = default_hunt_dir(path)

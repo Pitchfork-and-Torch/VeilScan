@@ -78,6 +78,33 @@ def test_hunt_cli_json_trailing_zip(tmp_path: Path) -> None:
     assert zip_case.flag in result.flags
 
 
+def test_hunt_flag_re_override(tmp_path: Path) -> None:
+    from veilscan.decode.container import plant_jpeg_com
+    from veilscan.hunt.gym import _cover
+
+    p = tmp_path / "custom.jpg"
+    p.write_bytes(plant_jpeg_com(_cover(32), f"note {TOKEN} end"))
+    default = hunt_path(p)
+    assert default.flags == []
+    custom = hunt_path(p, flag_re=r"INV_WM:[A-Z_]+:\d{4}")
+    assert custom.flags == [TOKEN]
+    assert any(f.flag_hit and f.family == "container" for f in custom.findings)
+    r = runner.invoke(app, ["hunt", str(p), "--json", "--no-report", "--flag-re", r"INV_WM:[A-Z_]+:\d{4}"])
+    assert r.exit_code == 0, r.output
+    assert TOKEN in r.stdout
+    assert '"flag_count": 1' in r.stdout
+
+
+def test_hunt_flag_re_invalid_exits_clean(tmp_path: Path) -> None:
+    p = tmp_path / "plain.txt"
+    p.write_text("FLAG{never-reached}\n", encoding="utf-8")
+    r = runner.invoke(app, ["hunt", str(p), "--no-report", "--flag-re", "("], color=False)
+    assert r.exit_code == 2, r.output
+    assert "Traceback" not in r.output
+    assert "--flag-re" in r.output
+    assert "invalid regex" in r.output
+
+
 def test_gym_cli(tmp_path: Path) -> None:
     r = runner.invoke(app, ["gym", "--out", str(tmp_path / "g")])
     assert r.exit_code == 0, r.output

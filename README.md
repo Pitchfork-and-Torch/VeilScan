@@ -47,6 +47,8 @@ py -3 -m veilscan hunt path\to\image.png --json --out hunt-out
 # hunt-out/report.png  hunt-out/findings.json  (schema 2: flags, flag_count, summary)
 py -3 -m veilscan hunt path\to\image.png --deep --out hunt-out
 py -3 -m veilscan hunt path\to\image.jpg --wordlist wordlist.txt --out hunt-out
+# custom token instead of FLAG{}; a bad pattern exits 2 with a one-line error
+py -3 -m veilscan hunt path\to\image.jpg --flag-re "INV_WM:[A-Z_]+:\d{4}" --no-report
 py -3 -m veilscan gym
 py -3 -m veilscan doctor
 py -3 -m veilscan inspect path\to\image.jpg --policy both
