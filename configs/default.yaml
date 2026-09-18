@@ -1,0 +1,56 @@
+threshold: 0.48
+tile_size: 1024
+tile_overlap: 64
+device: auto
+tier: all
+jpeg_quality_probe: 95
+
+peak_ok:
+  - chi_square
+  - rs_analysis
+  - bitplane
+  - dct
+  - dwt
+  - hybrid_dds
+  - tree_ring_spectral
+  - residual_cnn
+  - fsnet_lite
+
+fusion:
+  mode: legacy
+  jpeg_freq_weight: 0.5
+  full_mean: 0.20
+  ok_mean: 0.20
+  top_mean: 0.20
+  peak: 0.40
+  top_k: 3
+  uncertainty: peak_ok
+  t_lsb: 0.50
+  t_freq: 0.50
+  t_class: 0.48
+
+operating_point_path: null
+
+weights:
+  chi_square: 1.0
+  rs_analysis: 1.05
+  sample_pairs: 0.95
+  bitplane: 0.85
+  histogram: 0.7
+  patchwork: 0.0
+  dct: 1.0
+  dft: 0.75
+  dwt: 0.95
+  hybrid_dds: 0.8
+  tree_ring_spectral: 0.9
+  fourier_mellin: 0.45
+  block_multiscale: 0.7
+  srm: 0.9
+  color_spaces: 0.55
+  reconstruction: 0.6
+  higher_order: 0.5
+  jpeg_ela: 0.55
+  residual_cnn: 1.15
+  fsnet_lite: 1.2
+  wmd: 1.1
+  foundation: 0.55

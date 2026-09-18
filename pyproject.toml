@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "veilscan"
+version = "2.3.1"
+description = "Local watermark presence detector, keyless decode, and forensic hunt extract."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "LicenseRef-Proprietary" }
+authors = [{ name = "Pitchfork-and-Torch" }]
+dependencies = [
+  "numpy>=1.24",
+  "opencv-python-headless>=4.8",
+  "scipy>=1.11",
+  "scikit-image>=0.22",
+  "Pillow>=10.0",
+  "torch>=2.1",
+  "typer>=0.12",
+  "rich>=13.0",
+  "pydantic>=2.0",
+  "pyyaml>=6.0",
+  "matplotlib>=3.8",
+  "PyWavelets>=1.5",
+  "scikit-learn>=1.4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "jpeglib>=0.13"]
+gui = ["gradio>=4.0"]
+api = ["fastapi>=0.110", "uvicorn>=0.27"]
+onnx = ["onnx>=1.16"]
+jpeg = ["jpeglib>=0.13"]
+
+[project.scripts]
+veilscan = "veilscan.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["src"]
