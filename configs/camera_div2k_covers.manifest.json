@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "div2k-valid-hr-100",
+  "kind": "archive",
+  "license": "DIV2K (Timofte et al., NTIRE 2017). Research stills. Do not commit extracted files to this git repo.",
+  "source_page": "https://data.vision.ee.ethz.ch/cvl/DIV2K/",
+  "url": "https://data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_valid_HR.zip",
+  "archive": "DIV2K_valid_HR.zip",
+  "sha256": "20dd31fd84d777bc1cf5d6b7654a3f569c0aec74458ae094122ad1d0489900fc",
+  "member_glob": "DIV2K_valid_HR/*.png",
+  "take": 100,
+  "min_edge": 300,
+  "notes": "Second camera corpus, not BSDS500. sha256 pinned from first verified fetch 2026-08-22. Pytest uses a local zip fixture and never hits this URL. Not UniFreq."
+}
