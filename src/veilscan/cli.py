@@ -542,6 +542,13 @@ def bench(
     """Frozen bench. Generator by default. --covers DIR is the camera adapter."""
     from veilscan.eval.bench import ROOT, load_camera_cover_pack, load_protocol, run_bench, write_outputs
 
+    # Reject before run_bench so --n 0 / --size -1 do not emit NaN FPR locks
+    # (distinct from selftest/loao/calibrate --n/--size and wmd-scan rounds/steps).
+    if n is not None:
+        n = _require_positive_n(n)
+    if size is not None:
+        size = _require_positive_size(size)
+
     proto = load_protocol(protocol)
     atk = [x.strip() for x in attacks.split(",")] if attacks else None
     st = [x.strip() for x in styles.split(",")] if styles else None

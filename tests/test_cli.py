@@ -96,3 +96,17 @@ def test_wmd_nonpositive_rounds_steps_exits_clean(tmp_path) -> None:
         blob = (r.stdout or "") + (r.stderr or "")
         assert "Traceback" not in blob, blob
         assert hint in blob or hint.lstrip("-") in blob.lower()
+
+
+def test_bench_nonpositive_n_size_exits_clean() -> None:
+    """bench must reject --n/--size < 1 with exit 2 (no NaN FPR locks from empty cells)."""
+    for cmd, hint in (
+        (["bench", "--n", "0", "--attacks", "identity", "--styles", "sine"], "--n"),
+        (["bench", "--n", "1", "--size", "-1", "--attacks", "identity", "--styles", "sine"], "--size"),
+    ):
+        r = runner.invoke(app, cmd)
+        assert r.exit_code == 2, (cmd, r.exit_code, r.stdout, r.stderr)
+        blob = (r.stdout or "") + (r.stderr or "")
+        assert "Traceback" not in blob, blob
+        assert hint in blob or hint.lstrip("-") in blob.lower()
+
