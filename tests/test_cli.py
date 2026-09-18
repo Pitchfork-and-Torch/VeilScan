@@ -134,3 +134,25 @@ def test_embed_text_invalid_layout_exits_clean(tmp_path) -> None:
     assert r.exit_code == 2, r.output
     assert "Traceback" not in r.output
     assert "--layout" in r.output
+
+
+def test_embed_invalid_family_exits_clean(tmp_path) -> None:
+    """embed --family (synthetic WM) must exit 2, distinct from embed-text families."""
+    from PIL import Image
+    import numpy as np
+    from veilscan.generators import synthetic_cover
+
+    img = synthetic_cover(32, 32, np.random.default_rng(8), style="photo")
+    src = tmp_path / "src.png"
+    Image.fromarray(img).save(src)
+    out = tmp_path / "out.png"
+    r = runner.invoke(
+        app,
+        ["embed", str(src), str(out), "--family", "nope"],
+        color=False,
+    )
+    assert r.exit_code == 2, r.output
+    assert "Traceback" not in r.output
+    assert "--family" in r.output
+    assert "lsb" in r.output.lower()
+
