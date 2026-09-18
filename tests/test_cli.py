@@ -78,3 +78,21 @@ def test_eval_nonpositive_size_exits_clean() -> None:
         blob = (r.stdout or "") + (r.stderr or "")
         assert "Traceback" not in blob, blob
         assert "--size" in blob or "size" in blob.lower()
+
+
+def test_wmd_nonpositive_rounds_steps_exits_clean(tmp_path) -> None:
+    """wmd-scan must reject rounds/steps < 1 with exit 2 (no silent max(1, ...) coerce)."""
+    suspects = tmp_path / "sus"
+    refs = tmp_path / "refs"
+    suspects.mkdir()
+    refs.mkdir()
+    # Minimal placeholder dirs; validation runs before image load work matters.
+    for cmd, hint in (
+        (["wmd-scan", str(suspects), "--reference-dir", str(refs), "--rounds", "0"], "--rounds"),
+        (["wmd-scan", str(suspects), "--reference-dir", str(refs), "--steps", "-1"], "--steps"),
+    ):
+        r = runner.invoke(app, cmd)
+        assert r.exit_code == 2, (cmd, r.exit_code, r.stdout, r.stderr)
+        blob = (r.stdout or "") + (r.stderr or "")
+        assert "Traceback" not in blob, blob
+        assert hint in blob or hint.lstrip("-") in blob.lower()

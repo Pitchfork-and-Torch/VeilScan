@@ -51,6 +51,20 @@ def _require_positive_size(size: int) -> int:
     return int(size)
 
 
+def _require_positive_rounds(rounds: int) -> int:
+    """Reject rounds < 1 so wmd-scan does not silently coerce via max(1, rounds)."""
+    if int(rounds) < 1:
+        raise typer.BadParameter("must be >= 1", param_hint="--rounds")
+    return int(rounds)
+
+
+def _require_positive_steps(steps: int) -> int:
+    """Reject steps < 1 so wmd-scan does not silently coerce via max(1, steps)."""
+    if int(steps) < 1:
+        raise typer.BadParameter("must be >= 1", param_hint="--steps")
+    return int(steps)
+
+
 def _cfg(config: Optional[Path], tier: Optional[str], threshold: Optional[float]) -> VeilConfig:
     cfg = VeilConfig.load(config)
     if tier:
@@ -491,6 +505,8 @@ def wmd_scan(
     from veilscan.image_io import iter_images, load_rgb
     from veilscan.config import resolve_device, VeilConfig
 
+    rounds = _require_positive_rounds(rounds)
+    steps = _require_positive_steps(steps)
     cfg = VeilConfig.load()
     sus = [load_rgb(p) for p in iter_images(suspects)[:32]]
     refs = [load_rgb(p) for p in iter_images(reference_dir)[:16]]
