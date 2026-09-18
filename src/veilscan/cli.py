@@ -66,6 +66,33 @@ def _validate_tier(tier: str | None) -> str | None:
     return t
 
 
+_EMBED_TEXT_FAMILIES = frozenset({"lsb", "png-text", "jpeg-com"})
+
+
+def _validate_embed_text_family(family: str) -> str:
+    """Reject unknown --family before embed_text_path raises KeyError + exit 1."""
+    f = (family or "lsb").strip().lower()
+    if f not in _EMBED_TEXT_FAMILIES:
+        raise typer.BadParameter(
+            f"must be one of: {', '.join(sorted(_EMBED_TEXT_FAMILIES))}",
+            param_hint="--family",
+        )
+    return f
+
+
+def _validate_embed_text_layout(layout: str) -> str:
+    """Reject unknown --layout before get_layout raises KeyError + exit 1."""
+    from veilscan.decode.layouts import LAYOUT_BY_ID
+
+    lid = (layout or "").strip()
+    if lid not in LAYOUT_BY_ID:
+        raise typer.BadParameter(
+            f"must be one of: {', '.join(LAYOUT_BY_ID)}",
+            param_hint="--layout",
+        )
+    return lid
+
+
 
 @app.callback()
 def _root() -> None:
@@ -338,6 +365,8 @@ def embed_text_cmd(
     """Eval-only: plant keyless plaintext so decode can be tested. Not a hiding product."""
     from veilscan.decode.embed_text import embed_text_path
 
+    family = _validate_embed_text_family(family)
+    layout = _validate_embed_text_layout(layout)
     path = embed_text_path(inp, out, message, layout_id=layout, family=family)
     console.print(f"wrote {path} family={family} layout={layout}")
 

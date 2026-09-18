@@ -56,6 +56,8 @@ py -3 -m veilscan inspect path\to\image.jpg --policy both
 py -3 -m veilscan scan path\to\image.png --tier residual
 # bad --tier exits 2 (does not traceback on typos)
 py -3 -m veilscan scan path\to\image.png --policy camera
+# bad embed-text --family / --layout exits 2 (does not KeyError traceback)
+py -3 -m veilscan embed-text cover.png out.png -m "hello" --family lsb --layout r-bit0-msb
 py -3 -m veilscan selftest
 py -3 -m veilscan selftest --per-detector
 py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point

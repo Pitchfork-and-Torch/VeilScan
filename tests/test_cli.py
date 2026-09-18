@@ -95,3 +95,42 @@ def test_scan_tier_residual_casefold(tmp_path) -> None:
     Image.fromarray(img).save(path)
     r = runner.invoke(app, ["scan", str(path), "--tier", "RESIDUAL", "--json"])
     assert r.exit_code == 0, r.output
+
+
+def test_embed_text_invalid_family_exits_clean(tmp_path) -> None:
+    from PIL import Image
+    import numpy as np
+    from veilscan.generators import synthetic_cover
+
+    img = synthetic_cover(32, 32, np.random.default_rng(6), style="photo")
+    src = tmp_path / "src.png"
+    Image.fromarray(img).save(src)
+    out = tmp_path / "out.png"
+    r = runner.invoke(
+        app,
+        ["embed-text", str(src), str(out), "--message", "hi", "--family", "nope"],
+        color=False,
+    )
+    assert r.exit_code == 2, r.output
+    assert "Traceback" not in r.output
+    assert "--family" in r.output
+    assert "lsb" in r.output.lower()
+
+
+def test_embed_text_invalid_layout_exits_clean(tmp_path) -> None:
+    from PIL import Image
+    import numpy as np
+    from veilscan.generators import synthetic_cover
+
+    img = synthetic_cover(32, 32, np.random.default_rng(7), style="photo")
+    src = tmp_path / "src.png"
+    Image.fromarray(img).save(src)
+    out = tmp_path / "out.png"
+    r = runner.invoke(
+        app,
+        ["embed-text", str(src), str(out), "--message", "hi", "--layout", "nope"],
+        color=False,
+    )
+    assert r.exit_code == 2, r.output
+    assert "Traceback" not in r.output
+    assert "--layout" in r.output
