@@ -92,6 +92,18 @@ def _validate_embed_text_layout(layout: str) -> str:
         )
     return lid
 
+def _validate_embed_family(family: str) -> str:
+    """Reject unknown embed --family before generators.embed raises KeyError."""
+    from veilscan.generators import FAMILIES
+
+    f = (family or "lsb").strip().lower()
+    if f not in FAMILIES:
+        raise typer.BadParameter(
+            f"must be one of: {', '.join(sorted(FAMILIES))}",
+            param_hint="--family",
+        )
+    return f
+
 
 
 @app.callback()
@@ -381,6 +393,7 @@ def embed(
     """Embed a synthetic eval watermark (not a product hiding tool)."""
     from veilscan.generators import embed as do_embed
 
+    family = _validate_embed_family(family)
     rgb = load_rgb(inp)
     marked = do_embed(rgb, family, seed=seed)
     save_rgb(out, marked)
