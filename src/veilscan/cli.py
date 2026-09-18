@@ -33,6 +33,22 @@ def _cfg(config: Optional[Path], tier: Optional[str], threshold: Optional[float]
     return cfg
 
 
+_PRESENT_POLICIES = frozenset({"generator", "camera", "both"})
+
+
+def _validate_policy(policy: str) -> str:
+    """Reject typos so operators do not silently get generator present."""
+    p = (policy or "generator").strip().lower()
+    if p not in _PRESENT_POLICIES:
+        raise typer.BadParameter(
+            f"must be one of: {', '.join(sorted(_PRESENT_POLICIES))}",
+            param_hint="--policy",
+        )
+    return p
+
+
+
+
 @app.callback()
 def _root() -> None:
     """VeilScan CLI."""
@@ -81,6 +97,7 @@ def scan(
     """Analyze one image (or refuse directories; use batch)."""
     if path.is_dir():
         raise typer.BadParameter("path is a directory; use `veilscan batch`")
+    policy = _validate_policy(policy)
     cfg = _cfg(config, tier, threshold)
     names = [x.strip() for x in detectors.split(",")] if detectors else None
     result = analyze_path(path, config=cfg, detectors=names, reference_dir=reference_dir, policy=policy)
@@ -104,6 +121,7 @@ def batch(
     """Scan every image under a folder."""
     from veilscan.image_io import iter_images
 
+    policy = _validate_policy(policy)
     cfg = _cfg(config, tier, None)
     rows = []
     for p in iter_images(path):
@@ -171,6 +189,7 @@ def inspect(
     from veilscan.decode.report import default_report_path, render_decode_report
     from veilscan.types import SCHEMA_VERSION
 
+    policy = _validate_policy(policy)
     cfg = _cfg(config, None, threshold)
     scan_res = analyze_path(path, config=cfg, policy=policy)
     dec = do_decode(path)

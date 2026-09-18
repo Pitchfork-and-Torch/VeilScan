@@ -40,3 +40,31 @@ def test_bench_write_op_refuses_other_covers(tmp_path) -> None:
     )
     assert r.exit_code == 2, r.stdout + r.stderr
     assert "refusing" in (r.stdout + r.stderr).lower()
+
+
+def test_scan_invalid_policy_exits_clean(tmp_path) -> None:
+    from PIL import Image
+    import numpy as np
+    from veilscan.generators import synthetic_cover
+
+    img = synthetic_cover(32, 32, np.random.default_rng(2), style="photo")
+    p = tmp_path / "pol.png"
+    Image.fromarray(img).save(p)
+    r = runner.invoke(app, ["scan", str(p), "--policy", "camra"], color=False)
+    assert r.exit_code == 2, r.output
+    assert "Traceback" not in r.output
+    assert "--policy" in r.output
+    assert "generator" in r.output.lower() or "camera" in r.output.lower()
+
+
+def test_scan_policy_camera_casefold(tmp_path) -> None:
+    from PIL import Image
+    import numpy as np
+    from veilscan.generators import synthetic_cover
+
+    img = synthetic_cover(32, 32, np.random.default_rng(3), style="photo")
+    p = tmp_path / "cam.png"
+    Image.fromarray(img).save(p)
+    r = runner.invoke(app, ["scan", str(p), "--policy", "CAMERA", "--json"])
+    assert r.exit_code == 0, r.output
+    assert '"policy": "camera"' in r.output

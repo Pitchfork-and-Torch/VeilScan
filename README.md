@@ -52,6 +52,8 @@ py -3 -m veilscan hunt path\to\image.jpg --flag-re "INV_WM:[A-Z_]+:\d{4}" --no-r
 py -3 -m veilscan gym
 py -3 -m veilscan doctor
 py -3 -m veilscan inspect path\to\image.jpg --policy both
+# bad --policy exits 2 (does not silently fall back to generator)
+py -3 -m veilscan scan path\to\image.png --policy camera
 py -3 -m veilscan selftest
 py -3 -m veilscan selftest --per-detector
 py -3 -m veilscan bench --n 50 --styles photo --attacks identity,jpeg_70 --write-operating-point
