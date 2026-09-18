@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "bsds500-test-64",
+  "kind": "archive",
+  "license": "BSDS500 (Berkeley). Research stills. Do not commit extracted JPEGs to this git repo.",
+  "source_page": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/resources.html",
+  "url": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz",
+  "archive": "BSR_bsds500.tgz",
+  "sha256": "97e49d31764f3912f0c4122707d53062ac9e783ba0f095e447a4d53c1a41af8e",
+  "member_glob": "BSR/BSDS500/data/images/test/*.jpg",
+  "take": 64,
+  "min_edge": 300,
+  "notes": "sha256 pinned from first verified fetch 2026-08-21. Pytest uses a local tar fixture and never hits this URL."
+}
