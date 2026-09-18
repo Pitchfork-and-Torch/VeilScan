@@ -37,6 +37,13 @@ def _require_embed_family(family: str) -> str:
     return key
 
 
+def _require_positive_n(n: int) -> int:
+    """Reject n < 1 so selftest/loao/robustness/calibrate do not emit NaN AUC."""
+    if int(n) < 1:
+        raise typer.BadParameter("must be >= 1", param_hint="--n")
+    return int(n)
+
+
 def _cfg(config: Optional[Path], tier: Optional[str], threshold: Optional[float]) -> VeilConfig:
     cfg = VeilConfig.load(config)
     if tier:
@@ -353,6 +360,7 @@ def selftest(
     from veilscan.registry import all_detectors, ensure_loaded
 
     ensure_loaded()
+    n = _require_positive_n(n)
     names = [d.name for d in all_detectors() if d.name != "wmd"]
     report = run_synthetic(n=n, size=size, detectors=names, per_detector=per_detector)
     if json_out:
@@ -392,6 +400,7 @@ def loao(
     from veilscan.registry import all_detectors, ensure_loaded
 
     ensure_loaded()
+    n = _require_positive_n(n)
     names = [d.name for d in all_detectors() if d.name != "wmd"]
     report = run_loao(n=n, size=size, detectors=names)
     if json_out:
@@ -436,6 +445,7 @@ def robustness(
     """JPEG / resize / noise sweep. Retention vs identity AUC."""
     from veilscan.eval.harness import run_robustness, run_robustness_all
 
+    n = _require_positive_n(n)
     if all_families:
         report = run_robustness_all(n=n)
     else:
@@ -453,6 +463,7 @@ def calibrate(
     """Fit affine-logit maps on synthetic pairs. Writes JSON (does not train nets)."""
     from veilscan.calibrate import fit_calibration, save_calibration
 
+    n = _require_positive_n(n)
     data = fit_calibration(n=n, size=size)
     save_calibration(data, out)
     console.print(f"wrote {out} ensemble a={data['ensemble']['a']:.3f} b={data['ensemble']['b']:.3f}")

@@ -48,3 +48,19 @@ def test_robustness_invalid_family_exits_clean() -> None:
     blob = (r.stdout + r.stderr).lower()
     assert "unknown" in blob
     assert "traceback" not in blob
+
+
+def test_eval_nonpositive_n_exits_clean() -> None:
+    """selftest/loao/robustness/calibrate must reject n < 1 with exit 2 (no NaN AUC)."""
+    for cmd in (
+        ["selftest", "--n", "0"],
+        ["loao", "--n", "-1"],
+        ["robustness", "--family", "lsb", "--n", "0"],
+        ["calibrate", "--n", "-2", "--out", "/tmp/veilscan-cal-reject.json"],
+    ):
+        r = runner.invoke(app, cmd)
+        assert r.exit_code == 2, (cmd, r.exit_code, r.stdout, r.stderr)
+        blob = (r.stdout or "") + (r.stderr or "")
+        assert "Traceback" not in blob, blob
+        assert "--n" in blob or "n" in blob.lower()
+
