@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "method": "affine_logit",
+  "detectors": {},
+  "ensemble": {"a": 1.0, "b": 0.0},
+  "fit": {"n": 0, "protocol": "identity"}
+}
