@@ -105,6 +105,28 @@ def _validate_embed_family(family: str) -> str:
     return f
 
 
+def _validate_detectors(detectors: str | None) -> list[str] | None:
+    """Reject unknown --detectors before a silent empty-head scan."""
+    if detectors is None:
+        return None
+    raw = [x.strip() for x in detectors.split(",") if x.strip()]
+    if not raw:
+        raise typer.BadParameter(
+            "provide at least one detector name",
+            param_hint="--detectors",
+        )
+    from veilscan.registry import all_detectors, ensure_loaded
+
+    ensure_loaded()
+    known = {d.name for d in all_detectors()}
+    bad = [n for n in raw if n not in known]
+    if bad:
+        raise typer.BadParameter(
+            f"unknown detector(s): {', '.join(bad)}; must be one of: {', '.join(sorted(known))}",
+            param_hint="--detectors",
+        )
+    return raw
+
 
 @app.callback()
 def _root() -> None:
@@ -156,8 +178,8 @@ def scan(
         raise typer.BadParameter("path is a directory; use `veilscan batch`")
     policy = _validate_policy(policy)
     tier = _validate_tier(tier)
+    names = _validate_detectors(detectors)
     cfg = _cfg(config, tier, threshold)
-    names = [x.strip() for x in detectors.split(",")] if detectors else None
     result = analyze_path(path, config=cfg, detectors=names, reference_dir=reference_dir, policy=policy)
     if heatmap:
         rgb = load_rgb(path)

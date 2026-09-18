@@ -156,3 +156,18 @@ def test_embed_invalid_family_exits_clean(tmp_path) -> None:
     assert "--family" in r.output
     assert "lsb" in r.output.lower()
 
+
+
+def test_scan_invalid_detectors_exits_clean(tmp_path) -> None:
+    """Unknown --detectors must exit 2 (not a silent empty-head scan)."""
+    from PIL import Image
+    import numpy as np
+    from veilscan.generators import synthetic_cover
+
+    img = synthetic_cover(32, 32, np.random.default_rng(9), style="photo")
+    path = tmp_path / "det.png"
+    Image.fromarray(img).save(path)
+    r = runner.invoke(app, ["scan", str(path), "--detectors", "nope"], color=False)
+    assert r.exit_code == 2, r.output
+    assert "Traceback" not in r.output
+    assert "--detectors" in r.output
