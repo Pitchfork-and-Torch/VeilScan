@@ -53,6 +53,8 @@ py -3 -m veilscan gym
 py -3 -m veilscan doctor
 py -3 -m veilscan inspect path\to\image.jpg --policy both
 # bad --policy exits 2 (does not silently fall back to generator)
+py -3 -m veilscan scan path\to\image.png --tier residual
+# bad --tier exits 2 (does not traceback on typos)
 py -3 -m veilscan scan path\to\image.png --policy camera
 py -3 -m veilscan selftest
 py -3 -m veilscan selftest --per-detector

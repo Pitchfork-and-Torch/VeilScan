@@ -68,3 +68,30 @@ def test_scan_policy_camera_casefold(tmp_path) -> None:
     r = runner.invoke(app, ["scan", str(p), "--policy", "CAMERA", "--json"])
     assert r.exit_code == 0, r.output
     assert '"policy": "camera"' in r.output
+
+
+def test_scan_invalid_tier_exits_clean(tmp_path) -> None:
+    from PIL import Image
+    import numpy as np
+    from veilscan.generators import synthetic_cover
+
+    img = synthetic_cover(32, 32, np.random.default_rng(4), style="photo")
+    path = tmp_path / "tier.png"
+    Image.fromarray(img).save(path)
+    r = runner.invoke(app, ["scan", str(path), "--tier", "fastt"], color=False)
+    assert r.exit_code == 2, r.output
+    assert "Traceback" not in r.output
+    assert "--tier" in r.output
+    assert "fast" in r.output.lower()
+
+
+def test_scan_tier_residual_casefold(tmp_path) -> None:
+    from PIL import Image
+    import numpy as np
+    from veilscan.generators import synthetic_cover
+
+    img = synthetic_cover(32, 32, np.random.default_rng(5), style="photo")
+    path = tmp_path / "res.png"
+    Image.fromarray(img).save(path)
+    r = runner.invoke(app, ["scan", str(path), "--tier", "RESIDUAL", "--json"])
+    assert r.exit_code == 0, r.output

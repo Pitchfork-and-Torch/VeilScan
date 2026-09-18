@@ -34,6 +34,10 @@ def _cfg(config: Optional[Path], tier: Optional[str], threshold: Optional[float]
 
 
 _PRESENT_POLICIES = frozenset({"generator", "camera", "both"})
+# Keep in lockstep with veilscan.registry.select (plus "all").
+_SCAN_TIERS = frozenset(
+    {"fast", "frequency", "residual", "deep", "blackbox", "foundation", "all"}
+)
 
 
 def _validate_policy(policy: str) -> str:
@@ -46,6 +50,20 @@ def _validate_policy(policy: str) -> str:
         )
     return p
 
+
+def _validate_tier(tier: str | None) -> str | None:
+    """Reject unknown --tier before analyze raises ValueError + rich traceback."""
+    if tier is None:
+        return None
+    t = tier.strip().lower()
+    if not t:
+        return None
+    if t not in _SCAN_TIERS:
+        raise typer.BadParameter(
+            f"must be one of: {', '.join(sorted(_SCAN_TIERS))}",
+            param_hint="--tier",
+        )
+    return t
 
 
 
@@ -88,7 +106,7 @@ def scan(
     json_out: bool = typer.Option(False, "--json", help="Machine-readable report"),
     heatmap: Optional[Path] = typer.Option(None, help="Write overlay PNG here"),
     config: Optional[Path] = typer.Option(None, "--config", "-c"),
-    tier: Optional[str] = typer.Option(None, help="fast|frequency|all"),
+    tier: Optional[str] = typer.Option(None, help="fast|frequency|residual|deep|blackbox|foundation|all"),
     threshold: Optional[float] = typer.Option(None),
     detectors: Optional[str] = typer.Option(None, help="Comma-separated detector names"),
     reference_dir: Optional[Path] = typer.Option(None, help="Clean reference images for WMD"),
@@ -98,6 +116,7 @@ def scan(
     if path.is_dir():
         raise typer.BadParameter("path is a directory; use `veilscan batch`")
     policy = _validate_policy(policy)
+    tier = _validate_tier(tier)
     cfg = _cfg(config, tier, threshold)
     names = [x.strip() for x in detectors.split(",")] if detectors else None
     result = analyze_path(path, config=cfg, detectors=names, reference_dir=reference_dir, policy=policy)
@@ -122,6 +141,7 @@ def batch(
     from veilscan.image_io import iter_images
 
     policy = _validate_policy(policy)
+    tier = _validate_tier(tier)
     cfg = _cfg(config, tier, None)
     rows = []
     for p in iter_images(path):
