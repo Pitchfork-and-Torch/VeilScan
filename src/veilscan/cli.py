@@ -44,6 +44,13 @@ def _require_positive_n(n: int) -> int:
     return int(n)
 
 
+def _require_positive_size(size: int) -> int:
+    """Reject size < 1 so cover synthesis does not hit OpenCV/numpy hard errors."""
+    if int(size) < 1:
+        raise typer.BadParameter("must be >= 1", param_hint="--size")
+    return int(size)
+
+
 def _cfg(config: Optional[Path], tier: Optional[str], threshold: Optional[float]) -> VeilConfig:
     cfg = VeilConfig.load(config)
     if tier:
@@ -361,6 +368,7 @@ def selftest(
 
     ensure_loaded()
     n = _require_positive_n(n)
+    size = _require_positive_size(size)
     names = [d.name for d in all_detectors() if d.name != "wmd"]
     report = run_synthetic(n=n, size=size, detectors=names, per_detector=per_detector)
     if json_out:
@@ -401,6 +409,7 @@ def loao(
 
     ensure_loaded()
     n = _require_positive_n(n)
+    size = _require_positive_size(size)
     names = [d.name for d in all_detectors() if d.name != "wmd"]
     report = run_loao(n=n, size=size, detectors=names)
     if json_out:
@@ -464,6 +473,7 @@ def calibrate(
     from veilscan.calibrate import fit_calibration, save_calibration
 
     n = _require_positive_n(n)
+    size = _require_positive_size(size)
     data = fit_calibration(n=n, size=size)
     save_calibration(data, out)
     console.print(f"wrote {out} ensemble a={data['ensemble']['a']:.3f} b={data['ensemble']['b']:.3f}")

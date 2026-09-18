@@ -64,3 +64,17 @@ def test_eval_nonpositive_n_exits_clean() -> None:
         assert "Traceback" not in blob, blob
         assert "--n" in blob or "n" in blob.lower()
 
+
+
+def test_eval_nonpositive_size_exits_clean() -> None:
+    """selftest/loao/calibrate must reject size < 1 with exit 2 (no OpenCV/numpy crash)."""
+    for cmd in (
+        ["selftest", "--n", "1", "--size", "0"],
+        ["loao", "--n", "1", "--size", "-1"],
+        ["calibrate", "--n", "1", "--size", "0", "--out", "/tmp/veilscan-cal-size-reject.json"],
+    ):
+        r = runner.invoke(app, cmd)
+        assert r.exit_code == 2, (cmd, r.exit_code, r.stdout, r.stderr)
+        blob = (r.stdout or "") + (r.stderr or "")
+        assert "Traceback" not in blob, blob
+        assert "--size" in blob or "size" in blob.lower()
