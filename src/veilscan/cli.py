@@ -24,6 +24,19 @@ app = typer.Typer(
 console = Console()
 
 
+def _require_embed_family(family: str) -> str:
+    """Reject unknown robustness/embed families with exit 2 (no KeyError traceback)."""
+    from veilscan.generators import FAMILIES
+
+    key = (family or "").strip().lower()
+    if key not in FAMILIES:
+        console.print(
+            f"ERROR: unknown --family {family!r}. known: {', '.join(sorted(FAMILIES))}"
+        )
+        raise typer.Exit(code=2)
+    return key
+
+
 def _cfg(config: Optional[Path], tier: Optional[str], threshold: Optional[float]) -> VeilConfig:
     cfg = VeilConfig.load(config)
     if tier:
@@ -426,7 +439,8 @@ def robustness(
     if all_families:
         report = run_robustness_all(n=n)
     else:
-        report = run_robustness(n=n, family=family)
+        fam = _require_embed_family(family)
+        report = run_robustness(n=n, family=fam)
     console.print_json(data=report)
 
 

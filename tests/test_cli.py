@@ -40,3 +40,11 @@ def test_bench_write_op_refuses_other_covers(tmp_path) -> None:
     )
     assert r.exit_code == 2, r.stdout + r.stderr
     assert "refusing" in (r.stdout + r.stderr).lower()
+
+
+def test_robustness_invalid_family_exits_clean() -> None:
+    r = runner.invoke(app, ["robustness", "--family", "nope", "--n", "1"])
+    assert r.exit_code == 2, r.stdout + r.stderr
+    blob = (r.stdout + r.stderr).lower()
+    assert "unknown" in blob
+    assert "traceback" not in blob
