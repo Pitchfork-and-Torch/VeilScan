@@ -170,6 +170,11 @@ def decode(
     from veilscan.decode.container import load_raw_rgb
     from veilscan.decode.report import default_report_path, render_decode_report
 
+    # scan/hunt already refuse directories; decode used to path.read_bytes() on a
+    # folder and raise IsADirectoryError (exit 1 + traceback). Distinct from
+    # scan/hunt path checks and from prior CLI family/n/size validators.
+    if path.is_dir():
+        raise typer.BadParameter("path is a directory; pass a single image file")
     result = do_decode(path)
     if json_out:
         console.print_json(data=result.to_json())
@@ -213,6 +218,9 @@ def inspect(
     from veilscan.jpeg_meta import core_head_scores, inspect_jpeg_panel
     from veilscan.types import SCHEMA_VERSION
 
+    # Same directory refuse as decode (inspect also read_bytes / analyze on path).
+    if path.is_dir():
+        raise typer.BadParameter("path is a directory; pass a single image file")
     cfg = _cfg(config, None, threshold)
     scan_res = analyze_path(path, config=cfg, policy=policy)
     dec = do_decode(path)

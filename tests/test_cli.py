@@ -110,3 +110,13 @@ def test_bench_nonpositive_n_size_exits_clean() -> None:
         assert "Traceback" not in blob, blob
         assert hint in blob or hint.lstrip("-") in blob.lower()
 
+
+
+def test_decode_directory_exits_clean(tmp_path) -> None:
+    """decode/inspect must refuse directories with exit 2 (no IsADirectoryError traceback)."""
+    for cmd in (["decode", str(tmp_path)], ["inspect", str(tmp_path)]):
+        r = runner.invoke(app, cmd)
+        assert r.exit_code == 2, (cmd, r.exit_code, r.stdout, r.stderr)
+        blob = (r.stdout or "") + (r.stderr or "")
+        assert "Traceback" not in blob, blob
+        assert "directory" in blob.lower()
