@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "bsds500-train-200",
+  "kind": "archive",
+  "license": "BSDS500 (Berkeley). Research stills. Do not commit extracted JPEGs to this git repo.",
+  "source_page": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/resources.html",
+  "url": "https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz",
+  "archive": "BSR_bsds500.tgz",
+  "sha256": "97e49d31764f3912f0c4122707d53062ac9e783ba0f095e447a4d53c1a41af8e",
+  "member_glob": "BSR/BSDS500/data/images/train/*.jpg",
+  "take": 200,
+  "min_edge": 300,
+  "notes": "Same archive as camera_covers.manifest.json (test-64). Train stills only. Frozen bench pack stays data/covers/camera. Pytest never hits this URL."
+}

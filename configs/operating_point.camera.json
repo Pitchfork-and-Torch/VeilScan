@@ -1,0 +1,20 @@
+{
+  "id": "op-v1.4.0-camera-locked-n50",
+  "status": "locked",
+  "threshold": 0.75553,
+  "t_lsb": 0.345267,
+  "t_freq": 0.777408,
+  "t_class": 0.959054,
+  "fpr_est": 0.05,
+  "fpr_target": 0.05,
+  "n": 50,
+  "date": "2026-08-22",
+  "protocol": "veilscan-bench-v1",
+  "corpus": "camera",
+  "slice": [
+    "camera/identity",
+    "camera/jpeg_70"
+  ],
+  "fusion_mode": "legacy",
+  "notes": "v1.4 quality-aware jpeg_freq_weight (schema 5). Does not replace default present ~0.67. specialist_or did not beat legacy FPR; default stays legacy."
+}
