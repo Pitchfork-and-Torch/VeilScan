@@ -1,0 +1,36 @@
+# Frozen generator bench. Not ImageNet / UniFreq.
+id: veilscan-bench-v1
+seed: 20260822
+n: 20
+size: 128
+styles:
+  - sine
+  - photo
+families:
+  - lsb
+  - dct
+  - dwt
+  - spread
+  - tree_ring
+  - patchwork
+known_miss:
+  - svd
+attacks:
+  - identity
+  - jpeg_90
+  - jpeg_70
+  - jpeg_50
+  - resize_90
+  - crop_90
+  - noise
+  - blur
+operating_slice:
+  styles:
+    - photo
+  attacks:
+    - identity
+    - jpeg_70
+fpr_target: 0.05
+holdout_seed_start: 10000
+detectors: peak_ok
+notes: generator-photo / generator-sine. Do not cite as camera-photo FPR.
